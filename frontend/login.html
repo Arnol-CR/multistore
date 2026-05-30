@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Login</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background:#0a0c10;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            font-family:'Segoe UI',sans-serif;
+        }
+        .fondo {
+            position:fixed; inset:0;
+            background: radial-gradient(ellipse at 60% 40%, #0d2240 0%, #0a0c10 70%);
+            z-index:0;
+        }
+        .card {
+            position:relative; z-index:1;
+            background:#0d1017;
+            border:1px solid #1e2530;
+            border-radius:20px;
+            padding:48px 40px;
+            width:100%;
+            max-width:420px;
+            box-shadow: 0 0 60px rgba(59,130,246,0.08);
+        }
+        .logo {
+            text-align:center;
+            margin-bottom:36px;
+        }
+        .logo img {
+            width:90px;
+            height:90px;
+            object-fit:contain;
+            margin-bottom:14px;
+            filter: drop-shadow(0 0 12px rgba(30,180,220,0.3));
+        }
+        .logo h1 {
+            color:#fff;
+            font-size:26px;
+            font-weight:800;
+            letter-spacing:-0.5px;
+        }
+        .logo h1 span { color:#3b82f6; }
+        .logo p { color:#4b5563; font-size:12px; margin-top:5px; letter-spacing:1px; text-transform:uppercase; }
+        .divider {
+            border:none;
+            border-top:1px solid #1e2530;
+            margin-bottom:28px;
+        }
+        .campo { margin-bottom:18px; }
+        .campo label {
+            display:block;
+            color:#6b7280;
+            font-size:11px;
+            margin-bottom:7px;
+            text-transform:uppercase;
+            letter-spacing:1.5px;
+        }
+        .input-wrap {
+            position:relative;
+        }
+        .input-wrap svg {
+            position:absolute;
+            left:14px; top:50%;
+            transform:translateY(-50%);
+            width:16px; height:16px;
+            stroke:#4b5563;
+        }
+        .campo input {
+            width:100%;
+            background:#13181f;
+            border:1px solid #1e2530;
+            border-radius:10px;
+            padding:12px 16px 12px 42px;
+            color:#fff;
+            font-size:14px;
+            outline:none;
+            transition:.2s;
+            font-family:'Segoe UI',sans-serif;
+        }
+        .campo input:focus {
+            border-color:#3b82f6;
+            background:#151c27;
+        }
+        .campo input::placeholder { color:#374151; }
+        .btn {
+            width:100%;
+            background:linear-gradient(135deg,#2563eb,#1d4ed8);
+            color:#fff;
+            border:none;
+            border-radius:10px;
+            padding:14px;
+            font-size:15px;
+            font-weight:600;
+            cursor:pointer;
+            margin-top:10px;
+            transition:.2s;
+            letter-spacing:0.3px;
+        }
+        .btn:hover { background:linear-gradient(135deg,#3b82f6,#2563eb); transform:translateY(-1px); }
+        .btn:active { transform:translateY(0); }
+        .error {
+            color:#ef4444;
+            font-size:12px;
+            text-align:center;
+            margin-top:14px;
+            display:none;
+            background:#1a0a0a;
+            border:1px solid #3b1212;
+            border-radius:8px;
+            padding:10px;
+        }
+        .footer {
+            text-align:center;
+            margin-top:28px;
+            color:#374151;
+            font-size:11px;
+            letter-spacing:0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="fondo"></div>
+    <div class="card">
+        <div class="logo">
+            <img src="/assets/Recurso 3.png" alt="MultiStore Logo" />
+            <h1>Multi<span>Store</span></h1>
+            <p>Sistema de gestión de pedidos</p>
+        </div>
+        <hr class="divider">
+        <div class="campo">
+            <label>Usuario</label>
+            <div class="input-wrap">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <input type="text" id="usuario" placeholder="Tu usuario" />
+            </div>
+        </div>
+        <div class="campo">
+            <label>Contraseña</label>
+            <div class="input-wrap">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <input type="password" id="password" placeholder="••••••••" />
+            </div>
+        </div>
+        <button class="btn" onclick="login()">
+            Ingresar al sistema
+        </button>
+        <div class="error" id="error">
+            ⚠️ Usuario o contraseña incorrectos
+        </div>
+        <div class="footer">MultiStore &copy; 2026 — ShopAholic</div>
+    </div>
+    <script>
+        async function login() {
+            const usuario = document.getElementById('usuario').value.trim();
+            const password = document.getElementById('password').value;
+            if (!usuario || !password) {
+                const err = document.getElementById('error');
+                err.textContent = '⚠️ Ingresa usuario y contraseña';
+                err.style.display = 'block';
+                return;
+            }
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    localStorage.setItem('ms_usuario', JSON.stringify(data.usuario));
+                    window.location.href = '/dashboard.html';
+                } else {
+                    const err = document.getElementById('error');
+                    err.textContent = '⚠️ Usuario o contraseña incorrectos';
+                    err.style.display = 'block';
+                }
+            } catch (e) {
+                const err = document.getElementById('error');
+                err.textContent = '⚠️ Error conectando al servidor';
+                err.style.display = 'block';
+            }
+        }
+        document.addEventListener('keypress', e => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
