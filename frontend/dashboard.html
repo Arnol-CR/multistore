@@ -265,15 +265,17 @@
                 <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
                 <div class="tbl-wrap">
                     <table class="tbl">
-                        <thead>
+                       <thead>
                             <tr>
-                                <th>N° Pedido</th>
+                                <th>#</th>
+                                <th>Fecha</th>
                                 <th>Artículo</th>
                                 <th>Tienda</th>
                                 <th>Cliente</th>
                                 <th>Precio (L)</th>
                                 <th>Tracking</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-pedidos">
@@ -390,9 +392,12 @@
             const json = await res.json();
             const tbody = document.getElementById('tabla-pedidos');
             if (json.ok && json.data.length > 0) {
-                tbody.innerHTML = json.data.map(p => `
+               tbody.innerHTML = json.data.map((p, i) => `
                     <tr>
-                        <td style="color:#60a5fa;font-weight:600;white-space:nowrap">${p.NumeroPedido}</td>
+                        <td style="color:#4b5563;font-size:11px">${i + 1}</td>
+                        <td style="color:#9ca3af;font-size:11px;white-space:nowrap">
+                            ${new Date(p.FechaPedido).toLocaleDateString('es-HN')}
+                        </td>
                         <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
                         <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
                         <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">${p.NombreCliente}</td>
@@ -403,6 +408,14 @@
                             ${p.Seguimiento ? p.Seguimiento.substring(0,12)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
                         </td>
                         <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
+                        <td style="white-space:nowrap">
+                            <button onclick="asignarVendedor(${p.IdDetallePedido})" 
+                                style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px" 
+                                title="Asignar vendedor">👤</button>
+                            <button onclick="ponerPrecio(${p.IdDetallePedido})" 
+                                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
+                                title="Poner precio">💲</button>
+                        </td>
                     </tr>
                 `).join('');
             } else {
@@ -427,6 +440,13 @@
     cargarStats();
     cargarPedidosRecientes();
     setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
+
+    function asignarVendedor(id) {
+        alert('Módulo Asignar Vendedor — próximamente');
+    }
+    function ponerPrecio(id) {
+        alert('Módulo Poner Precio — próximamente');
+    }
 </script>
 </body>
 </html>
