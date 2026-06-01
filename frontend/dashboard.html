@@ -374,7 +374,7 @@
                         </td>
                         <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
                         <td style="white-space:nowrap">
-                            <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')"
+                            <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                                 style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
                                 title="Asignar cliente">👤</button>
                             <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
@@ -405,7 +405,7 @@
                             </span>
                         </div>
                         <div class="tarjeta-btns">
-                            <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')">👤 Asignar cliente</button>
+                            <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                             <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
                         </div>
                     </div>
@@ -448,7 +448,9 @@
         document.getElementById('cliente-seleccionado').style.display = 'none';
         document.getElementById('articulos-extra').style.display = 'none';
         document.getElementById('modal-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('modal-vendedor-nombre').textContent = '👤 ' + (nombreVendedor || '');
+        document.getElementById('modal-articulo-desc').textContent = 'Descripción: ' +descripcion || '';
+        document.getElementById('modal-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';   
+        document.getElementById('modal-vendedor-nombre').textContent = '🛍️ Vendedor: ' + (nombreVendedor || '');
         setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
     }
 
@@ -556,9 +558,9 @@
         idDetallePrecioActual = id;
         document.getElementById('modal-precio').style.display = 'flex';
         document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('precio-articulo-desc').textContent = descripcion || '';
-        document.getElementById('precio-articulo-talla').textContent = talla ? '📐 ' + talla : '';
-        document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
+        document.getElementById('precio-articulo-desc').textContent = 'Descripcion Artículo : ' + descripcion || '';
+        document.getElementById('precio-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';
+        document.getElementById('precio-cliente-nombre').textContent = '👤 Cliente: ' + (nombreCliente || 'Sin cliente');
         document.getElementById('precio-input').value = precioActual || '';
         setTimeout(() => document.getElementById('precio-input').focus(), 100);
     }
@@ -602,7 +604,8 @@
         <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO SELECCIONADO</div>
             <div id="modal-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-            <div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
+            <div id="modal-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
+            <div id="modal-articulo-talla" style="color:#6b7280;font-size:11px;margin-top:2px;"></div><div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
         </div>
         <div style="margin-bottom:12px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Buscar cliente</div>
