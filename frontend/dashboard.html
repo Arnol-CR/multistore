@@ -9,17 +9,10 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
 
-        /* OVERLAY MOBILE */
         .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99; }
         .overlay.active { display:block; }
 
-        /* SIDEBAR */
-        .sidebar {
-            width:230px; min-width:230px; background:#0d1017;
-            border-right:1px solid #1e2530; display:flex;
-            flex-direction:column; transition:transform .25s ease;
-            z-index:100;
-        }
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
         .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
         .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
@@ -45,10 +38,7 @@
         .btn-salir:hover { color:#fca5a5; }
         .btn-salir svg { width:16px; height:16px; }
 
-        /* MAIN */
         .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
-
-        /* TOPBAR */
         .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
         .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
         .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
@@ -59,10 +49,8 @@
         .search { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:8px 14px; font-size:13px; color:#9ca3af; width:200px; outline:none; font-family:'Segoe UI',sans-serif; }
         .search:focus { border-color:#3b82f6; color:#e2e8f0; }
 
-        /* CONTENT */
         .content { flex:1; overflow-y:auto; padding:16px; }
 
-        /* STATS */
         .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
         .stat { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; cursor:pointer; transition:.2s; }
         .stat:hover { border-color:#2d3f5e; transform:translateY(-1px); }
@@ -71,13 +59,11 @@
         .stat-delta { font-size:11px; margin-top:4px; color:#34d399; }
         .stat-delta.warn { color:#f59e0b; }
 
-        /* GRID */
         .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
         .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:16px; }
         .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
         .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
 
-        /* TABLA */
         .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
         .tbl { width:100%; border-collapse:collapse; font-size:12px; min-width:500px; }
         .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:8px 8px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
@@ -91,7 +77,6 @@
         .status.entregado { background:#0c1f3d; color:#60a5fa; }
         .status.nuevo     { background:#1f1025; color:#c084fc; }
 
-        /* MÓDULOS */
         .modulos { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
         .modulo { display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; border:1px solid #1e2530; cursor:pointer; transition:.18s; background:#0a0c10; text-decoration:none; }
         .modulo:hover { background:#13181f; border-color:#2d3f5e; }
@@ -105,36 +90,15 @@
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            /* Sidebar oculto por defecto en móvil */
-            .sidebar {
-                position:fixed;
-                top:0; left:0; bottom:0;
-                transform:translateX(-100%);
-            }
-            .sidebar.open {
-                transform:translateX(0);
-                box-shadow:4px 0 20px rgba(0,0,0,0.5);
-            }
-
-            /* Mostrar botón hamburguesa */
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
             .btn-menu { display:flex; }
-
-            /* Ocultar buscador en móvil */
             .search { display:none; }
-
-            /* Stats 2 columnas en móvil */
             .stats { grid-template-columns:1fr 1fr; gap:10px; }
             .stat-val { font-size:20px; }
-
-            /* Grid en columna en móvil */
             .grid2 { grid-template-columns:1fr; }
-
-            /* Content padding menor */
             .content { padding:12px; }
-
-            /* Topbar compacto */
             .topbar { padding:10px 14px; }
             .topbar-title { font-size:15px; }
         }
@@ -147,18 +111,12 @@
             .modulos { grid-template-columns:1fr; }
         }
 
-                /* TARJETAS MÓVIL */
         .tarjetas-mobile { display:none; }
 
         @media (max-width: 768px) {
             .tbl-wrap { display:none; }
             .tarjetas-mobile { display:flex; flex-direction:column; gap:10px; }
-            .tarjeta-pedido {
-                background:#13181f;
-                border:1px solid #1e2530;
-                border-radius:10px;
-                padding:12px 14px;
-            }
+            .tarjeta-pedido { background:#13181f; border:1px solid #1e2530; border-radius:10px; padding:12px 14px; }
             .tarjeta-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
             .tarjeta-num { color:#4b5563; font-size:11px; }
             .tarjeta-fecha { color:#6b7280; font-size:11px; }
@@ -172,23 +130,17 @@
             .btn-cliente { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f !important; }
             .btn-precio { background:#2d1f0a; color:#f59e0b; border:1px solid #3d2a0a !important; }
         }
-
     </style>
-
-
 </head>
 <body>
 
-<!-- OVERLAY PARA CERRAR SIDEBAR EN MÓVIL -->
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
 
-<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
         <img src="/assets/Recurso 3.png" alt="Logo">
         <div class="sidebar-logo-text">Multi<span>Store</span></div>
     </div>
-
     <div class="sidebar-user">
         <div class="avatar" id="avatar">--</div>
         <div>
@@ -196,7 +148,6 @@
             <div class="user-info-rol" id="user-rol">--</div>
         </div>
     </div>
-
     <nav class="nav">
         <div class="nav-label">Principal</div>
         <a class="nav-item active" href="/dashboard.html" onclick="cerrarMenu()">
@@ -216,7 +167,6 @@
             <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             Mis Precios
         </a>
-
         <div class="nav-label solo-admin">Administración</div>
         <a class="nav-item solo-admin" href="/asignar-vendedor.html" onclick="cerrarMenu()">
             <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
@@ -232,7 +182,6 @@
             Reportes
         </a>
     </nav>
-
     <div class="sidebar-bottom">
         <button class="btn-salir" onclick="cerrarSesion()">
             <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
@@ -241,7 +190,6 @@
     </div>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
     <div class="topbar">
         <div class="topbar-left">
@@ -263,7 +211,6 @@
     </div>
 
     <div class="content">
-        <!-- STATS -->
         <div class="stats">
             <div class="stat">
                 <div class="stat-label">Paquetes activos</div>
@@ -287,35 +234,32 @@
             </div>
         </div>
 
-        <!-- GRID -->
-<div class="grid2">
-    <!-- Pedidos recientes -->
-    <div class="card">
-        <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
-        <div class="tbl-wrap">
-            <table class="tbl">
-               <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Fecha</th>
-                        <th>Artículo</th>
-                        <th>Tienda</th>
-                        <th>Cliente</th>
-                        <th>Precio (L)</th>
-                        <th>Tracking</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-pedidos">
-                    <tr><td colspan="7" style="color:#374151;text-align:center;padding:20px">Cargando...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
-    </div>
+        <div class="grid2">
+            <div class="card">
+                <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Artículo</th>
+                                <th>Tienda</th>
+                                <th>Cliente</th>
+                                <th>Precio (L)</th>
+                                <th>Tracking</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-pedidos">
+                            <tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
+            </div>
 
-            <!-- Módulos rápidos -->
             <div class="card">
                 <div class="card-title"><span class="dot" style="background:#7c3aed"></span>Acceso rápido</div>
                 <div class="modulos">
@@ -362,27 +306,22 @@
 </main>
 
 <script>
-    // Verificar sesión
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
 
-    // Datos del usuario
     const iniciales = (usuario.nombres[0] + usuario.apellidos[0]).toUpperCase();
     document.getElementById('avatar').textContent = iniciales;
     document.getElementById('user-name').textContent = usuario.nombres + ' ' + usuario.apellidos;
     document.getElementById('user-rol').textContent = usuario.esAdmin ? 'Administrador' : 'Vendedor';
 
-    // Fecha
     document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {
         weekday:'long', year:'numeric', month:'long', day:'numeric'
     });
 
-    // Mostrar módulos de admin
     if (usuario.esAdmin) {
         document.querySelectorAll('.solo-admin').forEach(el => el.style.display = 'flex');
     }
 
-    // Menú hamburguesa
     function abrirMenu() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('overlay').classList.add('active');
@@ -391,14 +330,11 @@
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('overlay').classList.remove('active');
     }
-
-    // Cerrar sesión
     function cerrarSesion() {
         localStorage.removeItem('ms_usuario');
         window.location.href = '/login.html';
     }
 
-    // Cargar stats reales
     async function cargarStats() {
         try {
             const res = await fetch(`/api/pedidos/stats?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin}`);
@@ -410,12 +346,11 @@
                 document.getElementById('stat-sin-precio').textContent   = d.SinPrecio ?? 0;
                 document.getElementById('stat-entregados').textContent   = d.EntregadosAnio ?? 0;
             }
-        } catch (e) {
-            console.error('Error cargando stats:', e);
-        }
+        } catch (e) { console.error('Error cargando stats:', e); }
     }
 
-    // Cargar pedidos recientes
+    let articulosDisponibles = [];
+
     async function cargarPedidosRecientes() {
         try {
             const res = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin}`);
@@ -423,12 +358,11 @@
             const tbody = document.getElementById('tabla-pedidos');
             if (json.ok && json.data.length > 0) {
                 articulosDisponibles = json.data;
+
                 tbody.innerHTML = json.data.map((p, i) => `
                     <tr>
                         <td style="color:#4b5563;font-size:11px">${i + 1}</td>
-                        <td style="color:#9ca3af;font-size:11px;white-space:nowrap">
-                            ${new Date(p.FechaPedido).toLocaleDateString('es-HN')}
-                        </td>
+                        <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</td>
                         <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
                         <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
                         <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">${p.NombreCliente}</td>
@@ -440,66 +374,48 @@
                         </td>
                         <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
                         <td style="white-space:nowrap">
-                            <button onclick="asignarVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')" 
-                                style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px" 
+                            <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')"
+                                style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
                                 title="Asignar cliente">👤</button>
-                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')" 
-                                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
-                                ${p.ValorCobroCliente && p.ValorCobroCliente > 0
-    ? usuario.esAdmin
-        ? `<button onclick="desbloquearPrecio(${p.IdDetallePedido})" 
-                style="background:#1a0a0a;color:#ef4444;border:1px solid #3b1212;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
-                title="Desbloquear precio">🔓</button>`
-        : `<button disabled 
-                style="background:#13181f;color:#374151;border:1px solid #1e2530;border-radius:6px;padding:4px 8px;font-size:10px;cursor:not-allowed" 
-                title="Precio ya asignado">💲</button>`
-    : `<button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}'))" 
-                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
-                title="Asignar precio">💲</button>`
-}
+                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
+                                title="Asignar precio">💲</button>
                         </td>
                     </tr>
                 `).join('');
 
-                                    // Tarjetas para móvil
-                    document.getElementById('tarjetas-mobile').innerHTML = json.data.map((p, i) => `
-                        <div class="tarjeta-pedido">
-                            <div class="tarjeta-header">
-                                <span class="tarjeta-num">#${i + 1}</span>
-                                <span class="tarjeta-fecha">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</span>
-                            </div>
-                            <div class="tarjeta-articulo">${p.NombreArticulo}</div>
-                            <div class="tarjeta-info">
-                                <span class="tarjeta-tag">${p.NombreEmpresa || '---'}</span>
-                                <span class="tarjeta-tag" style="color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${p.NombreCliente}</span>
-                                ${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}
-                            </div>
-                            <div class="tarjeta-row">
-                                <span class="tarjeta-precio" style="color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'}">
-                                    ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
-                                </span>
-                                <span style="font-size:11px;font-family:monospace;color:#6b7280">
-                                    ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
-                                </span>
-                            </div>
-                            <div class="tarjeta-btns">
-                                <button class="btn-cliente" onclick="asignarVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')">👤 Asignar cliente</button>
-                                ${p.ValorCobroCliente && p.ValorCobroCliente > 0
-    ? usuario.esAdmin
-        ? `<button class="btn-precio" style="background:#1a0a0a;color:#ef4444;border:1px solid #3b1212 !important;" onclick="desbloquearPrecio(${p.IdDetallePedido})">🔓 Desbloquear</button>`
-        : `<button class="btn-precio" disabled style="background:#13181f;color:#374151;cursor:not-allowed;">💲 Precio asignado</button>`
-    : `<button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>`
-        }
-                            </div>
+                document.getElementById('tarjetas-mobile').innerHTML = json.data.map((p, i) => `
+                    <div class="tarjeta-pedido">
+                        <div class="tarjeta-header">
+                            <span class="tarjeta-num">#${i + 1}</span>
+                            <span class="tarjeta-fecha">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</span>
                         </div>
-                    `).join('');
+                        <div class="tarjeta-articulo">${p.NombreArticulo}</div>
+                        <div class="tarjeta-info">
+                            <span class="tarjeta-tag">${p.NombreEmpresa || '---'}</span>
+                            <span class="tarjeta-tag" style="color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${p.NombreCliente}</span>
+                            ${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}
+                        </div>
+                        <div class="tarjeta-row">
+                            <span class="tarjeta-precio" style="color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'}">
+                                ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
+                            </span>
+                            <span style="font-size:11px;font-family:monospace;color:#6b7280">
+                                ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
+                            </span>
+                        </div>
+                        <div class="tarjeta-btns">
+                            <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')">👤 Asignar cliente</button>
+                            <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
+                        </div>
+                    </div>
+                `).join('');
 
             } else {
-                tbody.innerHTML = '<tr><td colspan="7" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
+                document.getElementById('tarjetas-mobile').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;">Sin pedidos pendientes</p>';
             }
-        } catch (e) {
-            console.error('Error cargando pedidos:', e);
-        }
+        } catch (e) { console.error('Error cargando pedidos:', e); }
     }
 
     function getEstadoBadge(idSeguimiento, idEstado) {
@@ -515,40 +431,17 @@
 
     cargarStats();
     cargarPedidosRecientes();
-    
     setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
 
-    async function desbloquearPrecio(id) {
-    if (!confirm('¿Desbloquear el precio de este artículo? El vendedor podrá modificarlo.')) return;
-    try {
-        const res = await fetch('/api/clientes/desbloquear-precio', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idDetallePedido: id })
-        });
-        const json = await res.json();
-        if (json.ok) {
-            cargarPedidosRecientes();
-            alert('✅ Precio desbloqueado correctamente');
-        } else {
-            alert('❌ Error: ' + json.error);
-        }
-    } catch (e) {
-        alert('❌ Error de conexión');
-    }
-}
-
-
+    // ===== MODAL CLIENTE =====
     let idDetallePedidoActual = null;
     let clienteSeleccionadoId = null;
     let clienteSeleccionadoNombre = null;
-    let articulosDisponibles = [];
 
-    function asignarVendedor(id, nombreArticulo, nombreVendedor) {
+    function asignarCliente(id, nombreArticulo, nombreVendedor) {
         idDetallePedidoActual = id;
         clienteSeleccionadoId = null;
         clienteSeleccionadoNombre = null;
-
         document.getElementById('modal-cliente').style.display = 'flex';
         document.getElementById('buscar-cliente-input').value = '';
         document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>';
@@ -556,7 +449,6 @@
         document.getElementById('articulos-extra').style.display = 'none';
         document.getElementById('modal-articulo-nombre').textContent = nombreArticulo || 'Artículo';
         document.getElementById('modal-vendedor-nombre').textContent = '👤 ' + (nombreVendedor || '');
-
         setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
     }
 
@@ -622,7 +514,7 @@
         }
         lista.innerHTML = disponibles.map(a => `
             <div style="padding:10px 14px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;">
-                <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}" 
+                <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
                     style="width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;">
                 <label for="chk-${a.IdDetallePedido}" style="cursor:pointer;flex:1;">
                     <div style="color:#d1d5db;font-size:13px;">${a.NombreArticulo}</div>
@@ -637,12 +529,9 @@
             alert('⚠️ Selecciona un cliente primero');
             return;
         }
-
-        // Recoger IDs seleccionados
         const checkboxes = document.querySelectorAll('#lista-articulos-extra input[type=checkbox]:checked');
         const idsExtra = Array.from(checkboxes).map(c => c.value);
         const todosIds = [idDetallePedidoActual, ...idsExtra].join(',');
-
         try {
             const res = await fetch('/api/clientes/asignar-multiple', {
                 method: 'POST',
@@ -657,27 +546,22 @@
             } else {
                 alert('❌ Error: ' + json.error);
             }
-        } catch (e) {
-            alert('❌ Error de conexión');
-        }
+        } catch (e) { alert('❌ Error de conexión'); }
     }
 
+    // ===== MODAL PRECIO =====
     let idDetallePrecioActual = null;
 
     function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion, talla) {
-    if (precioActual && !usuario.esAdmin) {
-        alert('⚠️ Este artículo ya tiene precio asignado. Solo un administrador puede modificarlo.');
-        return;
-            }
-            idDetallePrecioActual = id;
-            document.getElementById('modal-precio').style.display = 'flex';
-            document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-            document.getElementById('precio-articulo-desc').textContent = descripcion || '';
-            document.getElementById('precio-articulo-talla').textContent = talla ? '📐 ' + talla : '';
-            document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
-            document.getElementById('precio-input').value = precioActual || '';
-            setTimeout(() => document.getElementById('precio-input').focus(), 100);
-        }
+        idDetallePrecioActual = id;
+        document.getElementById('modal-precio').style.display = 'flex';
+        document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
+        document.getElementById('precio-articulo-desc').textContent = descripcion || '';
+        document.getElementById('precio-articulo-talla').textContent = talla ? '📐 ' + talla : '';
+        document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
+        document.getElementById('precio-input').value = precioActual || '';
+        setTimeout(() => document.getElementById('precio-input').focus(), 100);
+    }
 
     function cerrarModalPrecio() {
         document.getElementById('modal-precio').style.display = 'none';
@@ -704,69 +588,49 @@
             } else {
                 alert('❌ Error: ' + json.error);
             }
-        } catch (e) {
-            alert('❌ Error de conexión');
-        }
+        } catch (e) { alert('❌ Error de conexión'); }
     }
-
-
 </script>
 
 <!-- MODAL ASIGNAR CLIENTE -->
 <div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
     <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:520px;margin:16px;max-height:90vh;overflow-y:auto;">
-        
-        <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h3 style="color:#fff;font-size:15px;">👤 Asignar Cliente</h3>
             <button onclick="cerrarModalCliente()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
         </div>
-
-        <!-- Info artículo -->
-        <div id="modal-articulo-info" style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO SELECCIONADO</div>
             <div id="modal-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
             <div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
         </div>
-
-        <!-- Buscador cliente -->
         <div style="margin-bottom:12px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Buscar cliente</div>
-            <input id="buscar-cliente-input" type="text" placeholder="Escribe el nombre del cliente..." 
+            <input id="buscar-cliente-input" type="text" placeholder="Escribe el nombre del cliente..."
                 oninput="buscarClientesModal(this.value)"
                 style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px;color:#fff;font-size:14px;outline:none;font-family:'Segoe UI',sans-serif;">
         </div>
-
-        <!-- Lista clientes -->
         <div id="lista-clientes" style="max-height:160px;overflow-y:auto;margin-bottom:14px;border:1px solid #1e2530;border-radius:8px;">
             <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>
         </div>
-
-        <!-- Cliente seleccionado -->
         <div id="cliente-seleccionado" style="display:none;background:#0f2318;border:1px solid #1a3d28;border-radius:8px;padding:10px 14px;margin-bottom:14px;">
             <div style="font-size:11px;color:#34d399;margin-bottom:2px;">CLIENTE SELECCIONADO</div>
             <div id="cliente-seleccionado-nombre" style="color:#fff;font-size:13px;font-weight:600;"></div>
         </div>
-
-        <!-- Botón agregar más artículos -->
-        <button onclick="toggleArticulosExtra()" id="btn-mas-articulos"
+        <button onclick="toggleArticulosExtra()"
             style="width:100%;background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
             <span>➕</span> <span>Agregar más artículos</span>
         </button>
-
-        <!-- Lista artículos extra con checkboxes -->
         <div id="articulos-extra" style="display:none;margin-bottom:14px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Selecciona artículos adicionales</div>
             <div id="lista-articulos-extra" style="max-height:180px;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;"></div>
         </div>
-
-        <!-- Botones -->
         <div style="display:flex;gap:10px;">
-            <button onclick="cerrarModalCliente()" 
+            <button onclick="cerrarModalCliente()"
                 style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
                 Cancelar
             </button>
-            <button onclick="confirmarAsignacion()" 
+            <button onclick="confirmarAsignacion()"
                 style="flex:2;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
                 ✅ Asignar Cliente
             </button>
@@ -777,22 +641,17 @@
 <!-- MODAL ASIGNAR PRECIO -->
 <div id="modal-precio" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
     <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:400px;margin:16px;">
-        
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h3 style="color:#fff;font-size:15px;">💲 Asignar Precio</h3>
             <button onclick="cerrarModalPrecio()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
         </div>
-
-        <!-- Info artículo -->
         <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:16px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO</div>
             <div id="precio-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-                <div id="precio-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
-                <div id="precio-articulo-talla" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
-                <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:4px;"></div>
-             </div>
-
-        <!-- Campo precio -->
+            <div id="precio-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
+            <div id="precio-articulo-talla" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
+            <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:4px;"></div>
+        </div>
         <div style="margin-bottom:16px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Precio de venta (Lempiras)</div>
             <div style="position:relative;">
@@ -801,19 +660,12 @@
                     style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px 10px 28px;color:#fff;font-size:16px;outline:none;font-family:'Segoe UI',sans-serif;">
             </div>
         </div>
-
-        <!-- Advertencia -->
-        <div style="background:#2d1f0a;border:1px solid #3d2a0a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#f59e0b;">
-            ⚠️ El precio solo puede asignarse una vez. Solo un administrador puede modificarlo después.
-        </div>
-
-        <!-- Botones -->
         <div style="display:flex;gap:10px;">
-            <button onclick="cerrarModalPrecio()" 
+            <button onclick="cerrarModalPrecio()"
                 style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
                 Cancelar
             </button>
-            <button onclick="confirmarPrecio()" 
+            <button onclick="confirmarPrecio()"
                 style="flex:2;background:#854d0e;color:#fef08a;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
                 💲 Guardar Precio
             </button>
