@@ -441,12 +441,92 @@
     cargarPedidosRecientes();
     setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
 
+    let idDetallePedidoActual = null;
+
     function asignarVendedor(id) {
-        alert('Módulo Asignar Vendedor — próximamente');
+    idDetallePedidoActual = id;
+    document.getElementById('modal-cliente').style.display = 'flex';
+    document.getElementById('buscar-cliente-input').value = '';
+    document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;font-size:13px;">Escribe para buscar clientes...</p>';
+    setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
     }
-    function ponerPrecio(id) {
-        alert('Módulo Poner Precio — próximamente');
+
+function cerrarModalCliente() {
+    document.getElementById('modal-cliente').style.display = 'none';
+    idDetallePedidoActual = null;
+}
+
+let buscarTimeout = null;
+function buscarClientesModal(nombre) {
+    clearTimeout(buscarTimeout);
+    if (nombre.length < 2) {
+        document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;font-size:13px;">Escribe al menos 2 letras...</p>';
+        return;
     }
+    buscarTimeout = setTimeout(async () => {
+        try {
+            const res = await fetch(`/api/clientes/buscar?nombre=${encodeURIComponent(nombre)}`);
+            const json = await res.json();
+            const lista = document.getElementById('lista-clientes');
+            if (json.ok && json.data.length > 0) {
+                lista.innerHTML = json.data.map(c => `
+                    <div onclick="seleccionarCliente(${c.IdCliente}, '${c.NombreCompleto}')"
+                        style="padding:10px 14px;border-bottom:1px solid #1e2530;cursor:pointer;transition:.15s;border-radius:6px;"
+                        onmouseover="this.style.background='#13181f'" onmouseout="this.style.background='transparent'">
+                        <div style="color:#d1d5db;font-size:13px;font-weight:600">${c.NombreCompleto}</div>
+                        <div style="color:#4b5563;font-size:11px">${c.CodigoCliente} · ${c.CodigoVendedor}</div>
+                    </div>
+                `).join('');
+            } else {
+                lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;font-size:13px;">No se encontraron clientes</p>';
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, 400);
+}
+
+async function seleccionarCliente(idCliente, nombre) {
+    if (!confirm(`¿Asignar "${nombre}" a este pedido?`)) return;
+    try {
+        const res = await fetch('/api/clientes/asignar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idDetallePedido: idDetallePedidoActual, idCliente })
+        });
+        const json = await res.json();
+        if (json.ok) {
+            cerrarModalCliente();
+            cargarPedidosRecientes();
+            alert('✅ Cliente asignado correctamente');
+        } else {
+            alert('❌ Error: ' + json.error);
+        }
+    } catch (e) {
+        alert('❌ Error de conexión');
+    }
+}
+
+function ponerPrecio(id) {
+    alert('Módulo Asignar Precio — próximamente');
+}
 </script>
+
+<!-- MODAL ASIGNAR CLIENTE -->
+<div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
+    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:480px;margin:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="color:#fff;font-size:15px;">👤 Asignar Cliente</h3>
+            <button onclick="cerrarModalCliente()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+        <input id="buscar-cliente-input" type="text" placeholder="Buscar cliente por nombre..." 
+            oninput="buscarClientesModal(this.value)"
+            style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;font-family:'Segoe UI',sans-serif;">
+        <div id="lista-clientes" style="max-height:280px;overflow-y:auto;">
+            <p style="color:#4b5563;text-align:center;padding:20px;font-size:13px;">Escribe para buscar clientes...</p>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
