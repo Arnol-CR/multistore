@@ -631,15 +631,15 @@
     if (precioActual && !usuario.esAdmin) {
         alert('⚠️ Este artículo ya tiene precio asignado. Solo un administrador puede modificarlo.');
         return;
-    }
-    idDetallePrecioActual = id;
-    document.getElementById('modal-precio').style.display = 'flex';
-    document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-    document.getElementById('precio-articulo-desc').textContent = descripcion || '';
-    document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
-    document.getElementById('precio-input').value = precioActual || '';
-    setTimeout(() => document.getElementById('precio-input').focus(), 100);
-}
+            }
+            idDetallePrecioActual = id;
+            document.getElementById('modal-precio').style.display = 'flex';
+            document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
+            document.getElementById('precio-articulo-desc').textContent = descripcion || '';
+            document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
+            document.getElementById('precio-input').value = precioActual || '';
+            setTimeout(() => document.getElementById('precio-input').focus(), 100);
+        }
 
     function cerrarModalPrecio() {
         document.getElementById('modal-precio').style.display = 'none';
@@ -749,8 +749,9 @@
         <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:16px;">
             <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO</div>
             <div id="precio-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-            <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
-        </div>
+                <div id="precio-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
+                <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:4px;"></div>
+            </div>
 
         <!-- Campo precio -->
         <div style="margin-bottom:16px;">
