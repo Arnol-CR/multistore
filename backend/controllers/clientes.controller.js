@@ -40,7 +40,7 @@ const asignarPrecio = async (req, res) => {
     await pool.request()
       .input('IdDetalleCliente', sql.Int, idDetallePedido)
       .input('ValorCobro', sql.Decimal(18,2), valorCobro)
-      .input('EsAdmin', sql.Bit, esAdmin ? 1 : 0)
+      //.input('EsAdmin', sql.Bit, esAdmin ? 1 : 0)
       .execute('Up_ValorVentaDetallesPedidos');
     res.json({ ok: true, mensaje: 'Precio asignado correctamente' });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }

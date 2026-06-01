@@ -374,10 +374,10 @@
                         </td>
                         <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
                         <td style="white-space:nowrap">
-                            <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                            <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                                 style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
                                 title="Asignar cliente">👤</button>
-                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                                 style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
                                 title="Asignar precio">💲</button>
                         </td>
@@ -438,7 +438,7 @@
     let clienteSeleccionadoId = null;
     let clienteSeleccionadoNombre = null;
 
-    function asignarCliente(id, nombreArticulo, nombreVendedor) {
+function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) {
         idDetallePedidoActual = id;
         clienteSeleccionadoId = null;
         clienteSeleccionadoNombre = null;
@@ -580,7 +580,7 @@
             const res = await fetch('/api/clientes/precio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idDetallePedido: idDetallePrecioActual, valorCobro: valor, esAdmin: usuario.esAdmin })
+                body: JSON.stringify({ idDetallePedido: idDetallePrecioActual, valorCobro: valor })
             });
             const json = await res.json();
             if (json.ok) {
