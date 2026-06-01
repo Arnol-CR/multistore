@@ -146,7 +146,36 @@
             .stat-val { font-size:18px; }
             .modulos { grid-template-columns:1fr; }
         }
+
+                /* TARJETAS MÓVIL */
+        .tarjetas-mobile { display:none; }
+
+        @media (max-width: 768px) {
+            .tbl-wrap { display:none; }
+            .tarjetas-mobile { display:flex; flex-direction:column; gap:10px; }
+            .tarjeta-pedido {
+                background:#13181f;
+                border:1px solid #1e2530;
+                border-radius:10px;
+                padding:12px 14px;
+            }
+            .tarjeta-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+            .tarjeta-num { color:#4b5563; font-size:11px; }
+            .tarjeta-fecha { color:#6b7280; font-size:11px; }
+            .tarjeta-articulo { color:#e2e8f0; font-size:13px; font-weight:600; margin-bottom:6px; }
+            .tarjeta-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+            .tarjeta-tag { font-size:11px; color:#9ca3af; background:#0d1017; padding:3px 8px; border-radius:6px; }
+            .tarjeta-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+            .tarjeta-precio { font-size:13px; font-weight:600; }
+            .tarjeta-btns { display:flex; gap:8px; }
+            .tarjeta-btns button { flex:1; padding:8px; border-radius:8px; font-size:12px; cursor:pointer; border:none; font-weight:600; }
+            .btn-cliente { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f !important; }
+            .btn-precio { background:#2d1f0a; color:#f59e0b; border:1px solid #3d2a0a !important; }
+        }
+
     </style>
+
+
 </head>
 <body>
 
@@ -264,6 +293,7 @@
             <div class="card">
                 <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
                 <div class="tbl-wrap">
+                    <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
                     <table class="tbl">
                        <thead>
                             <tr>
@@ -418,6 +448,35 @@
                         </td>
                     </tr>
                 `).join('');
+
+                                    // Tarjetas para móvil
+                    document.getElementById('tarjetas-mobile').innerHTML = json.data.map((p, i) => `
+                        <div class="tarjeta-pedido">
+                            <div class="tarjeta-header">
+                                <span class="tarjeta-num">#${i + 1}</span>
+                                <span class="tarjeta-fecha">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</span>
+                            </div>
+                            <div class="tarjeta-articulo">${p.NombreArticulo}</div>
+                            <div class="tarjeta-info">
+                                <span class="tarjeta-tag">${p.NombreEmpresa || '---'}</span>
+                                <span class="tarjeta-tag" style="color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${p.NombreCliente}</span>
+                                ${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}
+                            </div>
+                            <div class="tarjeta-row">
+                                <span class="tarjeta-precio" style="color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'}">
+                                    ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
+                                </span>
+                                <span style="font-size:11px;font-family:monospace;color:#6b7280">
+                                    ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
+                                </span>
+                            </div>
+                            <div class="tarjeta-btns">
+                                <button class="btn-cliente" onclick="asignarVendedor(${p.IdDetallePedido})">👤 Asignar cliente</button>
+                                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido})">💲 Asignar precio</button>
+                            </div>
+                        </div>
+                    `).join('');
+
             } else {
                 tbody.innerHTML = '<tr><td colspan="7" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
             }
