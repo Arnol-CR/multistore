@@ -445,7 +445,18 @@
                                 title="Asignar cliente">👤</button>
                             <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')" 
                                 style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
-                                title="Asignar precio">💲</button>
+                                ${p.ValorCobroCliente && p.ValorCobroCliente > 0
+    ? usuario.esAdmin
+        ? `<button onclick="desbloquearPrecio(${p.IdDetallePedido})" 
+                style="background:#1a0a0a;color:#ef4444;border:1px solid #3b1212;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
+                title="Desbloquear precio">🔓</button>`
+        : `<button disabled 
+                style="background:#13181f;color:#374151;border:1px solid #1e2530;border-radius:6px;padding:4px 8px;font-size:10px;cursor:not-allowed" 
+                title="Precio ya asignado">💲</button>`
+    : `<button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}'))" 
+                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
+                title="Asignar precio">💲</button>`
+}
                         </td>
                     </tr>
                 `).join('');
@@ -473,7 +484,12 @@
                             </div>
                             <div class="tarjeta-btns">
                                 <button class="btn-cliente" onclick="asignarVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')">👤 Asignar cliente</button>
-                                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
+                                ${p.ValorCobroCliente && p.ValorCobroCliente > 0
+    ? usuario.esAdmin
+        ? `<button class="btn-precio" style="background:#1a0a0a;color:#ef4444;border:1px solid #3b1212 !important;" onclick="desbloquearPrecio(${p.IdDetallePedido})">🔓 Desbloquear</button>`
+        : `<button class="btn-precio" disabled style="background:#13181f;color:#374151;cursor:not-allowed;">💲 Precio asignado</button>`
+    : `<button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>`
+        }
                             </div>
                         </div>
                     `).join('');
@@ -501,6 +517,27 @@
     cargarPedidosRecientes();
     
     setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
+
+    async function desbloquearPrecio(id) {
+    if (!confirm('¿Desbloquear el precio de este artículo? El vendedor podrá modificarlo.')) return;
+    try {
+        const res = await fetch('/api/clientes/desbloquear-precio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idDetallePedido: id })
+        });
+        const json = await res.json();
+        if (json.ok) {
+            cargarPedidosRecientes();
+            alert('✅ Precio desbloqueado correctamente');
+        } else {
+            alert('❌ Error: ' + json.error);
+        }
+    } catch (e) {
+        alert('❌ Error de conexión');
+    }
+}
+
 
     let idDetallePedidoActual = null;
     let clienteSeleccionadoId = null;
@@ -627,7 +664,7 @@
 
     let idDetallePrecioActual = null;
 
-    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion) {
+    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion, talla) {
     if (precioActual && !usuario.esAdmin) {
         alert('⚠️ Este artículo ya tiene precio asignado. Solo un administrador puede modificarlo.');
         return;
@@ -636,6 +673,7 @@
             document.getElementById('modal-precio').style.display = 'flex';
             document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
             document.getElementById('precio-articulo-desc').textContent = descripcion || '';
+            document.getElementById('precio-articulo-talla').textContent = talla ? '📐 ' + talla : '';
             document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
             document.getElementById('precio-input').value = precioActual || '';
             setTimeout(() => document.getElementById('precio-input').focus(), 100);
@@ -656,7 +694,7 @@
             const res = await fetch('/api/clientes/precio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idDetallePedido: idDetallePrecioActual, valorCobro: valor })
+                body: JSON.stringify({ idDetallePedido: idDetallePrecioActual, valorCobro: valor, esAdmin: usuario.esAdmin })
             });
             const json = await res.json();
             if (json.ok) {
@@ -750,8 +788,9 @@
             <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO</div>
             <div id="precio-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
                 <div id="precio-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
+                <div id="precio-articulo-talla" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
                 <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:4px;"></div>
-            </div>
+             </div>
 
         <!-- Campo precio -->
         <div style="margin-bottom:16px;">
