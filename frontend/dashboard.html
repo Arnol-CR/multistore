@@ -443,9 +443,9 @@
                             <button onclick="asignarVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')" 
                                 style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px" 
                                 title="Asignar cliente">👤</button>
-                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0})" 
-    style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
-    title="Asignar precio">💲</button>
+                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')" 
+                                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer" 
+                                title="Asignar precio">💲</button>
                         </td>
                     </tr>
                 `).join('');
@@ -473,7 +473,7 @@
                             </div>
                             <div class="tarjeta-btns">
                                 <button class="btn-cliente" onclick="asignarVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}')">👤 Asignar cliente</button>
-                                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0})">💲 Asignar precio</button>
+                                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
                             </div>
                         </div>
                     `).join('');
@@ -627,19 +627,19 @@
 
     let idDetallePrecioActual = null;
 
-    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual) {
-        // Si ya tiene precio y no es admin, bloquear
-        if (precioActual && !usuario.esAdmin) {
-            alert('⚠️ Este artículo ya tiene precio asignado. Solo un administrador puede modificarlo.');
-            return;
-        }
-        idDetallePrecioActual = id;
-        document.getElementById('modal-precio').style.display = 'flex';
-        document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
-        document.getElementById('precio-input').value = precioActual || '';
-        setTimeout(() => document.getElementById('precio-input').focus(), 100);
+    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion) {
+    if (precioActual && !usuario.esAdmin) {
+        alert('⚠️ Este artículo ya tiene precio asignado. Solo un administrador puede modificarlo.');
+        return;
     }
+    idDetallePrecioActual = id;
+    document.getElementById('modal-precio').style.display = 'flex';
+    document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
+    document.getElementById('precio-articulo-desc').textContent = descripcion || '';
+    document.getElementById('precio-cliente-nombre').textContent = '👤 ' + (nombreCliente || 'Sin cliente');
+    document.getElementById('precio-input').value = precioActual || '';
+    setTimeout(() => document.getElementById('precio-input').focus(), 100);
+}
 
     function cerrarModalPrecio() {
         document.getElementById('modal-precio').style.display = 'none';
