@@ -633,16 +633,16 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         }
         buscarTimeout = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
+                const res = await fetch(`/api/clientes/buscar?nombre=${encodeURIComponent(nombre)}`);
                 const json = await res.json();
                 const lista = document.getElementById('lista-clientes');
                 if (json.ok && json.data.length > 0) {
                     lista.innerHTML = json.data.map(c => `
-                        <div onclick="seleccionarCliente(${c.IdCliente}, '${c.NombreCompleto.trim()}')"
+                        <div onclick="seleccionarCliente(${c.IdCliente}, '${(c.NombreCompleto || '').trim().replace(/'/g, "\\'")}')"
                             style="padding:10px 14px;border-bottom:1px solid #1e2530;cursor:pointer;transition:.15s;"
                             onmouseover="this.style.background='#13181f'" onmouseout="this.style.background='transparent'">
                             <div style="color:#d1d5db;font-size:13px;font-weight:600">${c.NombreCompleto}</div>
-                            <div style="color:#4b5563;font-size:11px">${c.CodigoCliente} · ${c.CodigoVendedor}</div>
+                            <div style="color:#4b5563;font-size:11px">${c.CodigoCliente || ''} · ${c.CodigoVendedor || ''}</div>
                         </div>
                     `).join('');
                 } else {
