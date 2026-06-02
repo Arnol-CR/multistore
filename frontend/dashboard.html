@@ -590,6 +590,13 @@
             </div>
         </div>
     `}).join('');
+
+    // Aplicar display correcto a celdas solo-admin generadas dinámicamente
+    if (usuario.esAdmin) {
+        document.querySelectorAll('#tabla-pedidos td.solo-admin').forEach(td => {
+            td.style.display = 'table-cell';
+        });
+    }
 }
 
 function cambiarPagina(nuevaPagina) {
