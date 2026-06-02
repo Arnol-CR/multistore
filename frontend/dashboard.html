@@ -632,16 +632,15 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         clienteSeleccionadoNombre = null;
         document.getElementById('modal-cliente').style.display = 'flex';
         document.getElementById('buscar-cliente-input').value = '';
+        if (document.getElementById('buscar-extra-input')) document.getElementById('buscar-extra-input').value = '';
         document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>';
         document.getElementById('cliente-seleccionado').style.display = 'none';
-        document.getElementById('articulos-extra').style.display = 'none';
         document.getElementById('modal-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('modal-articulo-desc').textContent = 'Descripción: ' +descripcion || '';
-        document.getElementById('modal-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';   
-        document.getElementById('modal-vendedor-nombre').textContent = '🛍️ Vendedor: ' + (nombreVendedor || '');
+        document.getElementById('modal-articulo-desc').textContent = descripcion ? 'Descripción: ' + descripcion : '';
+        document.getElementById('modal-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';
+        document.getElementById('modal-vendedor-nombre').textContent = '🛍️ Vendedor: ' + (nombreVendedor || 'Sin vendedor');
+        cargarArticulosExtra();
         setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
-
-        
     }
 
     function cerrarModalCliente() {
@@ -687,56 +686,86 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         document.getElementById('buscar-cliente-input').value = nombre;
     }
 
-    function toggleArticulosExtra() {
-        const div = document.getElementById('articulos-extra');
-        if (div.style.display === 'none') {
-            div.style.display = 'block';
-            cargarArticulosExtra();
-        } else {
-            div.style.display = 'none';
-        }
-    }
+    function toggleArticulosExtra() {} // panel siempre visible
+
+    let articulosExtraData = [];
 
     function cargarArticulosExtra() {
-        const lista = document.getElementById('lista-articulos-extra');
         const soloMios    = document.getElementById('chk-solo-mis')?.checked || false;
         const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
+        articulosExtraData = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoActual);
+        if (soloMios)    articulosExtraData = articulosExtraData.filter(a => a.IdVendedor === usuario.id);
+        if (sinVendedor) articulosExtraData = articulosExtraData.filter(a => !a.IdVendedor);
+        renderizarArticulosExtra(articulosExtraData);
+    }
 
-        let disponibles = articulosDisponibles.filter(a =>
-            a.IdDetallePedido !== idDetallePedidoActual && !a.IdCliente
-        );
-        // Respetar filtros activos del dashboard
-        if (soloMios)    disponibles = disponibles.filter(a => a.IdVendedor === usuario.id);
-        if (sinVendedor) disponibles = disponibles.filter(a => !a.IdVendedor);
+    function filtrarArticulosExtra(texto) {
+        const q = (texto || '').trim().toLowerCase();
+        const filtrados = q
+            ? articulosExtraData.filter(a =>
+                (a.NombreArticulo      || '').toLowerCase().includes(q) ||
+                (a.DescripcionArticulo || '').toLowerCase().includes(q) ||
+                (a.TallaColor         || '').toLowerCase().includes(q) ||
+                (a.NombreCliente      || '').toLowerCase().includes(q))
+            : articulosExtraData;
+        renderizarArticulosExtra(filtrados);
+    }
 
-        if (disponibles.length === 0) {
-            lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">No hay más artículos sin cliente</p>';
+    function renderizarArticulosExtra(lista) {
+        const el = document.getElementById('lista-articulos-extra');
+        const countEl = document.getElementById('extra-count');
+        if (countEl) countEl.textContent = lista.length + ' artículos';
+        if (!el) return;
+        if (lista.length === 0) {
+            el.innerHTML = '<p style="color:#4b5563;text-align:center;padding:24px;font-size:13px;">No hay artículos disponibles</p>';
             return;
         }
-        lista.innerHTML = disponibles.map(a => {
-            const nombreVendedor = a.NombreVendedor
-                ? a.NombreVendedor.trim()
-                : 'Sin vendedor';
-            const colorVendedor = a.IdVendedor ? '#c084fc' : '#ef4444';
+        el.innerHTML = lista.map(a => {
+            const vendColor  = a.IdVendedor ? '#c084fc' : '#ef4444';
+            const vendNombre = a.NombreVendedor ? a.NombreVendedor.trim() : 'Sin vendedor';
+            const clienteStr = a.IdCliente ? `<span style="color:#34d399;">👤 ${a.NombreCliente}</span>` : '<span style="color:#ef4444;">Sin cliente</span>';
+            const precioStr  = a.ValorCobroCliente ? `<span style="color:#34d399;">L ${parseFloat(a.ValorCobroCliente).toFixed(2)}</span>` : '<span style="color:#f59e0b;">Sin precio</span>';
+            const desc       = a.DescripcionArticulo ? a.DescripcionArticulo.trim().substring(0,70) + (a.DescripcionArticulo.length > 70 ? '...' : '') : '';
             return `
-            <div style="padding:10px 14px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;">
-                <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
-                    style="width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;">
-                <label for="chk-${a.IdDetallePedido}" style="cursor:pointer;flex:1;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                        <span style="color:#d1d5db;font-size:13px;">${a.NombreArticulo}</span>
-                        <span style="font-size:11px;color:${colorVendedor};white-space:nowrap;">
-                            👤 ${nombreVendedor}
-                        </span>
+            <div style="padding:12px 14px;border-bottom:1px solid #1e2530;transition:.15s;"
+                 onmouseover="this.style.background='#0d1117'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
+                        onchange="togglePrecioExtra(${a.IdDetallePedido})"
+                        style="width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;margin-top:3px;flex-shrink:0;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <span style="color:#e2e8f0;font-size:13px;font-weight:600;">${a.NombreArticulo}</span>
+                            <span style="font-size:11px;color:${vendColor};white-space:nowrap;">👤 ${vendNombre}</span>
+                        </div>
+                        ${desc ? `<div style="color:#6b7280;font-size:11px;margin-top:2px;line-height:1.3;">${desc}</div>` : ''}
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
+                            <span style="color:#4b5563;font-size:11px;">${a.NombreEmpresa}</span>
+                            ${a.TallaColor ? `<span style="color:#4b5563;font-size:11px;">📐 ${a.TallaColor}</span>` : ''}
+                            <span style="font-size:11px;">${clienteStr}</span>
+                            <span style="font-size:11px;">${precioStr}</span>
+                        </div>
+                        <div id="precio-extra-${a.IdDetallePedido}" style="display:none;margin-top:8px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="color:#f59e0b;font-size:11px;white-space:nowrap;">💲 Precio (L):</span>
+                                <input type="number" id="val-precio-${a.IdDetallePedido}"
+                                    placeholder="0.00" step="0.01" min="0"
+                                    value="${a.ValorCobroCliente || ''}"
+                                    style="flex:1;background:#13181f;border:1px solid #3d2a0a;border-radius:6px;padding:5px 8px;color:#f59e0b;font-size:12px;outline:none;">
+                            </div>
+                        </div>
                     </div>
-                    <div style="color:#4b5563;font-size:11px;margin-top:2px;">
-                        ${a.NombreEmpresa} · ${new Date(a.FechaPedido).toLocaleDateString('es-HN')}
-                        ${a.TallaColor ? ' · 📐 ' + a.TallaColor : ''}
-                    </div>
-                </label>
-            </div>`
+                </div>
+            </div>`;
         }).join('');
     }
+
+    function togglePrecioExtra(idDetalle) {
+        const chk   = document.getElementById(`chk-${idDetalle}`);
+        const campo = document.getElementById(`precio-extra-${idDetalle}`);
+        if (campo) campo.style.display = chk.checked ? 'block' : 'none';
+    }
+
 
     async function confirmarAsignacion() {
         if (!clienteSeleccionadoId) {
@@ -744,22 +773,38 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             return;
         }
         const checkboxes = document.querySelectorAll('#lista-articulos-extra input[type=checkbox]:checked');
-        const idsExtra = Array.from(checkboxes).map(c => c.value);
-        const todosIds = [idDetallePedidoActual, ...idsExtra].join(',');
+        const idsExtra   = Array.from(checkboxes).map(c => parseInt(c.value));
+        const todosIds   = [idDetallePedidoActual, ...idsExtra].join(',');
+
         try {
-            const res = await fetch('/api/clientes/asignar-multiple', {
+            // 1. Asignar cliente a todos
+            const res  = await fetch('/api/clientes/asignar-multiple', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idCliente: clienteSeleccionadoId, idDetalles: todosIds })
             });
             const json = await res.json();
-            if (json.ok) {
-                cerrarModalCliente();
-                recargarConFiltros();
-                alert(`✅ Cliente "${clienteSeleccionadoNombre}" asignado a ${idsExtra.length + 1} artículo(s)`);
-            } else {
-                alert('❌ Error: ' + json.error);
-            }
+            if (!json.ok) { alert('❌ Error: ' + json.error); return; }
+
+            // 2. Guardar precios de los artículos extra que tengan precio ingresado
+            const promesasPrecios = idsExtra
+                .map(id => {
+                    const input = document.getElementById(`val-precio-${id}`);
+                    const valor = input ? parseFloat(input.value) : null;
+                    if (!valor || isNaN(valor) || valor <= 0) return null;
+                    return fetch('/api/clientes/precio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idDetallePedido: id, valorCobro: valor })
+                    }).then(r => r.json());
+                })
+                .filter(Boolean);
+
+            if (promesasPrecios.length > 0) await Promise.all(promesasPrecios);
+
+            cerrarModalCliente();
+            recargarConFiltros();
+            alert(`✅ Cliente "${clienteSeleccionadoNombre}" asignado a ${idsExtra.length + 1} artículo(s)${promesasPrecios.length > 0 ? ` y ${promesasPrecios.length} precio(s) guardado(s)` : ''}`);
         } catch (e) { alert('❌ Error de conexión'); }
     }
 
@@ -807,48 +852,65 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
 </script>
 
 <!-- MODAL ASIGNAR CLIENTE -->
-<div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:520px;margin:16px;max-height:90vh;overflow-y:auto;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <h3 style="color:#fff;font-size:15px;">👤 Asignar Cliente</h3>
-            <button onclick="cerrarModalCliente()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
-        </div>
-        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO SELECCIONADO</div>
-            <div id="modal-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-            <div id="modal-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
-            <div id="modal-articulo-talla" style="color:#6b7280;font-size:11px;margin-top:2px;"></div><div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
-        </div>
-        <div style="margin-bottom:12px;">
+<div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;width:100%;max-width:960px;max-height:92vh;display:flex;overflow:hidden;">
+
+        <!-- PANEL IZQUIERDO -->
+        <div style="flex:0 0 400px;padding:24px;border-right:1px solid #1e2530;display:flex;flex-direction:column;overflow-y:auto;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <h3 style="color:#fff;font-size:15px;">👤 Asignar Cliente</h3>
+                <button onclick="cerrarModalCliente()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
+            </div>
+
+            <!-- Info artículo -->
+            <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
+                <div style="font-size:10px;color:#4b5563;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Artículo seleccionado</div>
+                <div id="modal-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
+                <div id="modal-articulo-desc"   style="color:#9ca3af;font-size:11px;margin-top:3px;line-height:1.4;"></div>
+                <div id="modal-articulo-talla"  style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
+                <div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
+            </div>
+
+            <!-- Buscador cliente -->
             <div style="font-size:11px;color:#4b5563;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Buscar cliente</div>
             <input id="buscar-cliente-input" type="text" placeholder="Escribe el nombre del cliente..."
                 oninput="buscarClientesModal(this.value)"
-                style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px;color:#fff;font-size:14px;outline:none;font-family:'Segoe UI',sans-serif;">
+                style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px;color:#fff;font-size:13px;outline:none;font-family:'Segoe UI',sans-serif;box-sizing:border-box;margin-bottom:10px;">
+            <div id="lista-clientes" style="max-height:150px;overflow-y:auto;margin-bottom:12px;border:1px solid #1e2530;border-radius:8px;">
+                <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>
+            </div>
+            <div id="cliente-seleccionado" style="display:none;background:#0f2318;border:1px solid #1a3d28;border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+                <div style="font-size:10px;color:#34d399;margin-bottom:2px;">CLIENTE SELECCIONADO</div>
+                <div id="cliente-seleccionado-nombre" style="color:#fff;font-size:13px;font-weight:600;"></div>
+            </div>
+
+            <!-- Botones -->
+            <div style="display:flex;gap:10px;margin-top:auto;">
+                <button onclick="cerrarModalCliente()"
+                    style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
+                    Cancelar
+                </button>
+                <button onclick="confirmarAsignacion()"
+                    style="flex:2;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
+                    ✅ Asignar Cliente
+                </button>
+            </div>
         </div>
-        <div id="lista-clientes" style="max-height:160px;overflow-y:auto;margin-bottom:14px;border:1px solid #1e2530;border-radius:8px;">
-            <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>
-        </div>
-        <div id="cliente-seleccionado" style="display:none;background:#0f2318;border:1px solid #1a3d28;border-radius:8px;padding:10px 14px;margin-bottom:14px;">
-            <div style="font-size:11px;color:#34d399;margin-bottom:2px;">CLIENTE SELECCIONADO</div>
-            <div id="cliente-seleccionado-nombre" style="color:#fff;font-size:13px;font-weight:600;"></div>
-        </div>
-        <button onclick="toggleArticulosExtra()"
-            style="width:100%;background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
-            <span>➕</span> <span>Agregar más artículos</span>
-        </button>
-        <div id="articulos-extra" style="display:none;margin-bottom:14px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Selecciona artículos adicionales</div>
-            <div id="lista-articulos-extra" style="max-height:180px;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;"></div>
-        </div>
-        <div style="display:flex;gap:10px;">
-            <button onclick="cerrarModalCliente()"
-                style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
-                Cancelar
-            </button>
-            <button onclick="confirmarAsignacion()"
-                style="flex:2;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
-                ✅ Asignar Cliente
-            </button>
+
+        <!-- PANEL DERECHO -->
+        <div style="flex:1;padding:24px;display:flex;flex-direction:column;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="font-size:13px;color:#9ca3af;font-weight:600;">➕ Artículos adicionales</div>
+                <span id="extra-count" style="font-size:11px;color:#4b5563;"></span>
+            </div>
+
+            <!-- Mini buscador -->
+            <input id="buscar-extra-input" type="text" placeholder="🔍 Buscar artículo..."
+                oninput="filtrarArticulosExtra(this.value)"
+                style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:8px 12px;color:#9ca3af;font-size:12px;outline:none;font-family:'Segoe UI',sans-serif;box-sizing:border-box;margin-bottom:10px;">
+
+            <!-- Lista artículos -->
+            <div id="lista-articulos-extra" style="flex:1;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;"></div>
         </div>
     </div>
 </div>
