@@ -87,6 +87,28 @@
 
         .solo-admin { display:none; }
 
+        /* Buscador de pedidos */
+        .search-pedidos-wrap { margin-bottom:12px; display:flex; gap:8px; align-items:center; }
+        .search-pedidos { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:8px 14px; font-size:12px; color:#9ca3af; width:100%; outline:none; font-family:'Segoe UI',sans-serif; transition:.15s; }
+        .search-pedidos:focus { border-color:#3b82f6; color:#e2e8f0; }
+        .search-pedidos::placeholder { color:#374151; }
+        .search-count { font-size:11px; color:#4b5563; white-space:nowrap; }
+
+        /* Controles de filtro admin */
+        .filtros-admin { display:none; align-items:center; gap:10px; flex-wrap:wrap; }
+        .filtros-admin.visible { display:flex; }
+        .chk-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+        .chk-wrap input[type=checkbox] { width:14px; height:14px; accent-color:#3b82f6; cursor:pointer; }
+        .chk-wrap span { font-size:12px; color:#9ca3af; white-space:nowrap; }
+        .btn-limpiar { background:none; border:1px solid #1e2530; border-radius:6px; padding:6px 12px; font-size:11px; color:#6b7280; cursor:pointer; transition:.15s; white-space:nowrap; }
+        .btn-limpiar:hover { border-color:#3b82f6; color:#60a5fa; }
+
+        /* Filas de otros vendedores (solo admin ve) */
+        .fila-otro-vendedor td { background:#14100a !important; }
+        .fila-otro-vendedor:hover td { background:#1a140c !important; }
+        .fila-otro-vendedor td { border-left:2px solid #854d0e; }
+        .badge-otro-vendedor { font-size:9px; background:#2d1f0a; color:#f59e0b; border-radius:4px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
+
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
@@ -237,6 +259,17 @@
         <div class="grid2">
             <div class="card">
                 <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
+                <div class="search-pedidos-wrap">
+                    <input class="search-pedidos" id="search-pedidos" type="text" placeholder="🔍  Buscar por artículo, cliente o descripción..." oninput="filtrarPedidos(this.value)" />
+                    <button class="btn-limpiar" onclick="limpiarFiltro()" title="Limpiar búsqueda">✕ Limpiar</button>
+                    <span class="search-count" id="search-count"></span>
+                </div>
+                <div class="filtros-admin solo-admin" id="filtros-admin" style="margin-bottom:10px;">
+                    <label class="chk-wrap">
+                        <input type="checkbox" id="chk-solo-mis" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
+                        <span>Solo mis pedidos</span>
+                    </label>
+                </div>
                 <div class="tbl-wrap">
                     <table class="tbl">
                         <thead>
@@ -256,6 +289,9 @@
                             <tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Cargando...</td></tr>
                         </tbody>
                     </table>
+                    </div>
+                    <div id="paginacion"></div>
+                    <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
                 </div>
                 <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
             </div>
@@ -320,6 +356,7 @@
 
     if (usuario.esAdmin) {
         document.querySelectorAll('.solo-admin').forEach(el => el.style.display = 'flex');
+        document.getElementById('filtros-admin').classList.add('visible');
     }
 
     function abrirMenu() {
@@ -337,7 +374,7 @@
 
     async function cargarStats() {
         try {
-            const res = await fetch(`/api/pedidos/stats?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin}`);
+            const res = await fetch(`/api/pedidos/stats?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
             const json = await res.json();
             if (json.ok) {
                 const d = json.data;
@@ -349,17 +386,68 @@
         } catch (e) { console.error('Error cargando stats:', e); }
     }
 
-    let articulosDisponibles = [];
+    let articulosDisponibles = [];   // todos los datos del servidor
+    let articulosFiltrados   = [];   // subset según búsqueda activa
+    let paginaActual = 1;
+    const registrosPorPagina = 20;
+
+    // ── Buscador ──────────────────────────────────────────────
+    function limpiarFiltro() {
+        document.getElementById('search-pedidos').value = '';
+        const chk = document.getElementById('chk-solo-mis');
+        if (chk) chk.checked = false;
+        articulosFiltrados = articulosDisponibles;
+        paginaActual = 1;
+        renderizarPagina();
+    }
+
+    function filtrarPedidos(texto) {
+        const q = (texto || '').trim().toLowerCase();
+        const soloMios = document.getElementById('chk-solo-mis')?.checked || false;
+
+        articulosFiltrados = articulosDisponibles.filter(p => {
+            // Filtro checkbox solo mis pedidos (admin)
+            if (soloMios && p.IdVendedor !== usuario.id) return false;
+            // Filtro texto
+            if (!q) return true;
+            return (
+                (p.NombreArticulo      || '').toLowerCase().includes(q) ||
+                (p.NombreCliente       || '').toLowerCase().includes(q) ||
+                (p.DescripcionArticulo || '').toLowerCase().includes(q) ||
+                (p.NombreEmpresa       || '').toLowerCase().includes(q)
+            );
+        });
+        paginaActual = 1;
+        renderizarPagina();
+    }
 
     async function cargarPedidosRecientes() {
         try {
-            const res = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin}`);
+            const res = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
             const json = await res.json();
             const tbody = document.getElementById('tabla-pedidos');
             if (json.ok && json.data.length > 0) {
                 articulosDisponibles = json.data;
-
-                tbody.innerHTML = json.data.map((p, i) => `
+                // Mantener filtro activo si hay texto
+                const q = (document.getElementById('search-pedidos')?.value || '').trim().toLowerCase();
+                articulosFiltrados = q
+                    ? articulosDisponibles.filter(p =>
+                        (p.NombreArticulo   || '').toLowerCase().includes(q) ||
+                        (p.NombreCliente    || '').toLowerCase().includes(q) ||
+                        (p.DescripcionArticulo || '').toLowerCase().includes(q) ||
+                        (p.NombreEmpresa    || '').toLowerCase().includes(q)
+                      )
+                    : articulosDisponibles;
+                // Solo reiniciar página si es la carga inicial
+                if (paginaActual === 1 || articulosFiltrados.length === 0) paginaActual = 1;
+                renderizarPagina();
+            } else {
+                tbody.innerHTML = '<tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
+                document.getElementById('tarjetas-mobile').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;">Sin pedidos pendientes</p>';
+                document.getElementById('search-count').textContent = '';
+            }
+        } catch (e) { console.error('Error cargando pedidos:', e); }
+    }
                     <tr>
                         <td style="color:#4b5563;font-size:11px">${i + 1}</td>
                         <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</td>
@@ -418,6 +506,125 @@
         } catch (e) { console.error('Error cargando pedidos:', e); }
     }
 
+    function renderizarPagina() {
+    const tbody = document.getElementById('tabla-pedidos');
+    const inicio = (paginaActual - 1) * registrosPorPagina;
+    const fin = inicio + registrosPorPagina;
+    const pagina = articulosFiltrados.slice(inicio, fin);
+    const totalPaginas = Math.ceil(articulosFiltrados.length / registrosPorPagina) || 1;
+
+    // Contador de resultados
+    const countEl = document.getElementById('search-count');
+    if (countEl) {
+        const q = (document.getElementById('search-pedidos')?.value || '').trim();
+        countEl.textContent = q
+            ? `${articulosFiltrados.length} resultado${articulosFiltrados.length !== 1 ? 's' : ''}`
+            : `${articulosFiltrados.length} pedidos`;
+    }
+
+    tbody.innerHTML = pagina.map((p, i) => {
+        // Para admin: resaltar si el artículo no es de su vendedor (tiene vendedor asignado distinto al logueado)
+        const esOtroVendedor = usuario.esAdmin && p.IdVendedor && p.IdVendedor !== usuario.id;
+        const claseExtra = esOtroVendedor ? ' class="fila-otro-vendedor"' : '';
+        const badgeVendedor = esOtroVendedor
+            ? `<span class="badge-otro-vendedor" title="Vendedor: ${p.NombreVendedor || 'otro'}">👤 ${p.NombreVendedor || 'otro vend.'}</span>`
+            : '';
+        return `
+        <tr${claseExtra}>
+            <td style="color:#4b5563;font-size:11px">${inicio + i + 1}</td>
+            <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</td>
+            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
+            <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
+            <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">
+                ${p.NombreCliente || 'Sin cliente'}${badgeVendedor}
+            </td>
+            <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap">
+                ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
+            </td>
+            <td style="font-size:11px;font-family:monospace;color:#6b7280;white-space:nowrap">
+                ${p.Seguimiento ? p.Seguimiento.substring(0,12)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
+            </td>
+            <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
+            <td style="white-space:nowrap">
+                <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                    style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
+                    title="Asignar cliente">👤</button>
+                <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                    style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
+                    title="Asignar precio">💲</button>
+                ${usuario.esAdmin ? `
+                <button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}')"
+                    style="background:#1f1025;color:#c084fc;border:1px solid #3b1f5e;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-left:4px"
+                    title="Asignar vendedor">👥</button>` : ''}
+            </td>
+        </tr>
+    `}).join('');
+
+    // Paginación
+    document.getElementById('paginacion').innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 8px;border-top:1px solid #1e2530;margin-top:8px;">
+            <span style="font-size:12px;color:#4b5563;">
+                Mostrando ${articulosFiltrados.length === 0 ? 0 : inicio + 1}-${Math.min(fin, articulosFiltrados.length)} de ${articulosFiltrados.length}
+            </span>
+            <div style="display:flex;gap:6px;">
+                <button onclick="cambiarPagina(${paginaActual - 1})" ${paginaActual === 1 ? 'disabled' : ''}
+                    style="background:#13181f;color:${paginaActual === 1 ? '#374151' : '#9ca3af'};border:1px solid #1e2530;border-radius:6px;padding:5px 12px;font-size:12px;cursor:${paginaActual === 1 ? 'not-allowed' : 'pointer'};">
+                    ← Anterior
+                </button>
+                <span style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:5px 12px;font-size:12px;">
+                    ${paginaActual} / ${totalPaginas}
+                </span>
+                <button onclick="cambiarPagina(${paginaActual + 1})" ${paginaActual === totalPaginas ? 'disabled' : ''}
+                    style="background:#13181f;color:${paginaActual === totalPaginas ? '#374151' : '#9ca3af'};border:1px solid #1e2530;border-radius:6px;padding:5px 12px;font-size:12px;cursor:${paginaActual === totalPaginas ? 'not-allowed' : 'pointer'};">
+                    Siguiente →
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Tarjetas móvil
+    document.getElementById('tarjetas-mobile').innerHTML = pagina.map((p, i) => {
+        const esOtroVendedor = usuario.esAdmin && p.IdVendedor && p.IdVendedor !== usuario.id;
+        const borderStyle = esOtroVendedor ? 'border-left:3px solid #854d0e;background:#14100a;' : '';
+        const badgeVendedor = esOtroVendedor
+            ? `<span style="font-size:9px;background:#2d1f0a;color:#f59e0b;border-radius:4px;padding:1px 5px;margin-left:4px;">👤 ${p.NombreVendedor || 'otro vend.'}</span>`
+            : '';
+        return `
+        <div class="tarjeta-pedido" style="${borderStyle}">
+            <div class="tarjeta-header">
+                <span class="tarjeta-num">#${inicio + i + 1}</span>
+                <span class="tarjeta-fecha">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</span>
+            </div>
+            <div class="tarjeta-articulo">${p.NombreArticulo}</div>
+            <div class="tarjeta-info">
+                <span class="tarjeta-tag">${p.NombreEmpresa || '---'}</span>
+                <span class="tarjeta-tag" style="color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${p.NombreCliente || 'Sin cliente'}${badgeVendedor}</span>
+                ${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}
+            </div>
+            <div class="tarjeta-row">
+                <span class="tarjeta-precio" style="color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'}">
+                    ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
+                </span>
+                <span style="font-size:11px;font-family:monospace;color:#6b7280">
+                    ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
+                </span>
+            </div>
+            <div class="tarjeta-btns">
+                <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
+                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
+                ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;">👥 Vendedor</button>` : ''}
+            </div>
+        </div>
+    `}).join('');
+}
+
+function cambiarPagina(nuevaPagina) {
+    const totalPaginas = Math.ceil(articulosFiltrados.length / registrosPorPagina) || 1;
+    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+    paginaActual = nuevaPagina;
+    renderizarPagina();
+}
+
     function getEstadoBadge(idSeguimiento, idEstado) {
         if (!idSeguimiento) return '<span class="status pendiente">Sin tracking</span>';
         switch(idEstado) {
@@ -469,7 +676,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         }
         buscarTimeout = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/clientes/buscar?nombre=${encodeURIComponent(nombre)}`);
+                const res = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
                 const json = await res.json();
                 const lista = document.getElementById('lista-clientes');
                 if (json.ok && json.data.length > 0) {
@@ -675,6 +882,123 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         </div>
     </div>
 </div>
+
+<!-- MODAL ASIGNAR VENDEDOR (solo admin) -->
+<div id="modal-vendedor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
+    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:420px;margin:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="color:#fff;font-size:15px;">👥 Asignar Vendedor</h3>
+            <button onclick="cerrarModalVendedor()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:16px;">
+            <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO</div>
+            <div id="mv-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
+        </div>
+        <div style="margin-bottom:6px;font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Selecciona un vendedor</div>
+        <div id="mv-lista" style="border:1px solid #1e2530;border-radius:8px;overflow:hidden;margin-bottom:16px;max-height:260px;overflow-y:auto;">
+            <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Cargando vendedores...</p>
+        </div>
+        <div style="display:flex;gap:10px;">
+            <button onclick="cerrarModalVendedor()"
+                style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
+                Cancelar
+            </button>
+            <button onclick="confirmarVendedor()"
+                style="flex:2;background:#3b1f5e;color:#c084fc;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
+                👥 Asignar Vendedor
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== MODAL VENDEDOR =====
+    let idDetallePedidoVendedor = null;
+    let idVendedorSeleccionado  = null;
+    let vendedoresCargados      = [];
+
+    async function abrirModalVendedor(idDetalle, nombreArticulo) {
+        idDetallePedidoVendedor = idDetalle;
+        idVendedorSeleccionado  = null;
+        document.getElementById('mv-articulo-nombre').textContent = nombreArticulo;
+        document.getElementById('modal-vendedor').style.display = 'flex';
+
+        // Cargar vendedores si aún no se cargaron
+        if (vendedoresCargados.length === 0) {
+            try {
+                const res  = await fetch('/api/vendedores');
+                const json = await res.json();
+                vendedoresCargados = json.ok ? json.data : [];
+            } catch (e) { vendedoresCargados = []; }
+        }
+        renderizarListaVendedores();
+    }
+
+    function renderizarListaVendedores() {
+        const lista = document.getElementById('mv-lista');
+        if (vendedoresCargados.length === 0) {
+            lista.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;font-size:13px;">No se pudieron cargar los vendedores</p>';
+            return;
+        }
+        lista.innerHTML = vendedoresCargados.map(v => {
+            const nombre   = `${v.Nombres} ${v.Apellidos || ''}`.trim();
+            const esYo     = v.IdVendedor === usuario.id;
+            const activo   = idVendedorSeleccionado === v.IdVendedor;
+            return `
+            <div onclick="seleccionarVendedor(${v.IdVendedor})"
+                id="mv-item-${v.IdVendedor}"
+                style="padding:11px 14px;border-bottom:1px solid #1e2530;cursor:pointer;display:flex;align-items:center;gap:10px;
+                       background:${activo ? '#1f1025' : 'transparent'};transition:.15s;"
+                onmouseover="if(${!activo}) this.style.background='#13181f'"
+                onmouseout="if(${!activo}) this.style.background='transparent'">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b1f5e,#7c3aed);
+                            display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
+                    ${v.Nombres[0]}${v.Apellidos ? v.Apellidos[0] : ''}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="color:#d1d5db;font-size:13px;font-weight:600;">${nombre} ${esYo ? '<span style="font-size:10px;color:#4b5563;">(yo)</span>' : ''}</div>
+                    <div style="color:#4b5563;font-size:11px;">${v.CodigoVendedor}</div>
+                </div>
+                ${activo ? '<span style="color:#c084fc;font-size:16px;">✓</span>' : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function seleccionarVendedor(idVendedor) {
+        idVendedorSeleccionado = idVendedor;
+        renderizarListaVendedores();
+    }
+
+    function cerrarModalVendedor() {
+        document.getElementById('modal-vendedor').style.display = 'none';
+        idDetallePedidoVendedor = null;
+        idVendedorSeleccionado  = null;
+    }
+
+    async function confirmarVendedor() {
+        if (!idVendedorSeleccionado) {
+            alert('⚠️ Selecciona un vendedor primero');
+            return;
+        }
+        try {
+            const res  = await fetch('/api/vendedores/asignar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idDetalle: idDetallePedidoVendedor, idVendedor: idVendedorSeleccionado })
+            });
+            const json = await res.json();
+            if (json.ok) {
+                const vend = vendedoresCargados.find(v => v.IdVendedor === idVendedorSeleccionado);
+                const nombre = vend ? `${vend.Nombres} ${vend.Apellidos || ''}`.trim() : 'Vendedor';
+                cerrarModalVendedor();
+                cargarPedidosRecientes();
+                alert(`✅ Vendedor "${nombre}" asignado correctamente`);
+            } else {
+                alert('❌ Error: ' + json.error);
+            }
+        } catch (e) { alert('❌ Error de conexión'); }
+    }
+</script>
 
 </body>
 </html>
