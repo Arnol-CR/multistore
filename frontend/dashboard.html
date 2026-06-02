@@ -404,9 +404,9 @@
                                 ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
                             </span>
                         </div>
-                        <div class="tarjeta-btns">
-                            <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
-                            <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreCliente}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
+                       <div class="tarjeta-btns">
+                             <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
+                            <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
                         </div>
                     </div>
                 `).join('');
