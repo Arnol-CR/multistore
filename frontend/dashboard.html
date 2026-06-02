@@ -673,21 +673,43 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
 
     function cargarArticulosExtra() {
         const lista = document.getElementById('lista-articulos-extra');
-        const disponibles = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoActual && !a.IdCliente);
+        const soloMios    = document.getElementById('chk-solo-mis')?.checked || false;
+        const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
+
+        let disponibles = articulosDisponibles.filter(a =>
+            a.IdDetallePedido !== idDetallePedidoActual && !a.IdCliente
+        );
+        // Respetar filtros activos del dashboard
+        if (soloMios)    disponibles = disponibles.filter(a => a.IdVendedor === usuario.id);
+        if (sinVendedor) disponibles = disponibles.filter(a => !a.IdVendedor);
+
         if (disponibles.length === 0) {
             lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">No hay más artículos sin cliente</p>';
             return;
         }
-        lista.innerHTML = disponibles.map(a => `
+        lista.innerHTML = disponibles.map(a => {
+            const nombreVendedor = a.NombreVendedor
+                ? a.NombreVendedor.trim()
+                : 'Sin vendedor';
+            const colorVendedor = a.IdVendedor ? '#c084fc' : '#ef4444';
+            return `
             <div style="padding:10px 14px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;">
                 <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
                     style="width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;">
                 <label for="chk-${a.IdDetallePedido}" style="cursor:pointer;flex:1;">
-                    <div style="color:#d1d5db;font-size:13px;">${a.NombreArticulo}</div>
-                    <div style="color:#4b5563;font-size:11px;">${a.NombreEmpresa} · ${new Date(a.FechaPedido).toLocaleDateString('es-HN')}</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                        <span style="color:#d1d5db;font-size:13px;">${a.NombreArticulo}</span>
+                        <span style="font-size:11px;color:${colorVendedor};white-space:nowrap;">
+                            👤 ${nombreVendedor}
+                        </span>
+                    </div>
+                    <div style="color:#4b5563;font-size:11px;margin-top:2px;">
+                        ${a.NombreEmpresa} · ${new Date(a.FechaPedido).toLocaleDateString('es-HN')}
+                        ${a.TallaColor ? ' · 📐 ' + a.TallaColor : ''}
+                    </div>
                 </label>
-            </div>
-        `).join('');
+            </div>`
+        }).join('');
     }
 
     async function confirmarAsignacion() {
