@@ -269,6 +269,10 @@
                         <input type="checkbox" id="chk-solo-mis" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
                         <span>Solo mis pedidos</span>
                     </label>
+                    <label class="chk-wrap">
+                        <input type="checkbox" id="chk-sin-vendedor" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
+                        <span>Sin vendedor</span>
+                    </label>
                 </div>
                 <div class="tbl-wrap">
                     <table class="tbl">
@@ -282,6 +286,7 @@
                                 <th>Precio (L)</th>
                                 <th>Tracking</th>
                                 <th>Estado</th>
+                                <th class="solo-admin">Vendedor</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -396,19 +401,21 @@
         document.getElementById('search-pedidos').value = '';
         const chk = document.getElementById('chk-solo-mis');
         if (chk) chk.checked = false;
+        const chkSin = document.getElementById('chk-sin-vendedor');
+        if (chkSin) chkSin.checked = false;
         articulosFiltrados = articulosDisponibles;
         paginaActual = 1;
         renderizarPagina();
     }
 
     function filtrarPedidos(texto) {
-        const q = (texto || '').trim().toLowerCase();
-        const soloMios = document.getElementById('chk-solo-mis')?.checked || false;
+        const q            = (texto || '').trim().toLowerCase();
+        const soloMios     = document.getElementById('chk-solo-mis')?.checked || false;
+        const sinVendedor  = document.getElementById('chk-sin-vendedor')?.checked || false;
 
         articulosFiltrados = articulosDisponibles.filter(p => {
-            // Filtro checkbox solo mis pedidos (admin)
-            if (soloMios && p.IdVendedor !== usuario.id) return false;
-            // Filtro texto
+            if (soloMios    && p.IdVendedor !== usuario.id) return false;
+            if (sinVendedor && p.IdVendedor) return false;
             if (!q) return true;
             return (
                 (p.NombreArticulo      || '').toLowerCase().includes(q) ||
@@ -489,8 +496,14 @@
                 ${p.Seguimiento ? p.Seguimiento.substring(0,12)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
             </td>
             <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
+            <td class="solo-admin" style="font-size:11px;white-space:nowrap;color:${p.IdVendedor ? '#9ca3af' : '#ef4444'};">
+                ${p.IdVendedor
+                    ? `<span style="font-family:monospace;color:#c084fc;">${p.CodigoVendedor || ''}</span><br><span style="font-size:10px;color:#6b7280;">${(p.NombreVendedor || '').split(' ')[0]}</span>`
+                    : '<span style="color:#ef4444;font-size:10px;">Sin vendedor</span>'
+                }
+            </td>
             <td style="white-space:nowrap">
-                <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                     style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
                     title="Asignar cliente">👤</button>
                 <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
@@ -554,7 +567,7 @@
                 </span>
             </div>
             <div class="tarjeta-btns">
-                <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
+                <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
                 <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
                 ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;">👥 Vendedor</button>` : ''}
             </div>
@@ -911,7 +924,10 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
 
     function cargarArticulosParaVendedor() {
         const lista = document.getElementById('mv-lista-articulos');
-        const disponibles = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoVendedor);
+        const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
+        let disponibles = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoVendedor);
+        // Si el filtro sin vendedor está activo, mostrar solo esos
+        if (sinVendedor) disponibles = disponibles.filter(a => !a.IdVendedor);
         if (disponibles.length === 0) {
             lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">No hay más artículos disponibles</p>';
             return;
@@ -926,6 +942,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                         ${a.NombreEmpresa || '---'} · ${new Date(a.FechaPedido).toLocaleDateString('es-HN')}
                         ${a.TallaColor ? ' · 📐 ' + a.TallaColor : ''}
                         ${a.CodigoArticulo ? ' · 🏷️ ' + a.CodigoArticulo : ''}
+                        · <span style="color:${a.IdVendedor ? '#c084fc' : '#ef4444'}">${a.CodigoVendedor || 'Sin vendedor'}</span>
                     </div>
                 </label>
             </div>
