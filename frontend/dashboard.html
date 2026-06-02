@@ -639,6 +639,10 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         document.getElementById('modal-articulo-desc').textContent = descripcion ? 'Descripción: ' + descripcion : '';
         document.getElementById('modal-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';
         document.getElementById('modal-vendedor-nombre').textContent = '🛍️ Vendedor: ' + (nombreVendedor || 'Sin vendedor');
+        // Cargar precio actual del artículo principal
+        const articuloPrincipal = articulosDisponibles.find(a => a.IdDetallePedido === id);
+        const inputPrincipal = document.getElementById('val-precio-principal');
+        if (inputPrincipal) inputPrincipal.value = articuloPrincipal?.ValorCobroCliente || '';
         cargarArticulosExtra();
         setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
     }
@@ -751,6 +755,8 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                                 <input type="number" id="val-precio-${a.IdDetallePedido}"
                                     placeholder="0.00" step="0.01" min="0"
                                     value="${a.ValorCobroCliente || ''}"
+                                    onblur="guardarPrecioInline(${a.IdDetallePedido}, this.value)"
+                                    onkeydown="if(event.key==='Enter') guardarPrecioInline(${a.IdDetallePedido}, this.value)"
                                     style="flex:1;background:#13181f;border:1px solid #3d2a0a;border-radius:6px;padding:5px 8px;color:#f59e0b;font-size:12px;outline:none;">
                             </div>
                         </div>
@@ -764,6 +770,22 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         const chk   = document.getElementById(`chk-${idDetalle}`);
         const campo = document.getElementById(`precio-extra-${idDetalle}`);
         if (campo) campo.style.display = chk.checked ? 'block' : 'none';
+    }
+
+    async function guardarPrecioInline(idDetalle, valor) {
+        if (!idDetalle) return;
+        const v = parseFloat(valor);
+        if (!v || isNaN(v) || v <= 0) return;
+        try {
+            await fetch('/api/clientes/precio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idDetallePedido: idDetalle, valorCobro: v })
+            });
+            // Actualizar en memoria para que la tabla lo refleje
+            const art = articulosDisponibles.find(a => a.IdDetallePedido === idDetalle);
+            if (art) art.ValorCobroCliente = v;
+        } catch(e) { console.error('Error guardando precio:', e); }
     }
 
 
@@ -869,6 +891,14 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                 <div id="modal-articulo-desc"   style="color:#9ca3af;font-size:11px;margin-top:3px;line-height:1.4;"></div>
                 <div id="modal-articulo-talla"  style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
                 <div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
+                <!-- Precio del artículo principal -->
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #1e2530;">
+                    <span style="color:#f59e0b;font-size:11px;white-space:nowrap;">💲 Precio (L):</span>
+                    <input type="number" id="val-precio-principal" placeholder="0.00" step="0.01" min="0"
+                        onblur="guardarPrecioInline(idDetallePedidoActual, this.value)"
+                        onkeydown="if(event.key==='Enter') guardarPrecioInline(idDetallePedidoActual, this.value)"
+                        style="flex:1;background:#0d1017;border:1px solid #3d2a0a;border-radius:6px;padding:6px 10px;color:#f59e0b;font-size:13px;outline:none;font-family:'Segoe UI',sans-serif;">
+                </div>
             </div>
 
             <!-- Buscador cliente -->
