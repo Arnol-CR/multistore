@@ -448,63 +448,7 @@
             }
         } catch (e) { console.error('Error cargando pedidos:', e); }
     }
-                    <tr>
-                        <td style="color:#4b5563;font-size:11px">${i + 1}</td>
-                        <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</td>
-                        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
-                        <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
-                        <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">${p.NombreCliente}</td>
-                        <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap">
-                            ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
-                        </td>
-                        <td style="font-size:11px;font-family:monospace;color:#6b7280;white-space:nowrap">
-                            ${p.Seguimiento ? p.Seguimiento.substring(0,12)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
-                        </td>
-                        <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
-                        <td style="white-space:nowrap">
-                            <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
-                                style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
-                                title="Asignar cliente">👤</button>
-                            <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
-                                style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
-                                title="Asignar precio">💲</button>
-                        </td>
-                    </tr>
-                `).join('');
 
-                document.getElementById('tarjetas-mobile').innerHTML = json.data.map((p, i) => `
-                    <div class="tarjeta-pedido">
-                        <div class="tarjeta-header">
-                            <span class="tarjeta-num">#${i + 1}</span>
-                            <span class="tarjeta-fecha">${new Date(p.FechaPedido).toLocaleDateString('es-HN')}</span>
-                        </div>
-                        <div class="tarjeta-articulo">${p.NombreArticulo}</div>
-                        <div class="tarjeta-info">
-                            <span class="tarjeta-tag">${p.NombreEmpresa || '---'}</span>
-                            <span class="tarjeta-tag" style="color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${p.NombreCliente}</span>
-                            ${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}
-                        </div>
-                        <div class="tarjeta-row">
-                            <span class="tarjeta-precio" style="color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'}">
-                                ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
-                            </span>
-                            <span style="font-size:11px;font-family:monospace;color:#6b7280">
-                                ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
-                            </span>
-                        </div>
-                       <div class="tarjeta-btns">
-                             <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
-                            <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
-                        </div>
-                    </div>
-                `).join('');
-
-            } else {
-                tbody.innerHTML = '<tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
-                document.getElementById('tarjetas-mobile').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;">Sin pedidos pendientes</p>';
-            }
-        } catch (e) { console.error('Error cargando pedidos:', e); }
-    }
 
     function renderizarPagina() {
     const tbody = document.getElementById('tabla-pedidos');
