@@ -273,6 +273,10 @@
                         <input type="checkbox" id="chk-sin-vendedor" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
                         <span>Sin vendedor</span>
                     </label>
+                    <label class="chk-wrap">
+                        <input type="checkbox" id="chk-sin-precio" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
+                        <span>Sin precio</span>
+                    </label>
                 </div>
                 <div class="tbl-wrap">
                     <table class="tbl">
@@ -403,6 +407,8 @@
         if (chk) chk.checked = false;
         const chkSin = document.getElementById('chk-sin-vendedor');
         if (chkSin) chkSin.checked = false;
+        const chkSinPrecio = document.getElementById('chk-sin-precio');
+        if (chkSinPrecio) chkSinPrecio.checked = false;
         articulosFiltrados = articulosDisponibles;
         paginaActual = 1;
         renderizarPagina();
@@ -412,10 +418,12 @@
         const q            = (texto || '').trim().toLowerCase();
         const soloMios     = document.getElementById('chk-solo-mis')?.checked || false;
         const sinVendedor  = document.getElementById('chk-sin-vendedor')?.checked || false;
+        const sinPrecio    = document.getElementById('chk-sin-precio')?.checked || false;
 
         articulosFiltrados = articulosDisponibles.filter(p => {
-            if (soloMios    && p.IdVendedor !== usuario.id) return false;
+            if (soloMios   && p.IdVendedor !== usuario.id) return false;
             if (sinVendedor && p.IdVendedor) return false;
+            if (sinPrecio  && p.ValorCobroCliente) return false;
             if (!q) return true;
             return (
                 (p.NombreArticulo      || '').toLowerCase().includes(q) ||
@@ -426,6 +434,12 @@
         });
         paginaActual = 1;
         renderizarPagina();
+    }
+
+    // Recarga datos y reaplica los filtros activos
+    async function recargarConFiltros() {
+        await cargarPedidosRecientes();
+        filtrarPedidos(document.getElementById('search-pedidos')?.value || '');
     }
 
     async function cargarPedidosRecientes() {
@@ -487,7 +501,7 @@
             <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
             <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
             <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">
-                ${p.NombreCliente || 'Sin cliente'}${badgeVendedor}
+                ${p.NombreCliente || 'Sin cliente'}
             </td>
             <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap">
                 ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
@@ -729,7 +743,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             const json = await res.json();
             if (json.ok) {
                 cerrarModalCliente();
-                cargarPedidosRecientes();
+                recargarConFiltros();
                 alert(`✅ Cliente "${clienteSeleccionadoNombre}" asignado a ${idsExtra.length + 1} artículo(s)`);
             } else {
                 alert('❌ Error: ' + json.error);
@@ -771,7 +785,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             const json = await res.json();
             if (json.ok) {
                 cerrarModalPrecio();
-                cargarPedidosRecientes();
+                recargarConFiltros();
                 alert('✅ Precio asignado correctamente');
             } else {
                 alert('❌ Error: ' + json.error);
@@ -1041,7 +1055,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             const vend   = vendedoresCargados.find(v => v.IdVendedor === idVendedorSeleccionado);
             const nombre = vend ? `${vend.Nombres} ${vend.Apellidos || ''}`.trim() : 'Vendedor';
             cerrarModalVendedor();
-            cargarPedidosRecientes();
+            recargarConFiltros();
             alert(`✅ Vendedor "${nombre}" asignado a ${todosIds.length} artículo(s)`);
         } catch (e) { alert('❌ Error de conexión'); }
     }
