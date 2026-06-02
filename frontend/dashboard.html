@@ -512,7 +512,8 @@
             <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
             <td class="solo-admin" style="font-size:11px;white-space:nowrap;color:${p.IdVendedor ? '#9ca3af' : '#ef4444'};">
                 ${p.IdVendedor
-                    ? `<span style="font-family:monospace;color:#c084fc;">${p.CodigoVendedor || ''}</span><br><span style="font-size:10px;color:#6b7280;">${(p.NombreVendedor || '').split(' ')[0]}</span>`
+                    ? `<span style="color:#c084fc;font-weight:600;">${p.CodigoVendedor || ''}</span><br>
+                       <span style="font-size:10px;color:#6b7280;">${p.NombreVendedor || ''}</span>`
                     : '<span style="color:#ef4444;font-size:10px;">Sin vendedor</span>'
                 }
             </td>
