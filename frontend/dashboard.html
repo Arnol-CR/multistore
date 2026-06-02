@@ -497,7 +497,7 @@
                     style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
                     title="Asignar precio">💲</button>
                 ${usuario.esAdmin ? `
-                <button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}')"
+                <button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')"
                     style="background:#1f1025;color:#c084fc;border:1px solid #3b1f5e;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-left:4px"
                     title="Asignar vendedor">👥</button>` : ''}
             </td>
@@ -556,7 +556,7 @@
             <div class="tarjeta-btns">
                 <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${usuario.nombres}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
                 <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
-                ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;">👥 Vendedor</button>` : ''}
+                ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;">👥 Vendedor</button>` : ''}
             </div>
         </div>
     `}).join('');
@@ -829,19 +829,37 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
 
 <!-- MODAL ASIGNAR VENDEDOR (solo admin) -->
 <div id="modal-vendedor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:420px;margin:16px;">
+    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:480px;margin:16px;max-height:90vh;overflow-y:auto;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <h3 style="color:#fff;font-size:15px;">👥 Asignar Vendedor</h3>
             <button onclick="cerrarModalVendedor()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
         </div>
-        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:16px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO</div>
+
+        <!-- Info artículo -->
+        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
+            <div style="font-size:11px;color:#4b5563;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Artículo seleccionado</div>
             <div id="mv-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
+            <div id="mv-articulo-desc"   style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
+            <div id="mv-articulo-talla"  style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
+            <div id="mv-articulo-sku"    style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
         </div>
+
+        <!-- Lista vendedores -->
         <div style="margin-bottom:6px;font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Selecciona un vendedor</div>
-        <div id="mv-lista" style="border:1px solid #1e2530;border-radius:8px;overflow:hidden;margin-bottom:16px;max-height:260px;overflow-y:auto;">
+        <div id="mv-lista" style="border:1px solid #1e2530;border-radius:8px;overflow:hidden;margin-bottom:12px;max-height:220px;overflow-y:auto;">
             <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Cargando vendedores...</p>
         </div>
+
+        <!-- Agregar más artículos -->
+        <button onclick="toggleArticulosVendedor()"
+            style="width:100%;background:#1f1025;color:#c084fc;border:1px solid #3b1f5e;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span>➕</span><span>Agregar más artículos</span>
+        </button>
+        <div id="mv-articulos-extra" style="display:none;margin-bottom:14px;">
+            <div style="font-size:11px;color:#4b5563;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Selecciona artículos adicionales</div>
+            <div id="mv-lista-articulos" style="max-height:180px;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;"></div>
+        </div>
+
         <div style="display:flex;gap:10px;">
             <button onclick="cerrarModalVendedor()"
                 style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
@@ -861,13 +879,16 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
     let idVendedorSeleccionado  = null;
     let vendedoresCargados      = [];
 
-    async function abrirModalVendedor(idDetalle, nombreArticulo) {
+    async function abrirModalVendedor(idDetalle, nombreArticulo, descripcion, talla, sku) {
         idDetallePedidoVendedor = idDetalle;
         idVendedorSeleccionado  = null;
-        document.getElementById('mv-articulo-nombre').textContent = nombreArticulo;
+        document.getElementById('mv-articulo-nombre').textContent = nombreArticulo || 'Artículo';
+        document.getElementById('mv-articulo-desc').textContent   = descripcion ? 'Descripción: ' + descripcion : '';
+        document.getElementById('mv-articulo-talla').textContent  = talla ? '📐 Talla: ' + talla : '';
+        document.getElementById('mv-articulo-sku').textContent    = sku   ? '🏷️ SKU: ' + sku   : '';
+        document.getElementById('mv-articulos-extra').style.display = 'none';
         document.getElementById('modal-vendedor').style.display = 'flex';
 
-        // Cargar vendedores si aún no se cargaron
         if (vendedoresCargados.length === 0) {
             try {
                 const res  = await fetch('/api/vendedores');
@@ -878,6 +899,39 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         renderizarListaVendedores();
     }
 
+    function toggleArticulosVendedor() {
+        const div = document.getElementById('mv-articulos-extra');
+        if (div.style.display === 'none') {
+            div.style.display = 'block';
+            cargarArticulosParaVendedor();
+        } else {
+            div.style.display = 'none';
+        }
+    }
+
+    function cargarArticulosParaVendedor() {
+        const lista = document.getElementById('mv-lista-articulos');
+        const disponibles = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoVendedor);
+        if (disponibles.length === 0) {
+            lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">No hay más artículos disponibles</p>';
+            return;
+        }
+        lista.innerHTML = disponibles.map(a => `
+            <div style="padding:10px 14px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;">
+                <input type="checkbox" id="mvchk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
+                    style="width:16px;height:16px;cursor:pointer;accent-color:#c084fc;">
+                <label for="mvchk-${a.IdDetallePedido}" style="cursor:pointer;flex:1;">
+                    <div style="color:#d1d5db;font-size:13px;">${a.NombreArticulo}</div>
+                    <div style="color:#4b5563;font-size:11px;">
+                        ${a.NombreEmpresa || '---'} · ${new Date(a.FechaPedido).toLocaleDateString('es-HN')}
+                        ${a.TallaColor ? ' · 📐 ' + a.TallaColor : ''}
+                        ${a.CodigoArticulo ? ' · 🏷️ ' + a.CodigoArticulo : ''}
+                    </div>
+                </label>
+            </div>
+        `).join('');
+    }
+
     function renderizarListaVendedores() {
         const lista = document.getElementById('mv-lista');
         if (vendedoresCargados.length === 0) {
@@ -885,22 +939,24 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             return;
         }
         lista.innerHTML = vendedoresCargados.map(v => {
-            const nombre   = `${v.Nombres} ${v.Apellidos || ''}`.trim();
-            const esYo     = v.IdVendedor === usuario.id;
-            const activo   = idVendedorSeleccionado === v.IdVendedor;
+            const nombre = `${v.Nombres} ${v.Apellidos || ''}`.trim();
+            const esYo   = v.IdVendedor === usuario.id;
+            const activo = idVendedorSeleccionado === v.IdVendedor;
             return `
             <div onclick="seleccionarVendedor(${v.IdVendedor})"
                 id="mv-item-${v.IdVendedor}"
                 style="padding:11px 14px;border-bottom:1px solid #1e2530;cursor:pointer;display:flex;align-items:center;gap:10px;
                        background:${activo ? '#1f1025' : 'transparent'};transition:.15s;"
-                onmouseover="if(${!activo}) this.style.background='#13181f'"
-                onmouseout="if(${!activo}) this.style.background='transparent'">
+                onmouseover="if(!${activo}) this.style.background='#13181f'"
+                onmouseout="if(!${activo}) this.style.background='${activo ? '#1f1025' : 'transparent'}'">
                 <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b1f5e,#7c3aed);
                             display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
                     ${v.Nombres[0]}${v.Apellidos ? v.Apellidos[0] : ''}
                 </div>
                 <div style="flex:1;min-width:0;">
-                    <div style="color:#d1d5db;font-size:13px;font-weight:600;">${nombre} ${esYo ? '<span style="font-size:10px;color:#4b5563;">(yo)</span>' : ''}</div>
+                    <div style="color:#d1d5db;font-size:13px;font-weight:600;">
+                        ${nombre} ${esYo ? '<span style="font-size:10px;color:#4b5563;">(yo)</span>' : ''}
+                    </div>
                     <div style="color:#4b5563;font-size:11px;">${v.CodigoVendedor}</div>
                 </div>
                 ${activo ? '<span style="color:#c084fc;font-size:16px;">✓</span>' : ''}
@@ -924,22 +980,30 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             alert('⚠️ Selecciona un vendedor primero');
             return;
         }
+        const checkboxes = document.querySelectorAll('#mv-lista-articulos input[type=checkbox]:checked');
+        const idsExtra   = Array.from(checkboxes).map(c => parseInt(c.value));
+        const todosIds   = [idDetallePedidoVendedor, ...idsExtra];
+
         try {
-            const res  = await fetch('/api/vendedores/asignar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idDetalle: idDetallePedidoVendedor, idVendedor: idVendedorSeleccionado })
-            });
-            const json = await res.json();
-            if (json.ok) {
-                const vend = vendedoresCargados.find(v => v.IdVendedor === idVendedorSeleccionado);
-                const nombre = vend ? `${vend.Nombres} ${vend.Apellidos || ''}`.trim() : 'Vendedor';
-                cerrarModalVendedor();
-                cargarPedidosRecientes();
-                alert(`✅ Vendedor "${nombre}" asignado correctamente`);
-            } else {
-                alert('❌ Error: ' + json.error);
+            // Asignar a todos los IDs seleccionados
+            const promesas = todosIds.map(id =>
+                fetch('/api/vendedores/asignar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idDetalle: id, idVendedor: idVendedorSeleccionado })
+                }).then(r => r.json())
+            );
+            const resultados = await Promise.all(promesas);
+            const hayError   = resultados.find(r => !r.ok);
+            if (hayError) {
+                alert('❌ Error: ' + hayError.error);
+                return;
             }
+            const vend   = vendedoresCargados.find(v => v.IdVendedor === idVendedorSeleccionado);
+            const nombre = vend ? `${vend.Nombres} ${vend.Apellidos || ''}`.trim() : 'Vendedor';
+            cerrarModalVendedor();
+            cargarPedidosRecientes();
+            alert(`✅ Vendedor "${nombre}" asignado a ${todosIds.length} artículo(s)`);
         } catch (e) { alert('❌ Error de conexión'); }
     }
 </script>
