@@ -640,6 +640,8 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         document.getElementById('modal-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';   
         document.getElementById('modal-vendedor-nombre').textContent = '🛍️ Vendedor: ' + (nombreVendedor || '');
         setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
+
+        
     }
 
     function cerrarModalCliente() {
