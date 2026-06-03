@@ -523,7 +523,7 @@
                 <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                     style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
                     title="Asignar cliente">👤</button>
-                <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
+                <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', ${p.PrecioSugerido || 0})"
                     style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
                     title="Asignar precio">💲</button>
                 ${usuario.esAdmin ? `
@@ -585,7 +585,7 @@
             </div>
             <div class="tarjeta-btns">
                 <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
-                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">💲 Asignar precio</button>
+                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', ${p.PrecioSugerido || 0})">💲 Asignar precio</button>
                 ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;">👥 Vendedor</button>` : ''}
             </div>
         </div>
@@ -633,16 +633,23 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         document.getElementById('modal-cliente').style.display = 'flex';
         document.getElementById('buscar-cliente-input').value = '';
         if (document.getElementById('buscar-extra-input')) document.getElementById('buscar-extra-input').value = '';
+        seleccionadosMap = new Map();
         document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>';
         document.getElementById('cliente-seleccionado').style.display = 'none';
         document.getElementById('modal-articulo-nombre').textContent = nombreArticulo || 'Artículo';
         document.getElementById('modal-articulo-desc').textContent = descripcion ? 'Descripción: ' + descripcion : '';
         document.getElementById('modal-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';
         document.getElementById('modal-vendedor-nombre').textContent = '🛍️ Vendedor: ' + (nombreVendedor || 'Sin vendedor');
-        // Cargar precio actual del artículo principal
+        // Cargar precio actual y sugerido del artículo principal
         const articuloPrincipal = articulosDisponibles.find(a => a.IdDetallePedido === id);
         const inputPrincipal = document.getElementById('val-precio-principal');
         if (inputPrincipal) inputPrincipal.value = articuloPrincipal?.ValorCobroCliente || '';
+        const sugerido = redondearMultiplo5(articuloPrincipal?.PrecioSugerido || 0);
+        const elSugCliente = document.getElementById('precio-sugerido-cliente');
+        if (elSugCliente) {
+            elSugCliente.textContent = sugerido > 0 ? `Sugerido: L ${sugerido.toFixed(2)}` : '';
+            elSugCliente.style.display = sugerido > 0 ? 'inline' : 'none';
+        }
         cargarArticulosExtra();
         setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
     }
@@ -693,6 +700,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
     function toggleArticulosExtra() {} // panel siempre visible
 
     let articulosExtraData = [];
+    let seleccionadosMap = new Map(); // idDetalle -> { precio, nombre, talla, sugerido }
 
     function cargarArticulosExtra() {
         const soloMios    = document.getElementById('chk-solo-mis')?.checked || false;
@@ -722,20 +730,27 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         if (!el) return;
         if (lista.length === 0) {
             el.innerHTML = '<p style="color:#4b5563;text-align:center;padding:24px;font-size:13px;">No hay artículos disponibles</p>';
+            actualizarResumenSeleccionados();
             return;
         }
         el.innerHTML = lista.map(a => {
-            const vendColor  = a.IdVendedor ? '#c084fc' : '#ef4444';
-            const vendNombre = a.NombreVendedor ? a.NombreVendedor.trim() : 'Sin vendedor';
-            const clienteStr = a.IdCliente ? `<span style="color:#34d399;">👤 ${a.NombreCliente}</span>` : '<span style="color:#ef4444;">Sin cliente</span>';
-            const precioStr  = a.ValorCobroCliente ? `<span style="color:#34d399;">L ${parseFloat(a.ValorCobroCliente).toFixed(2)}</span>` : '<span style="color:#f59e0b;">Sin precio</span>';
-            const desc       = a.DescripcionArticulo ? a.DescripcionArticulo.trim().substring(0,70) + (a.DescripcionArticulo.length > 70 ? '...' : '') : '';
+            const vendColor   = a.IdVendedor ? '#c084fc' : '#ef4444';
+            const vendNombre  = a.NombreVendedor ? a.NombreVendedor.trim() : 'Sin vendedor';
+            const clienteStr  = a.IdCliente ? `<span style="color:#34d399;">👤 ${a.NombreCliente}</span>` : '<span style="color:#ef4444;">Sin cliente</span>';
+            const precioStr   = a.ValorCobroCliente ? `<span style="color:#34d399;">L ${parseFloat(a.ValorCobroCliente).toFixed(2)}</span>` : '<span style="color:#f59e0b;">Sin precio</span>';
+            const sugerido    = redondearMultiplo5(a.PrecioSugerido || 0);
+            const sugeridoStr = sugerido > 0 ? `<span style="color:#34d399;background:#0f2318;border:1px solid #1a3d28;border-radius:4px;padding:1px 6px;font-size:10px;">Sug: L ${sugerido.toFixed(2)}</span>` : '';
+            const desc        = a.DescripcionArticulo ? a.DescripcionArticulo.trim().substring(0,70) + (a.DescripcionArticulo.length > 70 ? '...' : '') : '';
+            // Restaurar estado del Map
+            const yaSeleccionado = seleccionadosMap.has(a.IdDetallePedido);
+            const precioGuardado = yaSeleccionado ? seleccionadosMap.get(a.IdDetallePedido).precio : (a.ValorCobroCliente || '');
             return `
-            <div style="padding:12px 14px;border-bottom:1px solid #1e2530;transition:.15s;"
-                 onmouseover="this.style.background='#0d1117'" onmouseout="this.style.background='transparent'">
+            <div style="padding:12px 14px;border-bottom:1px solid #1e2530;transition:.15s;${yaSeleccionado ? 'background:#0d1520;' : ''}"
+                 onmouseover="this.style.background='#0d1117'" onmouseout="this.style.background='${yaSeleccionado ? '#0d1520' : 'transparent'}'">
                 <div style="display:flex;align-items:flex-start;gap:10px;">
                     <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
-                        onchange="togglePrecioExtra(${a.IdDetallePedido})"
+                        ${yaSeleccionado ? 'checked' : ''}
+                        onchange="togglePrecioExtra(${a.IdDetallePedido}, '${(a.NombreArticulo||'').replace(/'/g,"\\'")}', '${(a.TallaColor||'').replace(/'/g,"\\'")}', ${sugerido})"
                         style="width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;margin-top:3px;flex-shrink:0;">
                     <div style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -748,13 +763,15 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                             ${a.TallaColor ? `<span style="color:#4b5563;font-size:11px;">📐 ${a.TallaColor}</span>` : ''}
                             <span style="font-size:11px;">${clienteStr}</span>
                             <span style="font-size:11px;">${precioStr}</span>
+                            ${sugeridoStr}
                         </div>
-                        <div id="precio-extra-${a.IdDetallePedido}" style="display:none;margin-top:8px;">
+                        <div id="precio-extra-${a.IdDetallePedido}" style="display:${yaSeleccionado ? 'block' : 'none'};margin-top:8px;">
                             <div style="display:flex;align-items:center;gap:8px;">
                                 <span style="color:#f59e0b;font-size:11px;white-space:nowrap;">💲 Precio (L):</span>
                                 <input type="number" id="val-precio-${a.IdDetallePedido}"
                                     placeholder="0.00" step="0.01" min="0"
-                                    value="${a.ValorCobroCliente || ''}"
+                                    value="${precioGuardado}"
+                                    oninput="actualizarPrecioEnMap(${a.IdDetallePedido}, this.value)"
                                     onblur="guardarPrecioInline(${a.IdDetallePedido}, this.value)"
                                     onkeydown="if(event.key==='Enter') guardarPrecioInline(${a.IdDetallePedido}, this.value)"
                                     style="flex:1;background:#13181f;border:1px solid #3d2a0a;border-radius:6px;padding:5px 8px;color:#f59e0b;font-size:12px;outline:none;">
@@ -764,12 +781,67 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                 </div>
             </div>`;
         }).join('');
+        actualizarResumenSeleccionados();
     }
 
-    function togglePrecioExtra(idDetalle) {
+    function togglePrecioExtra(idDetalle, nombre, talla, sugerido) {
         const chk   = document.getElementById(`chk-${idDetalle}`);
         const campo = document.getElementById(`precio-extra-${idDetalle}`);
-        if (campo) campo.style.display = chk.checked ? 'block' : 'none';
+        if (chk.checked) {
+            seleccionadosMap.set(idDetalle, { precio: '', nombre, talla, sugerido });
+            if (campo) campo.style.display = 'block';
+        } else {
+            seleccionadosMap.delete(idDetalle);
+            if (campo) campo.style.display = 'none';
+        }
+        actualizarResumenSeleccionados();
+    }
+
+    function actualizarPrecioEnMap(idDetalle, valor) {
+        if (seleccionadosMap.has(idDetalle)) {
+            const entry = seleccionadosMap.get(idDetalle);
+            entry.precio = valor;
+            seleccionadosMap.set(idDetalle, entry);
+        }
+        actualizarResumenSeleccionados();
+    }
+
+    function actualizarResumenSeleccionados() {
+        const el = document.getElementById('resumen-seleccionados');
+        if (!el) return;
+        if (seleccionadosMap.size === 0) {
+            el.style.display = 'none';
+            return;
+        }
+        el.style.display = 'block';
+        el.innerHTML = `
+            <div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
+                ${seleccionadosMap.size} artículo(s) adicional(es) seleccionado(s)
+            </div>
+            ${Array.from(seleccionadosMap.entries()).map(([id, data]) => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#0d1017;border:1px solid #1e2530;border-radius:6px;margin-bottom:4px;gap:8px;">
+                    <div style="min-width:0;">
+                        <div style="color:#d1d5db;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${data.nombre}</div>
+                        ${data.talla ? `<div style="color:#4b5563;font-size:10px;">${data.talla}</div>` : ''}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                        ${data.sugerido > 0 ? `<span style="font-size:10px;color:#6b7280;">Sug: L${data.sugerido}</span>` : ''}
+                        <span style="font-size:12px;color:${data.precio ? '#f59e0b' : '#4b5563'};">${data.precio ? 'L ' + data.precio : 'Sin precio'}</span>
+                        <button onclick="quitarSeleccionado(${id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:0 2px;">✕</button>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function quitarSeleccionado(idDetalle) {
+        seleccionadosMap.delete(idDetalle);
+        // Desmarcar checkbox si está visible
+        const chk = document.getElementById(`chk-${idDetalle}`);
+        if (chk) { chk.checked = false; }
+        const campo = document.getElementById(`precio-extra-${idDetalle}`);
+        if (campo) campo.style.display = 'none';
+        actualizarResumenSeleccionados();
     }
 
     async function guardarPrecioInline(idDetalle, valor) {
@@ -794,9 +866,8 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             alert('⚠️ Selecciona un cliente primero');
             return;
         }
-        const checkboxes = document.querySelectorAll('#lista-articulos-extra input[type=checkbox]:checked');
-        const idsExtra   = Array.from(checkboxes).map(c => parseInt(c.value));
-        const todosIds   = [idDetallePedidoActual, ...idsExtra].join(',');
+        const idsExtra = Array.from(seleccionadosMap.keys());
+        const todosIds = [idDetallePedidoActual, ...idsExtra].join(',');
 
         try {
             // 1. Asignar cliente a todos
@@ -808,11 +879,11 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             const json = await res.json();
             if (!json.ok) { alert('❌ Error: ' + json.error); return; }
 
-            // 2. Guardar precios de los artículos extra que tengan precio ingresado
+            // 2. Guardar precios del Map
             const promesasPrecios = idsExtra
                 .map(id => {
-                    const input = document.getElementById(`val-precio-${id}`);
-                    const valor = input ? parseFloat(input.value) : null;
+                    const entry = seleccionadosMap.get(id);
+                    const valor = parseFloat(entry?.precio);
                     if (!valor || isNaN(valor) || valor <= 0) return null;
                     return fetch('/api/clientes/precio', {
                         method: 'POST',
@@ -821,6 +892,17 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                     }).then(r => r.json());
                 })
                 .filter(Boolean);
+
+            // 3. Precio artículo principal
+            const inputPrincipal = document.getElementById('val-precio-principal');
+            const valorPrincipal = parseFloat(inputPrincipal?.value);
+            if (valorPrincipal > 0) {
+                promesasPrecios.push(fetch('/api/clientes/precio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idDetallePedido: idDetallePedidoActual, valorCobro: valorPrincipal })
+                }).then(r => r.json()));
+            }
 
             if (promesasPrecios.length > 0) await Promise.all(promesasPrecios);
 
@@ -833,14 +915,26 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
     // ===== MODAL PRECIO =====
     let idDetallePrecioActual = null;
 
-    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion, talla) {
+    function redondearMultiplo5(valor) {
+        if (!valor || valor <= 0) return 0;
+        return Math.round(valor / 5) * 5;
+    }
+
+    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion, talla, precioSugerido) {
         idDetallePrecioActual = id;
         document.getElementById('modal-precio').style.display = 'flex';
         document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('precio-articulo-desc').textContent = 'Descripcion Artículo : ' + descripcion || '';
+        document.getElementById('precio-articulo-desc').textContent = descripcion ? 'Descripción: ' + descripcion : '';
         document.getElementById('precio-articulo-talla').textContent = talla ? '📐 Talla: ' + talla : '';
         document.getElementById('precio-cliente-nombre').textContent = '👤 Cliente: ' + (nombreCliente || 'Sin cliente');
         document.getElementById('precio-input').value = precioActual || '';
+        // Precio sugerido
+        const sugerido = redondearMultiplo5(precioSugerido);
+        const elSugerido = document.getElementById('precio-sugerido-ref');
+        if (elSugerido) {
+            elSugerido.textContent = sugerido > 0 ? `Sugerido: L ${sugerido.toFixed(2)}` : '';
+            elSugerido.style.display = sugerido > 0 ? 'inline' : 'none';
+        }
         setTimeout(() => document.getElementById('precio-input').focus(), 100);
     }
 
@@ -892,12 +986,13 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
                 <div id="modal-articulo-talla"  style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
                 <div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
                 <!-- Precio del artículo principal -->
-                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #1e2530;">
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #1e2530;flex-wrap:wrap;">
                     <span style="color:#f59e0b;font-size:11px;white-space:nowrap;">💲 Precio (L):</span>
                     <input type="number" id="val-precio-principal" placeholder="0.00" step="0.01" min="0"
                         onblur="guardarPrecioInline(idDetallePedidoActual, this.value)"
                         onkeydown="if(event.key==='Enter') guardarPrecioInline(idDetallePedidoActual, this.value)"
-                        style="flex:1;background:#0d1017;border:1px solid #3d2a0a;border-radius:6px;padding:6px 10px;color:#f59e0b;font-size:13px;outline:none;font-family:'Segoe UI',sans-serif;">
+                        style="flex:1;min-width:80px;background:#0d1017;border:1px solid #3d2a0a;border-radius:6px;padding:6px 10px;color:#f59e0b;font-size:13px;outline:none;font-family:'Segoe UI',sans-serif;">
+                    <span id="precio-sugerido-cliente" style="display:none;font-size:11px;color:#34d399;background:#0f2318;border:1px solid #1a3d28;border-radius:4px;padding:2px 8px;white-space:nowrap;"></span>
                 </div>
             </div>
 
@@ -909,10 +1004,12 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             <div id="lista-clientes" style="max-height:150px;overflow-y:auto;margin-bottom:12px;border:1px solid #1e2530;border-radius:8px;">
                 <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>
             </div>
-            <div id="cliente-seleccionado" style="display:none;background:#0f2318;border:1px solid #1a3d28;border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+            <div id="cliente-seleccionado" style="display:none;background:#0f2318;border:1px solid #1a3d28;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
                 <div style="font-size:10px;color:#34d399;margin-bottom:2px;">CLIENTE SELECCIONADO</div>
                 <div id="cliente-seleccionado-nombre" style="color:#fff;font-size:13px;font-weight:600;"></div>
             </div>
+            <!-- Resumen artículos seleccionados -->
+            <div id="resumen-seleccionados" style="display:none;background:#0d1117;border:1px solid #1e2530;border-radius:8px;padding:10px;margin-bottom:10px;max-height:200px;overflow-y:auto;"></div>
 
             <!-- Botones -->
             <div style="display:flex;gap:10px;margin-top:auto;">
@@ -960,7 +1057,10 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:4px;"></div>
         </div>
         <div style="margin-bottom:16px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Precio de venta (Lempiras)</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <div style="font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Precio de venta (Lempiras)</div>
+                <span id="precio-sugerido-ref" style="display:none;font-size:11px;color:#34d399;background:#0f2318;border:1px solid #1a3d28;border-radius:4px;padding:2px 8px;"></span>
+            </div>
             <div style="position:relative;">
                 <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:14px;">L</span>
                 <input id="precio-input" type="number" min="0" step="0.01" placeholder="0.00"
