@@ -7,12 +7,12 @@
     <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; } .main { width:100%; }
 
         .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99; }
         .overlay.active { display:block; }
 
-        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
         .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
         .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
@@ -37,7 +37,7 @@
         .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
         .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
         .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
-        .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
+        .btn-menu { display:flex; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
         .btn-menu svg { width:22px; height:22px; }
         .topbar-title { font-size:16px; font-weight:700; color:#fff; }
         .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
@@ -124,9 +124,6 @@
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
         @media (max-width:768px) {
-            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
-            .btn-menu { display:flex; }
             .search-top { display:none; }
             .filtros-grid { grid-template-columns:1fr 1fr; }
             .content { padding:12px; }
@@ -259,9 +256,9 @@
                         <option value="">Todas</option>
                     </select>
                 </div>
-                <div class="filtro-group solo-admin">
+                <div class="filtro-group solo-admin" style="min-width:200px;">
                     <label>Vendedor</label>
-                    <select class="filtro-input" id="f-vendedor">
+                    <select class="filtro-input" id="f-vendedor" style="text-overflow:ellipsis;">
                         <option value="">Todos</option>
                     </select>
                 </div>
@@ -316,7 +313,6 @@
                             <th>Cliente</th>
                             <th class="solo-admin">Vendedor</th>
                             <th>Descripción</th>
-                            <th>Peso (lb)</th>
                             <th>Talla</th>
                             <th>Precio</th>
                             <th style="color:#ef4444">P. Sugerido</th>
@@ -431,7 +427,7 @@
         const suma      = pedidosFiltrados.reduce((acc, p) => acc + (parseFloat(p.ValorCobroCliente) || 0), 0);
         const pendientes = pedidosFiltrados.filter(p => !p.EstaEntregado).length;
         document.getElementById('stat-total').textContent     = total;
-        document.getElementById('stat-suma').textContent      = 'L ' + suma.toFixed(2);
+        document.getElementById('stat-suma').textContent      = 'L ' + suma.toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
         document.getElementById('stat-pendientes').textContent = pendientes;
     }
 
@@ -528,7 +524,6 @@
             const descCorta   = p.DescripcionArticulo
                 ? p.DescripcionArticulo.trim().substring(0,40) + (p.DescripcionArticulo.length > 40 ? '...' : '')
                 : '—';
-            const pesoLb      = p.Peso ? (p.Peso / 454).toFixed(2) : '—';
             const tracking    = p.Seguimiento ? p.Seguimiento.substring(0,14) + '...' : '<span style="color:#4b5563">Sin tracking</span>';
             const estado      = getEstadoBadge(p.IdSeguimiento, p.IdEstado);
             const entregado   = p.EstaEntregado
@@ -544,14 +539,13 @@
                 <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${p.NumeroPedido || '—'}</td>
                 <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
                 <td style="font-size:11px;color:#9ca3af;">${p.NombreEmpresa || '—'}</td>
-                <td style="font-size:10px;font-family:monospace;color:#6b7280;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.CodigoArticulo||''}">${p.CodigoArticulo ? p.CodigoArticulo.substring(0,12)+'...' : '—'}</td>
+                <td style="font-size:10px;font-family:monospace;color:#6b7280;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.CodigoArticulo||''}">${p.CodigoArticulo ? p.CodigoArticulo.substring(0,18)+'...' : '—'}</td>
                 <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap;">${p.NombreCliente || 'Sin cliente'}</td>
                 <td class="solo-admin" style="font-size:11px;white-space:nowrap;">${vendedorTxt}</td>
                 <td style="max-width:140px;font-size:11px;color:#6b7280;">
                     ${descCorta}
                     ${tieneDesc ? `<button onclick="verDesc('${(p.NombreArticulo||'').replace(/'/g,"\\'")}','${(p.TallaColor||'').replace(/'/g,"\\'")}','${(p.DescripcionArticulo||'').replace(/[\r\n]/g,' ').replace(/'/g,"\\'")}')" style="background:none;border:none;color:#3b82f6;cursor:pointer;font-size:10px;padding:0 3px;">ver más</button>` : ''}
                 </td>
-                <td style="font-size:11px;color:#9ca3af;text-align:center;">${pesoLb}</td>
                 <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${p.TallaColor || '—'}</td>
                 <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap;font-weight:600;">
                     ${p.ValorCobroCliente ? 'L ' + parseFloat(p.ValorCobroCliente).toFixed(2) : 'Sin precio'}
