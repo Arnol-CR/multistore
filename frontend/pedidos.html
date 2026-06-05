@@ -9,10 +9,11 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; } .main { width:100%; }
 
-        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
         .overlay.active { display:block; }
 
-        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); box-shadow:none; }
+        .sidebar.open { transform:translateX(0); box-shadow:4px 0 30px rgba(0,0,0,0.7); }
         .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
         .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
@@ -251,14 +252,22 @@
                     <input class="filtro-input" id="f-tracking" type="text" placeholder="Contiene...">
                 </div>
                 <div class="filtro-group">
+                    <label>Fecha desde</label>
+                    <input class="filtro-input" id="f-fecha-desde" type="date">
+                </div>
+                <div class="filtro-group">
+                    <label>Fecha hasta</label>
+                    <input class="filtro-input" id="f-fecha-hasta" type="date">
+                </div>
+                <div class="filtro-group">
                     <label>Tienda</label>
                     <select class="filtro-input" id="f-tienda">
                         <option value="">Todas</option>
                     </select>
                 </div>
-                <div class="filtro-group solo-admin" style="min-width:220px;grid-column:span 1;">
+                <div class="filtro-group solo-admin">
                     <label>Vendedor</label>
-                    <select class="filtro-input" id="f-vendedor" style="text-overflow:ellipsis;">
+                    <select class="filtro-input" id="f-vendedor">
                         <option value="">Todos</option>
                     </select>
                 </div>
@@ -444,6 +453,8 @@
         const articulo    = document.getElementById('f-articulo').value.trim().toLowerCase();
         const tracking    = document.getElementById('f-tracking').value.trim().toLowerCase();
         const tienda      = document.getElementById('f-tienda').value;
+        const fechaDesde  = document.getElementById('f-fecha-desde').value;
+        const fechaHasta  = document.getElementById('f-fecha-hasta').value;
         const vendedorId  = document.getElementById('f-vendedor')?.value || '';
         const sinCliente  = document.getElementById('chk-sin-cliente').checked;
         const sinPrecio   = document.getElementById('chk-sin-precio').checked;
@@ -459,6 +470,8 @@
             if (articulo    && !(p.NombreArticulo      || '').toLowerCase().includes(articulo))return false;
             if (tracking    && !(p.Seguimiento         || '').toLowerCase().includes(tracking))return false;
             if (tienda      && p.NombreEmpresa !== tienda)                                     return false;
+            if (fechaDesde  && p.FechaPedido && p.FechaPedido.substring(0,10) < fechaDesde) return false;
+            if (fechaHasta  && p.FechaPedido && p.FechaPedido.substring(0,10) > fechaHasta) return false;
             if (vendedorId  && String(p.IdVendedor) !== vendedorId)                            return false;
             if (sinCliente  && p.IdCliente)                                                    return false;
             if (sinPrecio   && p.ValorCobroCliente)                                            return false;
@@ -487,7 +500,7 @@
     }
 
     function limpiarFiltros() {
-        ['f-sku','f-desc','f-cliente','f-articulo','f-tracking'].forEach(id => {
+        ['f-sku','f-desc','f-cliente','f-articulo','f-tracking','f-fecha-desde','f-fecha-hasta'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
