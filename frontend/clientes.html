@@ -255,11 +255,12 @@
                                 <th style="text-align:right;">Pagado (L)</th>
                                 <th style="text-align:right;">% Pagado</th>
                                 <th style="text-align:right;">Saldo (L)</th>
+                                <th style="text-align:right;">% x Entregar</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-resumen">
-                            <tr><td colspan="7" style="color:#374151;text-align:center;padding:30px;">Cargando...</td></tr>
+                            <tr><td colspan="11" style="color:#374151;text-align:center;padding:30px;">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -470,7 +471,7 @@
         document.getElementById('resumen-count').textContent = clientes.length + ' clientes';
 
         if (clientes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="color:#374151;text-align:center;padding:24px;">Sin resultados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="color:#374151;text-align:center;padding:24px;">Sin resultados</td></tr>';
             return;
         }
 
@@ -506,8 +507,34 @@
 
             // Filas clientes
             grupo.clientes.forEach(c => {
-                const pct = parseFloat(c.PorcentajePagado) || 0;
+                const pct      = parseFloat(c.PorcentajePagado) || 0;
                 const pctColor = pct >= 100 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#ef4444';
+
+                // % Pendiente entrega con lógica de alertas
+                const saldo        = parseFloat(c.SaldoCalculado) || 0;
+                const pctPend      = parseFloat(c.PorcentajePendienteEntrega) || 0;
+                const montoPend    = parseFloat(c.MontoPendienteEntrega) || 0;
+                const artPend      = parseInt(c.ArticulosPendienteEntrega) || 0;
+
+                let pctPendColor, pctPendBg, pctPendIcon;
+                if (saldo <= 0) {
+                    // No debe nada — verde sin importar pendiente
+                    pctPendColor = '#34d399'; pctPendBg = '#0f2318'; pctPendIcon = '✓';
+                } else if (pctPend === 0 && saldo > 0) {
+                    // Debe dinero y nada por entregar — ¡cobrar ya!
+                    pctPendColor = '#ef4444'; pctPendBg = '#2d0a0a'; pctPendIcon = '⚠️';
+                } else if (pctPend >= 100) {
+                    // Todo lo que debe está en camino
+                    pctPendColor = '#60a5fa'; pctPendBg = '#0c1f3d'; pctPendIcon = '📦';
+                } else {
+                    // Algo por entregar, normal
+                    pctPendColor = '#f59e0b'; pctPendBg = '#2d1f0a'; pctPendIcon = '🚚';
+                }
+
+                const pctPendLabel = saldo <= 0
+                    ? '<span style="color:#34d399;font-size:11px;">Al día ✓</span>'
+                    : `<span style="background:${pctPendBg};color:${pctPendColor};font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;" title="${artPend} art. · L ${montoPend.toFixed(2)}">${pctPendIcon} ${c.PorcentajePendienteEntrega || '0%'}</span>`;
+
                 html += `<tr class="fila-cliente ${grupoId}">
                     <td style="color:#4b5563;font-size:11px;">${numGlobal++}</td>
                     <td style="font-weight:600;">${c.NombreCompleto || '—'}</td>
@@ -518,6 +545,7 @@
                     <td style="text-align:right;font-size:12px;color:#34d399;font-weight:600;">${fmtSaldo(c.TotalPagado)}</td>
                     <td style="text-align:right;font-size:12px;color:${pctColor};font-weight:700;">${c.PorcentajePagado || '0%'}</td>
                     <td class="${claseSaldo(c.SaldoCalculado)}" style="text-align:right;">${fmtSaldo(c.SaldoCalculado)}</td>
+                    <td style="text-align:right;">${pctPendLabel}</td>
                     <td>
                         <button onclick="verHistorialCliente(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.NombreVendedor||'').replace(/'/g,"\\'")} ${c.CodigoVendedor||''}', ${c.SaldoCalculado||0})"
                             style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">
@@ -530,7 +558,7 @@
 
         // Fila total global
         html += `<tr class="fila-total">
-            <td colspan="8" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
+            <td colspan="9" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
             <td class="${claseSaldo(totalGlobal)}" style="text-align:right;">${fmtSaldo(totalGlobal)}</td>
             <td></td>
         </tr>`;
