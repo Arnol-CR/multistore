@@ -120,6 +120,16 @@
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
+        @media (max-width:480px) {
+            .stats-grid { grid-template-columns:1fr; }
+            .tabs { flex-direction:column; }
+            .tab { padding:8px; font-size:12px; }
+            .tbl { font-size:11px; }
+            .tbl th, .tbl td { padding:6px 4px; }
+            .filtro-resumen input { width:100%; }
+            .buscar-cliente-wrap { flex-direction:column; }
+            .form-grid { grid-template-columns:1fr !important; }
+        }
         @media (max-width:768px) {
             .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
             .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
@@ -251,19 +261,13 @@
                             <tr>
                                 <th>#</th>
                                 <th>Cliente</th>
-                                <th>Código</th>
-                                <th>Teléfono</th>
-                                <th style="text-align:right;">Artículos</th>
-                                <th style="text-align:right;">Compras (L)</th>
-                                <th style="text-align:right;">Pagado (L)</th>
-                                <th style="text-align:right;">% Pagado</th>
                                 <th style="text-align:right;">Saldo (L)</th>
                                 <th style="text-align:right;">% x Entregar</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-resumen">
-                            <tr><td colspan="11" style="color:#374151;text-align:center;padding:30px;">Cargando...</td></tr>
+                            <tr><td colspan="5" style="color:#374151;text-align:center;padding:30px;">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -486,7 +490,7 @@
         document.getElementById('resumen-count').textContent = clientes.length + ' clientes';
 
         if (clientes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" style="color:#374151;text-align:center;padding:24px;">Sin resultados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="color:#374151;text-align:center;padding:24px;">Sin resultados</td></tr>';
             return;
         }
 
@@ -505,13 +509,16 @@
         let totalGlobal = 0;
 
         Object.entries(grupos).forEach(([key, grupo]) => {
+            // Filtrar clientes con saldo 0
+            grupo.clientes = grupo.clientes.filter(c => (parseFloat(c.SaldoCalculado)||0) !== 0);
+            if (grupo.clientes.length === 0) return;
             const totalGrupo = grupo.clientes.reduce((acc,c) => acc + (parseFloat(c.SaldoCalculado)||0), 0);
             totalGlobal += totalGrupo;
             const grupoId = 'grupo-' + key;
 
             // Fila vendedor
             html += `<tr class="fila-vendedor" onclick="toggleGrupo('${grupoId}')">
-                <td colspan="5">
+                <td colspan="2">
                     <span style="margin-right:8px;" id="ico-${grupoId}">▼</span>
                     👤 ${grupo.nombre} <span style="color:#4b5563;font-size:11px;margin-left:6px;">${grupo.codigo}</span>
                     <span style="color:#4b5563;font-size:11px;margin-left:8px;">(${grupo.clientes.length} cliente${grupo.clientes.length !== 1 ? 's' : ''})</span>
@@ -552,13 +559,7 @@
 
                 html += `<tr class="fila-cliente ${grupoId}">
                     <td style="color:#4b5563;font-size:11px;">${numGlobal++}</td>
-                    <td style="font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.NombreCompleto||''}">${c.NombreCompleto || '—'}</td>
-                    <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${c.CodigoCliente || '—'}</td>
-                    <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${c.Telefeno || '—'}</td>
-                    <td style="text-align:right;font-size:11px;color:#9ca3af;">${c.CantidadArticulos || 0}</td>
-                    <td style="text-align:right;font-size:12px;color:#d1d5db;font-weight:600;white-space:nowrap;">${fmtSaldo(c.TotalCompras)}</td>
-                    <td style="text-align:right;font-size:12px;color:#34d399;font-weight:600;white-space:nowrap;">${fmtSaldo(c.TotalPagado)}</td>
-                    <td style="text-align:right;font-size:12px;color:${pctColor};font-weight:700;white-space:nowrap;">${c.PorcentajePagado || '0%'}</td>
+                    <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.NombreCompleto||''}">${c.NombreCompleto || '—'}</td>
                     <td class="${claseSaldo(c.SaldoCalculado)}" style="text-align:right;white-space:nowrap;">${fmtSaldo(c.SaldoCalculado)}</td>
                     <td style="text-align:right;white-space:nowrap;">${pctPendLabel}</td>
                     <td>
@@ -573,7 +574,7 @@
 
         // Fila total global
         html += `<tr class="fila-total">
-            <td colspan="9" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
+            <td colspan="2" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
             <td class="${claseSaldo(totalGlobal)}" style="text-align:right;">${fmtSaldo(totalGlobal)}</td>
             <td></td>
         </tr>`;
@@ -783,7 +784,7 @@
             });
             // Si el usuario no es admin, preseleccionar su propio vendedor
             if (!usuario.esAdmin) sel.value = usuario.id;
-        } catch(e) {}
+        } catch(e) { console.error('Error cargando vendedores:', e); }
     }
 
     function limpiarFormCliente() {
