@@ -76,4 +76,21 @@ const getHistorialCliente = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { buscarClientes, asignarCliente, asignarClienteMultiple, asignarPrecio, desbloquearPrecio, getTodosClientes, getHistorialCliente };
+
+const crearCliente = async (req, res) => {
+  try {
+    const { nombre, apellido, telefono, correo, direccion, idVendedor } = req.body;
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('Nombre',            sql.NVarChar, nombre)
+      .input('Apellido',          sql.NVarChar, apellido)
+      .input('Telefono',          sql.NVarChar, telefono || '')
+      .input('CorreoElectronico', sql.NVarChar, correo || null)
+      .input('Direccion',         sql.NVarChar, direccion || '')
+      .input('IdVendedor',        sql.Int,      idVendedor)
+      .execute('In_Clientes');
+    res.json({ ok: true, mensaje: 'Cliente registrado correctamente' });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+module.exports = { buscarClientes, asignarCliente, asignarClienteMultiple, asignarPrecio, desbloquearPrecio, getTodosClientes, getHistorialCliente, crearCliente };

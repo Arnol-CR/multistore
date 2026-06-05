@@ -250,8 +250,11 @@
                                 <th>Cliente</th>
                                 <th>Código</th>
                                 <th>Teléfono</th>
-                                <th>Correo</th>
-                                <th>Saldo (L)</th>
+                                <th style="text-align:right;">Artículos</th>
+                                <th style="text-align:right;">Compras (L)</th>
+                                <th style="text-align:right;">Pagado (L)</th>
+                                <th style="text-align:right;">% Pagado</th>
+                                <th style="text-align:right;">Saldo (L)</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -329,11 +332,43 @@
 
         <!-- ===== TAB NUEVO CLIENTE ===== -->
         <div class="tab-content" id="tab-nuevo">
-            <div class="card" style="max-width:500px;">
+            <div class="card" style="max-width:560px;">
                 <div class="card-header">
                     <div class="card-title"><span class="dot" style="background:#34d399;"></span>Registrar nuevo cliente</div>
                 </div>
-                <p style="color:#4b5563;font-size:13px;">Próximamente...</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="form-nuevo-cliente">
+                    <div>
+                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Nombre *</label>
+                        <input id="nc-nombre" type="text" placeholder="Nombre" class="buscar-input" style="width:100%;">
+                    </div>
+                    <div>
+                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Apellido *</label>
+                        <input id="nc-apellido" type="text" placeholder="Apellido" class="buscar-input" style="width:100%;">
+                    </div>
+                    <div>
+                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Teléfono</label>
+                        <input id="nc-telefono" type="text" placeholder="88001122 (8 dígitos)" class="buscar-input" style="width:100%;" maxlength="8">
+                    </div>
+                    <div>
+                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Correo</label>
+                        <input id="nc-correo" type="email" placeholder="correo@ejemplo.com" class="buscar-input" style="width:100%;">
+                    </div>
+                    <div style="grid-column:span 2;">
+                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Dirección</label>
+                        <input id="nc-direccion" type="text" placeholder="Dirección del cliente" class="buscar-input" style="width:100%;">
+                    </div>
+                    <div style="grid-column:span 2;">
+                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Vendedor *</label>
+                        <select id="nc-vendedor" class="buscar-input" style="width:100%;background:#13181f;color:#9ca3af;">
+                            <option value="">Selecciona un vendedor...</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px;">
+                    <button onclick="limpiarFormCliente()" class="btn-ghost">✕ Limpiar</button>
+                    <button onclick="guardarNuevoCliente()" class="btn-primary" style="flex:1;">✅ Registrar Cliente</button>
+                </div>
+                <div id="nc-mensaje" style="margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:8px;"></div>
             </div>
         </div>
 
@@ -409,8 +444,8 @@
 
     function actualizarStats() {
         const total  = todosClientes.length;
-        const suma   = todosClientes.reduce((acc,c) => acc + (parseFloat(c.Saldo)||0), 0);
-        const alDia  = todosClientes.filter(c => (parseFloat(c.Saldo)||0) <= 0).length;
+        const suma   = todosClientes.reduce((acc,c) => acc + (parseFloat(c.SaldoCalculado)||0), 0);
+        const alDia  = todosClientes.filter(c => (parseFloat(c.SaldoCalculado)||0) <= 0).length;
         document.getElementById('stat-total-clientes').textContent = total;
         document.getElementById('stat-total-saldo').textContent = 'L ' + suma.toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
         document.getElementById('stat-al-dia').textContent = alDia;
@@ -471,15 +506,20 @@
 
             // Filas clientes
             grupo.clientes.forEach(c => {
+                const pct = parseFloat(c.PorcentajePagado) || 0;
+                const pctColor = pct >= 100 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#ef4444';
                 html += `<tr class="fila-cliente ${grupoId}">
                     <td style="color:#4b5563;font-size:11px;">${numGlobal++}</td>
                     <td style="font-weight:600;">${c.NombreCompleto || '—'}</td>
                     <td style="font-size:11px;color:#6b7280;">${c.CodigoCliente || '—'}</td>
                     <td style="font-size:11px;color:#9ca3af;">${c.Telefeno || '—'}</td>
-                    <td style="font-size:11px;color:#6b7280;">${c.CorreoElectronico || '—'}</td>
-                    <td class="${claseSaldo(c.Saldo)}" style="text-align:right;">${fmtSaldo(c.Saldo)}</td>
+                    <td style="text-align:right;font-size:11px;color:#9ca3af;">${c.CantidadArticulos || 0}</td>
+                    <td style="text-align:right;font-size:12px;color:#d1d5db;font-weight:600;">${fmtSaldo(c.TotalCompras)}</td>
+                    <td style="text-align:right;font-size:12px;color:#34d399;font-weight:600;">${fmtSaldo(c.TotalPagado)}</td>
+                    <td style="text-align:right;font-size:12px;color:${pctColor};font-weight:700;">${c.PorcentajePagado || '0%'}</td>
+                    <td class="${claseSaldo(c.SaldoCalculado)}" style="text-align:right;">${fmtSaldo(c.SaldoCalculado)}</td>
                     <td>
-                        <button onclick="verHistorialCliente(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.NombreVendedor||'').replace(/'/g,"\\'")} ${c.CodigoVendedor||''}', ${c.Saldo||0})"
+                        <button onclick="verHistorialCliente(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.NombreVendedor||'').replace(/'/g,"\\'")} ${c.CodigoVendedor||''}', ${c.SaldoCalculado||0})"
                             style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">
                             📋 Historial
                         </button>
@@ -490,7 +530,7 @@
 
         // Fila total global
         html += `<tr class="fila-total">
-            <td colspan="5" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
+            <td colspan="8" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
             <td class="${claseSaldo(totalGlobal)}" style="text-align:right;">${fmtSaldo(totalGlobal)}</td>
             <td></td>
         </tr>`;
@@ -651,8 +691,82 @@
         }
     });
 
+    // ===== NUEVO CLIENTE =====
+    async function cargarVendedoresSelect() {
+        try {
+            const res  = await fetch('/api/vendedores');
+            const json = await res.json();
+            const sel  = document.getElementById('nc-vendedor');
+            if (!sel || !json.ok) return;
+            json.data.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.IdVendedor;
+                opt.textContent = `${v.Nombres} ${v.Apellidos||''} (${v.CodigoVendedor})`;
+                sel.appendChild(opt);
+            });
+            // Si el usuario no es admin, preseleccionar su propio vendedor
+            if (!usuario.esAdmin) sel.value = usuario.id;
+        } catch(e) {}
+    }
+
+    function limpiarFormCliente() {
+        ['nc-nombre','nc-apellido','nc-telefono','nc-correo','nc-direccion'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('nc-vendedor').value = '';
+        const msg = document.getElementById('nc-mensaje');
+        msg.style.display = 'none';
+    }
+
+    async function guardarNuevoCliente() {
+        const nombre   = document.getElementById('nc-nombre').value.trim();
+        const apellido = document.getElementById('nc-apellido').value.trim();
+        const telefono = document.getElementById('nc-telefono').value.trim();
+        const correo   = document.getElementById('nc-correo').value.trim();
+        const direccion= document.getElementById('nc-direccion').value.trim();
+        const vendedor = document.getElementById('nc-vendedor').value;
+        const msg      = document.getElementById('nc-mensaje');
+
+        if (!nombre || !apellido || !vendedor) {
+            msg.style.display = 'block';
+            msg.style.background = '#2d0a0a';
+            msg.style.color = '#ef4444';
+            msg.style.border = '1px solid #7f1d1d';
+            msg.textContent = '⚠️ Nombre, apellido y vendedor son obligatorios';
+            return;
+        }
+
+        try {
+            const res  = await fetch('/api/clientes/nuevo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, apellido, telefono, correo, direccion, idVendedor: parseInt(vendedor) })
+            });
+            const json = await res.json();
+            if (json.ok) {
+                msg.style.display = 'block';
+                msg.style.background = '#0f2318';
+                msg.style.color = '#34d399';
+                msg.style.border = '1px solid #1a3d28';
+                msg.textContent = `✅ Cliente registrado correctamente — Código: ${json.codigo || ''}`;
+                limpiarFormCliente();
+                cargarResumen(); // Refrescar lista
+            } else {
+                msg.style.display = 'block';
+                msg.style.background = '#2d0a0a';
+                msg.style.color = '#ef4444';
+                msg.style.border = '1px solid #7f1d1d';
+                msg.textContent = '❌ Error: ' + json.error;
+            }
+        } catch(e) {
+            msg.style.display = 'block';
+            msg.style.textContent = '❌ Error de conexión';
+        }
+    }
+
     // ===== INIT =====
     cargarResumen();
+    cargarVendedoresSelect();
 </script>
 </body>
 </html>
