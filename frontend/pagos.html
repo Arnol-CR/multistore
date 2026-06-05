@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Pagos</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+        .overlay.active { display:block; }
+
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-item.active svg { opacity:1; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
+
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+        .btn-menu { display:none; background:none; border:none; cursor:pointer; padding:4px; flex-shrink:0; }
+        .btn-menu svg { width:22px; height:22px; stroke:#9ca3af; stroke-width:2; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+
+        .content { flex:1; overflow-y:auto; padding:16px; display:flex; justify-content:center; }
+
+        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:20px; }
+        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .card-title .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+        /* Upload area */
+        .upload-area { border:2px dashed #1e2530; border-radius:10px; padding:32px 16px; text-align:center; cursor:pointer; transition:.2s; position:relative; }
+        .upload-area:hover, .upload-area.drag { border-color:#3b82f6; background:#0a0f18; }
+        .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+        .upload-icon { font-size:40px; margin-bottom:10px; }
+        .upload-text { color:#6b7280; font-size:13px; }
+        .upload-text strong { color:#60a5fa; }
+        .preview-img { width:100%; max-height:280px; object-fit:contain; border-radius:8px; margin-top:12px; border:1px solid #1e2530; }
+
+        /* Textarea pegar */
+        .texto-area { width:100%; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:12px; color:#9ca3af; font-size:12px; font-family:'Segoe UI',monospace; resize:vertical; min-height:100px; outline:none; }
+        .texto-area:focus { border-color:#3b82f6; color:#e2e8f0; }
+
+        /* Botón IA */
+        .btn-ia { width:100%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); color:#fff; border:none; border-radius:8px; padding:12px; font-size:14px; font-weight:700; cursor:pointer; margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px; transition:.2s; }
+        .btn-ia:hover { opacity:.9; }
+        .btn-ia:disabled { opacity:.5; cursor:not-allowed; }
+
+        /* Separador */
+        .separador { display:flex; align-items:center; gap:10px; margin:12px 0; }
+        .separador hr { flex:1; border:none; border-top:1px solid #1e2530; }
+        .separador span { font-size:11px; color:#374151; }
+
+        /* Form */
+        .form-group { margin-bottom:14px; }
+        .form-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px; }
+        .form-input { width:100%; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; transition:.15s; }
+        .form-input:focus { border-color:#3b82f6; }
+        .form-input.ia-filled { border-color:#34d399; background:#0a1a14; }
+        select.form-input option { background:#0d1017; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+        /* Búsqueda cliente */
+        .buscar-wrap { position:relative; }
+        .buscar-drop { position:absolute; top:100%; left:0; right:0; background:#0d1017; border:1px solid #1e2530; border-radius:8px; z-index:50; max-height:180px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.5); display:none; }
+        .buscar-drop-item { padding:10px 14px; cursor:pointer; font-size:13px; color:#d1d5db; border-bottom:1px solid #111827; }
+        .buscar-drop-item:hover { background:#13181f; }
+        .buscar-drop-item:last-child { border-bottom:none; }
+
+        /* Botones acción */
+        .btn-guardar { width:100%; background:#1d4ed8; color:#fff; border:none; border-radius:8px; padding:13px; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px; transition:.2s; }
+        .btn-guardar:hover { background:#2563eb; }
+        .btn-limpiar { width:100%; background:none; color:#6b7280; border:1px solid #1e2530; border-radius:8px; padding:10px; font-size:13px; cursor:pointer; margin-top:8px; transition:.2s; }
+        .btn-limpiar:hover { border-color:#3b82f6; color:#60a5fa; }
+
+        /* Alerta IA */
+        .ia-resultado { background:#0a1a14; border:1px solid #1a3d28; border-radius:8px; padding:12px 14px; margin-top:12px; font-size:12px; color:#34d399; display:none; }
+        .ia-resultado.error { background:#2d0a0a; border-color:#7f1d1d; color:#ef4444; }
+
+        /* Mensaje éxito */
+        .msg-box { border-radius:8px; padding:12px 14px; margin-top:12px; font-size:13px; display:none; }
+        .msg-box.ok  { background:#0f2318; border:1px solid #1a3d28; color:#34d399; }
+        .msg-box.err { background:#2d0a0a; border:1px solid #7f1d1d; color:#ef4444; }
+
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+
+        @media (max-width:900px) {
+            .content { grid-template-columns:1fr; }
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
+            .btn-menu { display:flex; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <img src="/assets/Recurso-3.png" alt="logo" onerror="this.style.display='none'">
+        <div class="sidebar-logo-text">Multi<span>Store</span></div>
+    </div>
+    <div class="sidebar-user">
+        <div class="avatar" id="avatar">--</div>
+        <div>
+            <div class="user-info-name" id="user-name">--</div>
+            <div class="user-info-rol" id="user-rol">--</div>
+        </div>
+    </div>
+    <nav class="nav">
+        <div class="nav-label">Principal</div>
+        <a class="nav-item" href="/dashboard.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio</a>
+        <a class="nav-item" href="/pedidos.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Pedidos</a>
+        <a class="nav-item" href="/tracking.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Tracking</a>
+        <a class="nav-item" href="/clientes.html"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clientes</a>
+        <div class="nav-label">Administración</div>
+        <a class="nav-item" href="/asignar-vendedor.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Asignar Vendedor</a>
+        <a class="nav-item active" href="/pagos.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pagos</a>
+        <a class="nav-item" href="#"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Reportes</a>
+    </nav>
+    <div class="sidebar-bottom">
+        <button class="btn-salir" onclick="cerrarSesion()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Cerrar sesión
+        </button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <button class="btn-menu" onclick="abrirMenu()">
+            <svg fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        </button>
+        <div>
+            <div class="topbar-title">Registrar Pago</div>
+            <div class="topbar-fecha" id="topbar-fecha"></div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- PANEL FORMULARIO -->
+        <div class="card" style="width:100%;max-width:600px;">
+            <div class="card-title"><span class="dot" style="background:#34d399;"></span>Datos del pago</div>
+
+            <!-- Cliente -->
+            <div class="form-group">
+                <label class="form-label">Cliente *</label>
+                <div class="buscar-wrap">
+                    <input class="form-input" id="input-cliente" type="text" placeholder="Buscar cliente por nombre..."
+                        oninput="buscarCliente(this.value)" autocomplete="off">
+                    <div class="buscar-drop" id="drop-cliente"></div>
+                </div>
+                <div id="cliente-seleccionado-info" style="display:none;margin-top:6px;background:#0f2318;border:1px solid #1a3d28;border-radius:6px;padding:8px 12px;font-size:12px;">
+                    <span style="color:#34d399;font-weight:600;" id="cliente-sel-nombre"></span>
+                    <span style="color:#4b5563;margin-left:8px;" id="cliente-sel-codigo"></span>
+                    <span style="color:#f59e0b;margin-left:8px;">Saldo: </span>
+                    <span style="color:#f59e0b;font-weight:700;" id="cliente-sel-saldo"></span>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <!-- Fecha -->
+                <div class="form-group">
+                    <label class="form-label">Fecha del pago *</label>
+                    <input class="form-input" id="f-fecha" type="date">
+                </div>
+                <!-- Monto -->
+                <div class="form-group">
+                    <label class="form-label">Monto (L) *</label>
+                    <input class="form-input" id="f-monto" type="number" step="0.01" min="0" placeholder="0.00">
+                </div>
+            </div>
+
+            <!-- Método de pago -->
+            <div class="form-group">
+                <label class="form-label">Método de pago *</label>
+                <select class="form-input" id="f-metodo">
+                    <option value="">Selecciona...</option>
+                </select>
+            </div>
+
+            <!-- Cuenta banco -->
+            <div class="form-group">
+                <label class="form-label">Cuenta destino *</label>
+                <select class="form-input" id="f-cuenta">
+                    <option value="">Selecciona...</option>
+                </select>
+            </div>
+
+            <!-- Referencia -->
+            <div class="form-group">
+                <label class="form-label">N° Referencia</label>
+                <input class="form-input" id="f-referencia" type="text" placeholder="Número de transacción...">
+            </div>
+
+            <!-- Observaciones -->
+            <div class="form-group">
+                <label class="form-label">Observaciones</label>
+                <textarea class="form-input" id="f-observaciones" rows="3" placeholder="Notas adicionales..." style="resize:vertical;"></textarea>
+            </div>
+
+            <div class="msg-box" id="msg-box"></div>
+
+            <button class="btn-guardar" onclick="guardarPago()">💾 Registrar Pago</button>
+            <button class="btn-limpiar" onclick="limpiarFormulario()">✕ Limpiar todo</button>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    // ===== AUTH =====
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    document.getElementById('avatar').textContent = (usuario.nombres[0] + (usuario.apellidos?.[0]||'')).toUpperCase();
+    document.getElementById('user-name').textContent = usuario.nombres + ' ' + (usuario.apellidos||'');
+    document.getElementById('user-rol').textContent = usuario.esAdmin ? 'Administrador' : 'Vendedor';
+    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    // Fecha por defecto = hoy
+    document.getElementById('f-fecha').value = new Date().toISOString().substring(0,10);
+
+    function abrirMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('active'); }
+    function cerrarMenu() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('active'); }
+    function cerrarSesion() { localStorage.removeItem('ms_usuario'); window.location.href = '/login.html'; }
+
+    // ===== CATÁLOGOS =====
+    async function cargarCatalogos() {
+        try {
+            const [metodos, cuentas] = await Promise.all([
+                fetch('/api/pagos/metodos').then(r=>r.json()),
+                fetch('/api/pagos/cuentas').then(r=>r.json())
+            ]);
+            if (metodos.ok) {
+                const sel = document.getElementById('f-metodo');
+                metodos.data.forEach(m => {
+                    const o = document.createElement('option');
+                    o.value = m.IdMetodoPago;
+                    o.textContent = m.Metodo;
+                    sel.appendChild(o);
+                });
+            }
+            if (cuentas.ok) {
+                const sel = document.getElementById('f-cuenta');
+                cuentas.data.forEach(c => {
+                    const o = document.createElement('option');
+                    o.value = c.IdCuentaBanco;
+                    o.textContent = `${c.NombreCuenta} · ${c.Banco} · ${c.NumeroCuenta||''}`.replace(/·\s*$/,'');
+                    sel.appendChild(o);
+                });
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // ===== IMAGEN =====
+    let imagenBase64 = null;
+
+    function handleFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            imagenBase64 = e.target.result.split(',')[1];
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('preview-img').style.display = 'block';
+            document.getElementById('upload-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        document.getElementById('upload-area').classList.remove('drag');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) handleFile(file);
+    }
+
+    // ===== IA EXTRACCIÓN =====
+    async function extraerConIA() {
+        const texto  = document.getElementById('texto-comprobante').value.trim();
+        const resEl  = document.getElementById('ia-resultado');
+        const btnIA  = document.getElementById('btn-ia');
+
+        if (!imagenBase64 && !texto) {
+            resEl.className = 'ia-resultado error';
+            resEl.style.display = 'block';
+            resEl.textContent = '⚠️ Sube una imagen o pega el texto del comprobante primero';
+            return;
+        }
+
+        btnIA.disabled = true;
+        btnIA.textContent = '⏳ Analizando comprobante...';
+        resEl.style.display = 'none';
+
+        try {
+            const messages = [];
+            const content  = [];
+
+            if (imagenBase64) {
+                content.push({ type:'image', source:{ type:'base64', media_type:'image/png', data:imagenBase64 } });
+            }
+            content.push({ type:'text', text: `Eres un asistente que extrae datos de comprobantes de pago bancarios hondureños.
+${texto ? 'Texto del comprobante:\n' + texto : ''}
+Extrae SOLO estos campos en JSON (sin markdown, sin explicaciones):
+{
+  "fecha": "YYYY-MM-DD o null",
+  "monto": numero_decimal_o_null,
+  "referencia": "string_o_null",
+  "metodo": "Efectivo|Transferencia|null",
+  "observaciones": "descripcion_breve_o_null"
+}
+Si no encuentras un campo, usa null. La fecha debe estar en formato YYYY-MM-DD.` });
+
+            messages.push({ role:'user', content });
+
+            const res  = await fetch('https://api.anthropic.com/v1/messages', {
+                method:'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, messages })
+            });
+            const data = await res.json();
+            const raw  = data.content?.find(b => b.type==='text')?.text || '{}';
+            const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
+
+            // Llenar formulario con clase ia-filled
+            let extraidos = [];
+            if (json.fecha) {
+                document.getElementById('f-fecha').value = json.fecha;
+                document.getElementById('f-fecha').classList.add('ia-filled');
+                extraidos.push('fecha');
+            }
+            if (json.monto) {
+                document.getElementById('f-monto').value = json.monto;
+                document.getElementById('f-monto').classList.add('ia-filled');
+                extraidos.push('monto');
+            }
+            if (json.referencia) {
+                document.getElementById('f-referencia').value = json.referencia;
+                document.getElementById('f-referencia').classList.add('ia-filled');
+                extraidos.push('referencia');
+            }
+            if (json.metodo) {
+                const sel = document.getElementById('f-metodo');
+                for (let opt of sel.options) {
+                    if (opt.text.toLowerCase().includes(json.metodo.toLowerCase())) {
+                        sel.value = opt.value;
+                        sel.classList.add('ia-filled');
+                        extraidos.push('método');
+                        break;
+                    }
+                }
+            }
+            if (json.observaciones) {
+                document.getElementById('f-observaciones').value = json.observaciones;
+                extraidos.push('observaciones');
+            }
+
+            resEl.className = 'ia-resultado';
+            resEl.style.display = 'block';
+            resEl.textContent = extraidos.length > 0
+                ? `✅ Datos extraídos: ${extraidos.join(', ')}. Verifica y completa lo que falta.`
+                : '⚠️ No se pudieron extraer datos. Completa el formulario manualmente.';
+
+        } catch(e) {
+            resEl.className = 'ia-resultado error';
+            resEl.style.display = 'block';
+            resEl.textContent = '❌ Error al procesar: ' + e.message;
+        } finally {
+            btnIA.disabled = false;
+            btnIA.innerHTML = '✨ Extraer datos con IA';
+        }
+    }
+
+    // ===== BÚSQUEDA CLIENTE =====
+    let clienteIdSeleccionado = null;
+    let todosClientesPagos = [];
+
+    // Cargar todos los clientes al inicio para tener SaldoCalculado
+    async function cargarClientesPagos() {
+        try {
+            const res  = await fetch('/api/clientes/todos');
+            const json = await res.json();
+            if (json.ok) todosClientesPagos = json.data;
+        } catch(e) {}
+    }
+
+    function buscarCliente(texto) {
+        const drop = document.getElementById('drop-cliente');
+        if (texto.length < 2) { drop.style.display = 'none'; return; }
+        const q = texto.trim().toLowerCase();
+        const resultados = todosClientesPagos.filter(c =>
+            (c.NombreCompleto || '').toLowerCase().includes(q) ||
+            (c.CodigoCliente  || '').toLowerCase().includes(q)
+        ).slice(0, 10);
+
+        if (resultados.length > 0) {
+            drop.innerHTML = resultados.map(c => `
+                <div class="buscar-drop-item" onclick="seleccionarCliente(${c.IdCliente},'${(c.NombreCompleto||'').replace(/'/g,"\\'")}','${c.CodigoCliente||''}',${c.SaldoCalculado||0})">
+                    <strong>${c.NombreCompleto}</strong>
+                    <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
+                    <span style="color:#f59e0b;font-size:11px;margin-left:8px;">L ${parseFloat(c.SaldoCalculado||0).toLocaleString('es-HN',{minimumFractionDigits:2})}</span>
+                </div>`).join('');
+            drop.style.display = 'block';
+        } else {
+            drop.innerHTML = '<div class="buscar-drop-item" style="color:#4b5563;">Sin resultados</div>';
+            drop.style.display = 'block';
+        }
+    }
+
+    function seleccionarCliente(id, nombre, codigo, saldo) {
+        clienteIdSeleccionado = id;
+        document.getElementById('input-cliente').value = nombre;
+        document.getElementById('drop-cliente').style.display = 'none';
+        document.getElementById('cliente-sel-nombre').textContent = nombre;
+        document.getElementById('cliente-sel-codigo').textContent = codigo;
+        document.getElementById('cliente-sel-saldo').textContent = 'L ' + parseFloat(saldo||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
+        document.getElementById('cliente-seleccionado-info').style.display = 'block';
+    }
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.buscar-wrap')) document.getElementById('drop-cliente').style.display = 'none';
+    });
+
+    // ===== GUARDAR PAGO =====
+    async function guardarPago() {
+        const msg    = document.getElementById('msg-box');
+        const fecha  = document.getElementById('f-fecha').value;
+        const monto  = document.getElementById('f-monto').value;
+        const metodo = document.getElementById('f-metodo').value;
+        const cuenta = document.getElementById('f-cuenta').value;
+        const ref    = document.getElementById('f-referencia').value.trim();
+        const obs    = document.getElementById('f-observaciones').value.trim();
+
+        if (!clienteIdSeleccionado || !fecha || !monto || !metodo || !cuenta) {
+            msg.className = 'msg-box err';
+            msg.style.display = 'block';
+            msg.textContent = '⚠️ Cliente, fecha, monto, método y cuenta son obligatorios';
+            return;
+        }
+
+        try {
+            const res  = await fetch('/api/pagos/registrar', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    fechaPago:     fecha,
+                    idCliente:     clienteIdSeleccionado,
+                    cantidad:      parseFloat(monto),
+                    idMetodoPago:  parseInt(metodo),
+                    observaciones: obs,
+                    referencia:    ref,
+                    idCuenta:      parseInt(cuenta),
+                    idMovimiento:  3
+                })
+            });
+            const json = await res.json();
+            if (json.ok) {
+                msg.className = 'msg-box ok';
+                msg.style.display = 'block';
+                msg.textContent = `✅ Pago de L ${parseFloat(monto).toLocaleString('es-HN',{minimumFractionDigits:2})} registrado correctamente`;
+                limpiarFormulario();
+            } else {
+                msg.className = 'msg-box err';
+                msg.style.display = 'block';
+                msg.textContent = '❌ Error: ' + json.error;
+            }
+        } catch(e) {
+            msg.className = 'msg-box err';
+            msg.style.display = 'block';
+            msg.textContent = '❌ Error de conexión';
+        }
+    }
+
+    // ===== LIMPIAR =====
+    function limpiarFormulario() {
+        clienteIdSeleccionado = null;
+        imagenBase64 = null;
+        document.getElementById('input-cliente').value = '';
+        document.getElementById('cliente-seleccionado-info').style.display = 'none';
+        document.getElementById('f-fecha').value = new Date().toISOString().substring(0,10);
+        document.getElementById('f-monto').value = '';
+        document.getElementById('f-metodo').value = '';
+        document.getElementById('f-cuenta').value = '';
+        document.getElementById('f-referencia').value = '';
+        document.getElementById('f-observaciones').value = '';
+        document.getElementById('texto-comprobante').value = '';
+        document.getElementById('preview-img').style.display = 'none';
+        document.getElementById('upload-placeholder').style.display = 'block';
+        document.getElementById('ia-resultado').style.display = 'none';
+        document.getElementById('input-imagen').value = '';
+        ['f-fecha','f-monto','f-referencia','f-metodo'].forEach(id => {
+            document.getElementById(id).classList.remove('ia-filled');
+        });
+    }
+
+    cargarCatalogos();
+    cargarClientesPagos();
+</script>
+</body>
+</html>
