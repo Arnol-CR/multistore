@@ -111,6 +111,15 @@
         .desc-texto  { color:#9ca3af; font-size:13px; line-height:1.6; max-height:300px; overflow-y:auto; }
         .btn-cerrar-desc { margin-top:16px; background:#13181f; color:#9ca3af; border:1px solid #1e2530; border-radius:8px; padding:9px 20px; font-size:13px; cursor:pointer; }
 
+        
+        /* Tarjetas stats */
+        .stats-pedidos { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+        .stat-p { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; }
+        .stat-p-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .stat-p-val { font-size:22px; font-weight:800; color:#fff; }
+        .stat-p-sub { font-size:11px; margin-top:4px; color:#6b7280; }
+        @media(max-width:768px){ .stats-pedidos { grid-template-columns:1fr 1fr; } }
+
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
@@ -196,18 +205,37 @@
             </div>
         </div>
         <div class="topbar-right">
-            <input class="search-top" id="search-global" placeholder="Buscar rápido..." oninput="filtrarLocal(this.value)">
+            <input class="search-top" id="search-global" placeholder="Buscar: artículo, cliente, SKU, pedido, tracking..." oninput="filtrarLocal(this.value)">
         </div>
     </div>
 
     <div class="content">
+
+        <!-- Tarjetas stats -->
+        <div class="stats-pedidos">
+            <div class="stat-p">
+                <div class="stat-p-label">Total artículos</div>
+                <div class="stat-p-val" id="stat-total">--</div>
+                <div class="stat-p-sub">En lista filtrada</div>
+            </div>
+            <div class="stat-p">
+                <div class="stat-p-label">Suma precios</div>
+                <div class="stat-p-val" id="stat-suma">--</div>
+                <div class="stat-p-sub">Total cobrado</div>
+            </div>
+            <div class="stat-p">
+                <div class="stat-p-label">Por entregar</div>
+                <div class="stat-p-val" id="stat-pendientes">--</div>
+                <div class="stat-p-sub" style="color:#f59e0b;">No entregados</div>
+            </div>
+        </div>
 
         <!-- Filtros -->
         <div class="filtros-wrap">
             <div class="filtros-grid">
                 <div class="filtro-group">
                     <label>SKU / Código</label>
-                    <input class="filtro-input" id="f-sku" type="text" placeholder="Ej: sz251229...">
+                    <input class="filtro-input" id="f-sku" type="text" placeholder="Contiene...">
                 </div>
                 <div class="filtro-group">
                     <label>Descripción artículo</label>
@@ -215,24 +243,27 @@
                 </div>
                 <div class="filtro-group">
                     <label>Cliente</label>
-                    <input class="filtro-input" id="f-cliente" type="text" placeholder="Nombre cliente...">
+                    <input class="filtro-input" id="f-cliente" type="text" placeholder="Contiene...">
                 </div>
                 <div class="filtro-group">
                     <label>Artículo</label>
-                    <input class="filtro-input" id="f-articulo" type="text" placeholder="Nombre artículo...">
+                    <input class="filtro-input" id="f-articulo" type="text" placeholder="Contiene...">
+                </div>
+                <div class="filtro-group">
+                    <label>Seguimiento / Tracking</label>
+                    <input class="filtro-input" id="f-tracking" type="text" placeholder="Contiene...">
                 </div>
                 <div class="filtro-group">
                     <label>Tienda</label>
                     <select class="filtro-input" id="f-tienda">
                         <option value="">Todas</option>
-                        <option value="SHEIN">SHEIN</option>
-                        <option value="TEMU">TEMU</option>
-                        <option value="AMAZON">AMAZON</option>
                     </select>
                 </div>
                 <div class="filtro-group solo-admin">
                     <label>Vendedor</label>
-                    <input class="filtro-input" id="f-vendedor" type="text" placeholder="Nombre o código...">
+                    <select class="filtro-input" id="f-vendedor">
+                        <option value="">Todos</option>
+                    </select>
                 </div>
                 <div class="filtros-btns">
                     <button class="btn-filtrar" onclick="aplicarFiltros()">🔍 Filtrar</button>
@@ -256,6 +287,10 @@
                     <input type="checkbox" id="chk-entregados" onchange="aplicarFiltros()">
                     <span>Solo entregados</span>
                 </label>
+                <label class="chk-wrap">
+                    <input type="checkbox" id="chk-no-entregados" onchange="aplicarFiltros()">
+                    <span>No entregados</span>
+                </label>
                 <label class="chk-wrap solo-admin">
                     <input type="checkbox" id="chk-sin-vendedor" onchange="aplicarFiltros()">
                     <span>Sin vendedor</span>
@@ -275,7 +310,6 @@
                         <tr>
                             <th>#</th>
                             <th>N° Pedido</th>
-                            <th>Fecha</th>
                             <th>Artículo</th>
                             <th>Tienda</th>
                             <th>SKU</th>
@@ -368,9 +402,37 @@
                 todosPedidos = json.data;
                 document.getElementById('badge-pedidos').textContent = todosPedidos.length;
                 pedidosFiltrados = todosPedidos;
+                cargarTiendasDinamicas();
+                if (usuario.esAdmin) cargarVendedoresDinamicos();
                 renderizarPagina();
             }
         } catch(e) { console.error(e); }
+    }
+
+    function cargarTiendasDinamicas() {
+        const sel = document.getElementById('f-tienda');
+        const tiendas = [...new Set(todosPedidos.map(p => p.NombreEmpresa).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Todas</option>' + tiendas.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
+    async function cargarVendedoresDinamicos() {
+        try {
+            const res  = await fetch('/api/vendedores');
+            const json = await res.json();
+            const sel  = document.getElementById('f-vendedor');
+            if (!sel || !json.ok) return;
+            sel.innerHTML = '<option value="">Todos</option>' +
+                json.data.map(v => `<option value="${v.IdVendedor}">${v.Nombres} ${v.Apellidos||''} (${v.CodigoVendedor})</option>`).join('');
+        } catch(e) {}
+    }
+
+    function actualizarTarjetas() {
+        const total     = pedidosFiltrados.length;
+        const suma      = pedidosFiltrados.reduce((acc, p) => acc + (parseFloat(p.ValorCobroCliente) || 0), 0);
+        const pendientes = pedidosFiltrados.filter(p => !p.EstaEntregado).length;
+        document.getElementById('stat-total').textContent     = total;
+        document.getElementById('stat-suma').textContent      = 'L ' + suma.toFixed(2);
+        document.getElementById('stat-pendientes').textContent = pendientes;
     }
 
     // ===== FILTROS =====
@@ -379,26 +441,30 @@
         const desc        = document.getElementById('f-desc').value.trim().toLowerCase();
         const cliente     = document.getElementById('f-cliente').value.trim().toLowerCase();
         const articulo    = document.getElementById('f-articulo').value.trim().toLowerCase();
+        const tracking    = document.getElementById('f-tracking').value.trim().toLowerCase();
         const tienda      = document.getElementById('f-tienda').value;
-        const vendedor    = document.getElementById('f-vendedor')?.value.trim().toLowerCase() || '';
+        const vendedorId  = document.getElementById('f-vendedor')?.value || '';
         const sinCliente  = document.getElementById('chk-sin-cliente').checked;
         const sinPrecio   = document.getElementById('chk-sin-precio').checked;
         const sinTracking = document.getElementById('chk-sin-tracking').checked;
         const soloEntreg  = document.getElementById('chk-entregados').checked;
+        const noEntreg    = document.getElementById('chk-no-entregados').checked;
         const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
 
         pedidosFiltrados = todosPedidos.filter(p => {
-            if (sku         && !(p.CodigoArticulo   || '').toLowerCase().includes(sku))      return false;
-            if (desc        && !(p.DescripcionArticulo || '').toLowerCase().includes(desc))   return false;
-            if (cliente     && !(p.NombreCliente    || '').toLowerCase().includes(cliente))   return false;
-            if (articulo    && !(p.NombreArticulo   || '').toLowerCase().includes(articulo))  return false;
-            if (tienda      && p.NombreEmpresa !== tienda)                                    return false;
-            if (vendedor    && !((p.NombreVendedor  || '') + ' ' + (p.CodigoVendedor || '')).toLowerCase().includes(vendedor)) return false;
-            if (sinCliente  && p.IdCliente)                                                   return false;
-            if (sinPrecio   && p.ValorCobroCliente)                                           return false;
-            if (sinTracking && p.IdSeguimiento)                                               return false;
-            if (soloEntreg  && !p.EstaEntregado)                                              return false;
-            if (sinVendedor && p.IdVendedor)                                                  return false;
+            if (sku         && !(p.CodigoArticulo      || '').toLowerCase().includes(sku))     return false;
+            if (desc        && !(p.DescripcionArticulo || '').toLowerCase().includes(desc))    return false;
+            if (cliente     && !(p.NombreCliente       || '').toLowerCase().includes(cliente)) return false;
+            if (articulo    && !(p.NombreArticulo      || '').toLowerCase().includes(articulo))return false;
+            if (tracking    && !(p.Seguimiento         || '').toLowerCase().includes(tracking))return false;
+            if (tienda      && p.NombreEmpresa !== tienda)                                     return false;
+            if (vendedorId  && String(p.IdVendedor) !== vendedorId)                            return false;
+            if (sinCliente  && p.IdCliente)                                                    return false;
+            if (sinPrecio   && p.ValorCobroCliente)                                            return false;
+            if (sinTracking && p.IdSeguimiento)                                                return false;
+            if (soloEntreg  && !p.EstaEntregado)                                               return false;
+            if (noEntreg    && p.EstaEntregado)                                                return false;
+            if (sinVendedor && p.IdVendedor)                                                   return false;
             return true;
         });
         paginaActual = 1;
@@ -420,13 +486,18 @@
     }
 
     function limpiarFiltros() {
-        ['f-sku','f-desc','f-cliente','f-articulo'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('f-tienda').value = '';
-        if (document.getElementById('f-vendedor')) document.getElementById('f-vendedor').value = '';
-        ['chk-sin-cliente','chk-sin-precio','chk-sin-tracking','chk-entregados'].forEach(id => {
-            document.getElementById(id).checked = false;
+        ['f-sku','f-desc','f-cliente','f-articulo','f-tracking'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
         });
-        if (document.getElementById('chk-sin-vendedor')) document.getElementById('chk-sin-vendedor').checked = false;
+        ['f-tienda','f-vendedor'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        ['chk-sin-cliente','chk-sin-precio','chk-sin-tracking','chk-entregados','chk-no-entregados','chk-sin-vendedor'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.checked = false;
+        });
         document.getElementById('search-global').value = '';
         pedidosFiltrados = todosPedidos;
         paginaActual = 1;
@@ -443,6 +514,7 @@
         const totalPag = Math.ceil(total / POR_PAGINA) || 1;
 
         document.getElementById('result-count').textContent = `${total} pedido${total !== 1 ? 's' : ''}`;
+        actualizarTarjetas();
 
         if (pagina.length === 0) {
             tbody.innerHTML = `<tr><td colspan="16" style="color:#374151;text-align:center;padding:30px;">Sin resultados</td></tr>`;
@@ -470,7 +542,6 @@
             return `<tr>
                 <td style="color:#4b5563;font-size:11px;">${num}</td>
                 <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${p.NumeroPedido || '—'}</td>
-                <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${formatFecha(p.FechaPedido)}</td>
                 <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
                 <td style="font-size:11px;color:#9ca3af;">${p.NombreEmpresa || '—'}</td>
                 <td style="font-size:10px;font-family:monospace;color:#6b7280;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.CodigoArticulo||''}">${p.CodigoArticulo ? p.CodigoArticulo.substring(0,12)+'...' : '—'}</td>
