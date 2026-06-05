@@ -72,6 +72,7 @@
         .tbl tr:last-child td { border-bottom:none; }
         .tbl tr:hover td { background:#0a0f18; }
 
+        
         /* Fila vendedor (grupo) */
         .fila-vendedor td { background:#0d1520; color:#60a5fa; font-weight:700; font-size:12px; cursor:pointer; }
         .fila-vendedor td:first-child { padding-left:12px; }
@@ -126,7 +127,9 @@
             .stats-grid { grid-template-columns:1fr 1fr; }
         }
     </style>
+    
 </head>
+
 <body>
 
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
@@ -286,7 +289,7 @@
             </div>
 
             <!-- Info cliente seleccionado -->
-            <div class="cliente-info-card" id="cliente-info-card" style="display:none;">
+            <div class="cliente-info-card" id="cliente-info-card" style="display:none;flex-wrap:wrap;gap:16px;">
                 <div class="cliente-info-item">
                     <span>Cliente</span>
                     <strong id="hist-nombre" style="color:#fff;font-size:14px;"></strong>
@@ -294,6 +297,18 @@
                 <div class="cliente-info-item">
                     <span>Código</span>
                     <strong id="hist-codigo" style="color:#9ca3af;"></strong>
+                </div>
+                <div class="cliente-info-item">
+                    <span>Teléfono</span>
+                    <strong id="hist-telefono" style="color:#9ca3af;"></strong>
+                </div>
+                <div class="cliente-info-item">
+                    <span>Correo</span>
+                    <strong id="hist-correo" style="color:#9ca3af;"></strong>
+                </div>
+                <div class="cliente-info-item">
+                    <span>Dirección</span>
+                    <strong id="hist-direccion" style="color:#9ca3af;max-width:200px;display:block;"></strong>
                 </div>
                 <div class="cliente-info-item">
                     <span>Vendedor</span>
@@ -537,18 +552,18 @@
 
                 html += `<tr class="fila-cliente ${grupoId}">
                     <td style="color:#4b5563;font-size:11px;">${numGlobal++}</td>
-                    <td style="font-weight:600;">${c.NombreCompleto || '—'}</td>
-                    <td style="font-size:11px;color:#6b7280;">${c.CodigoCliente || '—'}</td>
-                    <td style="font-size:11px;color:#9ca3af;">${c.Telefeno || '—'}</td>
+                    <td style="font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.NombreCompleto||''}">${c.NombreCompleto || '—'}</td>
+                    <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${c.CodigoCliente || '—'}</td>
+                    <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${c.Telefeno || '—'}</td>
                     <td style="text-align:right;font-size:11px;color:#9ca3af;">${c.CantidadArticulos || 0}</td>
-                    <td style="text-align:right;font-size:12px;color:#d1d5db;font-weight:600;">${fmtSaldo(c.TotalCompras)}</td>
-                    <td style="text-align:right;font-size:12px;color:#34d399;font-weight:600;">${fmtSaldo(c.TotalPagado)}</td>
-                    <td style="text-align:right;font-size:12px;color:${pctColor};font-weight:700;">${c.PorcentajePagado || '0%'}</td>
-                    <td class="${claseSaldo(c.SaldoCalculado)}" style="text-align:right;">${fmtSaldo(c.SaldoCalculado)}</td>
-                    <td style="text-align:right;">${pctPendLabel}</td>
+                    <td style="text-align:right;font-size:12px;color:#d1d5db;font-weight:600;white-space:nowrap;">${fmtSaldo(c.TotalCompras)}</td>
+                    <td style="text-align:right;font-size:12px;color:#34d399;font-weight:600;white-space:nowrap;">${fmtSaldo(c.TotalPagado)}</td>
+                    <td style="text-align:right;font-size:12px;color:${pctColor};font-weight:700;white-space:nowrap;">${c.PorcentajePagado || '0%'}</td>
+                    <td class="${claseSaldo(c.SaldoCalculado)}" style="text-align:right;white-space:nowrap;">${fmtSaldo(c.SaldoCalculado)}</td>
+                    <td style="text-align:right;white-space:nowrap;">${pctPendLabel}</td>
                     <td>
                         <button onclick="verHistorialCliente(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.NombreVendedor||'').replace(/'/g,"\\'")} ${c.CodigoVendedor||''}', ${c.SaldoCalculado||0})"
-                            style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">
+                            style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;">
                             📋 Historial
                         </button>
                     </td>
@@ -583,36 +598,51 @@
 
     function buscarClienteHistorial(texto) {
         const drop = document.getElementById('resultados-hist');
-        clearTimeout(buscarTimeout);
         if (texto.length < 2) { drop.style.display = 'none'; return; }
-        buscarTimeout = setTimeout(async () => {
-            try {
-                const res  = await fetch(`/api/clientes/buscar?nombre=${encodeURIComponent(texto)}`);
-                const json = await res.json();
-                if (json.ok && json.data.length > 0) {
-                    drop.innerHTML = json.data.map(c => `
-                        <div class="buscar-item" onclick="seleccionarClienteHistorial(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.CodigoVendedor||'')}', ${c.Saldo||0})">
-                            <strong>${c.NombreCompleto}</strong>
-                            <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
-                        </div>`).join('');
-                    drop.style.display = 'block';
-                } else {
-                    drop.innerHTML = '<div class="buscar-item" style="color:#4b5563;">Sin resultados</div>';
-                    drop.style.display = 'block';
-                }
-            } catch(e) {}
-        }, 350);
+        const q = texto.trim().toLowerCase();
+        const resultados = todosClientes.filter(c =>
+            (c.NombreCompleto || '').toLowerCase().includes(q) ||
+            (c.CodigoCliente  || '').toLowerCase().includes(q)
+        ).slice(0, 10);
+        if (resultados.length > 0) {
+            drop.innerHTML = resultados.map(c => {
+                const nom = (c.NombreCompleto||'').replace(/'/g,"\'");
+                const cod = c.CodigoCliente||'';
+                const codV = (c.CodigoVendedor||'').replace(/'/g,"\'");
+                const nomV = (c.NombreVendedor||'').replace(/'/g,"\'");
+                const tel  = (c.Telefeno||'').replace(/'/g,"\'");
+                const mail = (c.CorreoElectronico||'').replace(/'/g,"\'");
+                const dir  = (c.Direccion||'').replace(/'/g,"\'");
+                return `<div class="buscar-item" onclick="seleccionarClienteHistorial(${c.IdCliente},'${nom}','${cod}','${codV}','${nomV}','${tel}','${mail}','${dir}')">
+                    <strong>${c.NombreCompleto}</strong>
+                    <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
+                    ${c.CodigoVendedor ? '<span style="color:#c084fc;font-size:11px;margin-left:6px;">'+c.CodigoVendedor+'</span>' : ''}
+                </div>`;
+            }).join('');
+            drop.style.display = 'block';
+        } else {
+            drop.innerHTML = '<div class="buscar-item" style="color:#4b5563;">Sin resultados</div>';
+            drop.style.display = 'block';
+        }
     }
+    
 
-    async function seleccionarClienteHistorial(idCliente, nombre, codigo, vendedor, saldo) {
+    async function seleccionarClienteHistorial(idCliente, nombre, codigo, codigoVend, nombreVend, telefono, correo, direccion) {
         document.getElementById('input-buscar-hist').value = nombre;
         document.getElementById('resultados-hist').style.display = 'none';
-        clienteHistorialActual = { idCliente, nombre, codigo, vendedor, saldo };
+
+        // Buscar saldo actualizado desde todosClientes
+        const clienteData = todosClientes.find(c => c.IdCliente === idCliente);
+        const saldo = clienteData ? parseFloat(clienteData.SaldoCalculado) || 0 : 0;
+        clienteHistorialActual = { idCliente, nombre, codigo, vendedor: codigoVend, saldo };
 
         // Info card
-        document.getElementById('hist-nombre').textContent  = nombre;
-        document.getElementById('hist-codigo').textContent  = codigo;
-        document.getElementById('hist-vendedor').textContent = vendedor;
+        document.getElementById('hist-nombre').textContent    = nombre;
+        document.getElementById('hist-codigo').textContent    = codigo;
+        document.getElementById('hist-telefono').textContent  = telefono || '—';
+        document.getElementById('hist-correo').textContent    = correo || '—';
+        document.getElementById('hist-direccion').textContent = direccion || '—';
+        document.getElementById('hist-vendedor').textContent  = codigoVend ? `${codigoVend} · ${nombreVend||''}` : '—';
         const saldoEl = document.getElementById('hist-saldo');
         saldoEl.textContent = fmtSaldo(saldo);
         saldoEl.className   = claseSaldo(saldo);
@@ -631,7 +661,15 @@
 
     function verHistorialCliente(idCliente, nombre, codigo, vendedor, saldo) {
         cambiarTab('historial');
-        seleccionarClienteHistorial(idCliente, nombre, codigo, vendedor, saldo);
+        const c = todosClientes.find(x => x.IdCliente === idCliente) || {};
+        seleccionarClienteHistorial(
+            idCliente, nombre, codigo,
+            c.CodigoVendedor || vendedor || '',
+            c.NombreVendedor || '',
+            c.Telefeno || '',
+            c.CorreoElectronico || '',
+            c.Direccion || ''
+        );
     }
 
     function renderizarHistorial(data) {
@@ -684,7 +722,7 @@
             c.PorcentajePagado || '0%',
             parseFloat(c.SaldoCalculado||0).toFixed(2)
         ]);
-        descargarCSV([cols,...filas], `saldos_clientes_${hoy()}.csv`);
+        descargarCSV([cols,...filas], `saldos_clientes_${hoy()}.xls`);
     }
 
     // ===== EXCEL HISTORIAL =====
@@ -697,15 +735,26 @@
             const tds = r.querySelectorAll('td');
             if (tds.length >= 6) filas.push([...tds].map(td => td.textContent.trim()));
         });
-        descargarCSV([cols,...filas], `historial_${clienteHistorialActual.codigo}_${hoy()}.csv`);
+        descargarCSV([cols,...filas], `historial_${clienteHistorialActual.codigo}_${hoy()}.xls`);
     }
 
     function descargarCSV(rows, filename) {
-        const bom = '\uFEFF';
-        const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+        // Generar Excel XML (abre directo en Excel sin problemas de encoding)
+        const xlsFilename = filename.replace('.csv', '.xls');
+        let xls = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+        xls += '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Datos</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>';
+        rows.forEach((row, i) => {
+            xls += '<tr>';
+            row.forEach(v => {
+                const tag = i === 0 ? 'th' : 'td';
+                xls += `<${tag}>${String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</${tag}>`;
+            });
+            xls += '</tr>';
+        });
+        xls += '</table></body></html>';
         const a = Object.assign(document.createElement('a'), {
-            href: URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})),
-            download: filename
+            href: URL.createObjectURL(new Blob([xls], {type:'application/vnd.ms-excel;charset=utf-8;'})),
+            download: xlsFilename
         });
         a.click();
     }
