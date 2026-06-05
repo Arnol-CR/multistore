@@ -1,48 +1,549 @@
-const { sql, poolPromise } = require('../db/connection');
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Pedidos</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
 
-const getDashboardStats = async (req, res) => {
-    try {
-        const { idVendedor, esAdmin } = req.query;
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('IdVendedor', sql.Int, parseInt(idVendedor))
-            .input('EsAdmin', sql.Bit, parseInt(esAdmin))
-            .execute('SP_DashboardStats');
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99; }
+        .overlay.active { display:block; }
 
-        res.json({ ok: true, data: result.recordset[0] });
-    } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; user-select:none; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-item.active svg { opacity:1; }
+        .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; transition:.15s; background:none; border:none; width:100%; }
+        .btn-salir:hover { color:#fca5a5; }
+        .btn-salir svg { width:16px; height:16px; }
+
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
+        .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
+        .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
+        .btn-menu svg { width:22px; height:22px; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+        .topbar-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+        .search-top { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:8px 14px; font-size:13px; color:#9ca3af; width:220px; outline:none; font-family:'Segoe UI',sans-serif; }
+        .search-top:focus { border-color:#3b82f6; color:#e2e8f0; }
+
+        .content { flex:1; overflow-y:auto; padding:16px; }
+
+        /* Filtros */
+        .filtros-wrap { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; margin-bottom:14px; }
+        .filtros-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; align-items:end; }
+        .filtro-group label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:5px; }
+        .filtro-input { width:100%; background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; transition:.15s; }
+        .filtro-input:focus { border-color:#3b82f6; color:#e2e8f0; }
+        .filtro-input::placeholder { color:#374151; }
+        select.filtro-input option { background:#0d1017; }
+        .filtros-btns { display:flex; gap:8px; align-items:flex-end; }
+        .btn-filtrar { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:8px 16px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; transition:.15s; }
+        .btn-filtrar:hover { background:#2563eb; }
+        .btn-limpiar { background:none; border:1px solid #1e2530; border-radius:7px; padding:8px 14px; font-size:12px; color:#6b7280; cursor:pointer; white-space:nowrap; transition:.15s; }
+        .btn-limpiar:hover { border-color:#3b82f6; color:#60a5fa; }
+
+        /* Checkboxes filtros */
+        .chk-fila { display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid #1e2530; }
+        .chk-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+        .chk-wrap input[type=checkbox] { width:14px; height:14px; accent-color:#3b82f6; cursor:pointer; }
+        .chk-wrap span { font-size:12px; color:#9ca3af; }
+        .solo-admin { display:none; }
+
+        /* Tabla */
+        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:16px; }
+        .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+        .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
+        .result-count { font-size:12px; color:#4b5563; }
+
+        .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .tbl { width:100%; border-collapse:collapse; font-size:12px; min-width:900px; }
+        .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:8px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
+        .tbl td { padding:9px 8px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
+        .tbl tr:last-child td { border-bottom:none; }
+        .tbl tr:hover td { background:#0a0f18; }
+
+        .status { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+        .status.pendiente { background:#2d1f0a; color:#f59e0b; }
+        .status.en-camino { background:#0f2318; color:#34d399; }
+        .status.entregado { background:#0c1f3d; color:#60a5fa; }
+        .status.nuevo     { background:#1f1025; color:#c084fc; }
+        .status.sin-tracking { background:#1a1a1a; color:#4b5563; }
+
+        .precio-sugerido { color:#ef4444; font-weight:700; font-size:12px; }
+        .entregado-badge { font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; }
+        .entregado-si { background:#0f2318; color:#34d399; }
+        .entregado-no { background:#1a1a1a; color:#4b5563; }
+
+        /* Paginación */
+        .paginacion { display:flex; align-items:center; justify-content:space-between; padding:12px 4px; border-top:1px solid #1e2530; margin-top:8px; flex-wrap:wrap; gap:8px; }
+        .pag-info { font-size:12px; color:#4b5563; }
+        .pag-btns { display:flex; gap:6px; }
+        .pag-btn { background:#13181f; color:#9ca3af; border:1px solid #1e2530; border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; transition:.15s; }
+        .pag-btn:hover:not(:disabled) { border-color:#3b82f6; color:#60a5fa; }
+        .pag-btn:disabled { color:#374151; cursor:not-allowed; }
+        .pag-current { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f; border-radius:6px; padding:5px 12px; font-size:12px; }
+
+        /* Modal descripción */
+        .modal-desc { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:999; align-items:center; justify-content:center; padding:16px; }
+        .modal-desc-box { background:#0d1017; border:1px solid #1e2530; border-radius:12px; padding:24px; width:100%; max-width:500px; }
+        .desc-titulo { color:#fff; font-size:14px; font-weight:700; margin-bottom:8px; }
+        .desc-talla  { color:#6b7280; font-size:11px; margin-bottom:12px; }
+        .desc-texto  { color:#9ca3af; font-size:13px; line-height:1.6; max-height:300px; overflow-y:auto; }
+        .btn-cerrar-desc { margin-top:16px; background:#13181f; color:#9ca3af; border:1px solid #1e2530; border-radius:8px; padding:9px 20px; font-size:13px; cursor:pointer; }
+
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+
+        @media (max-width:768px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
+            .btn-menu { display:flex; }
+            .search-top { display:none; }
+            .filtros-grid { grid-template-columns:1fr 1fr; }
+            .content { padding:12px; }
+            .tbl { min-width:1100px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <img src="/assets/Recurso-3.png" alt="logo" onerror="this.style.display='none'">
+        <div class="sidebar-logo-text">Multi<span>Store</span></div>
+    </div>
+    <div class="sidebar-user">
+        <div class="avatar" id="avatar">--</div>
+        <div>
+            <div class="user-info-name" id="user-name">--</div>
+            <div class="user-info-rol" id="user-rol">--</div>
+        </div>
+    </div>
+    <nav class="nav">
+        <div class="nav-label">Principal</div>
+        <a class="nav-item" href="/dashboard.html" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a class="nav-item active" href="/pedidos.html" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Pedidos
+            <span class="nav-badge" id="badge-pedidos">0</span>
+        </a>
+        <a class="nav-item" href="/tracking.html" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            Tracking
+        </a>
+        <a class="nav-item" href="/asignar-precios.html" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            Mis Precios
+        </a>
+        <div class="nav-label solo-admin">Administración</div>
+        <a class="nav-item solo-admin" href="/asignar-vendedor.html" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Asignar Vendedor
+        </a>
+        <a class="nav-item solo-admin" href="/pagos.html" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Pagos Envíos
+        </a>
+        <a class="nav-item solo-admin" href="#" onclick="cerrarMenu()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Reportes
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <button class="btn-salir" onclick="cerrarSesion()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Cerrar sesión
+        </button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="btn-menu" id="btn-menu" onclick="abrirMenu()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+            <div>
+                <div class="topbar-title">Pedidos</div>
+                <div class="topbar-fecha" id="topbar-fecha"></div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <input class="search-top" id="search-global" placeholder="Buscar rápido..." oninput="filtrarLocal(this.value)">
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Filtros -->
+        <div class="filtros-wrap">
+            <div class="filtros-grid">
+                <div class="filtro-group">
+                    <label>SKU / Código</label>
+                    <input class="filtro-input" id="f-sku" type="text" placeholder="Ej: sz251229...">
+                </div>
+                <div class="filtro-group">
+                    <label>Descripción artículo</label>
+                    <input class="filtro-input" id="f-desc" type="text" placeholder="Contiene...">
+                </div>
+                <div class="filtro-group">
+                    <label>Cliente</label>
+                    <input class="filtro-input" id="f-cliente" type="text" placeholder="Nombre cliente...">
+                </div>
+                <div class="filtro-group">
+                    <label>Artículo</label>
+                    <input class="filtro-input" id="f-articulo" type="text" placeholder="Nombre artículo...">
+                </div>
+                <div class="filtro-group">
+                    <label>Tienda</label>
+                    <select class="filtro-input" id="f-tienda">
+                        <option value="">Todas</option>
+                        <option value="SHEIN">SHEIN</option>
+                        <option value="TEMU">TEMU</option>
+                        <option value="AMAZON">AMAZON</option>
+                    </select>
+                </div>
+                <div class="filtro-group solo-admin">
+                    <label>Vendedor</label>
+                    <input class="filtro-input" id="f-vendedor" type="text" placeholder="Nombre o código...">
+                </div>
+                <div class="filtros-btns">
+                    <button class="btn-filtrar" onclick="aplicarFiltros()">🔍 Filtrar</button>
+                    <button class="btn-limpiar" onclick="limpiarFiltros()">✕ Limpiar</button>
+                </div>
+            </div>
+            <div class="chk-fila">
+                <label class="chk-wrap">
+                    <input type="checkbox" id="chk-sin-cliente" onchange="aplicarFiltros()">
+                    <span>Sin cliente</span>
+                </label>
+                <label class="chk-wrap">
+                    <input type="checkbox" id="chk-sin-precio" onchange="aplicarFiltros()">
+                    <span>Sin precio</span>
+                </label>
+                <label class="chk-wrap">
+                    <input type="checkbox" id="chk-sin-tracking" onchange="aplicarFiltros()">
+                    <span>Sin tracking</span>
+                </label>
+                <label class="chk-wrap">
+                    <input type="checkbox" id="chk-entregados" onchange="aplicarFiltros()">
+                    <span>Solo entregados</span>
+                </label>
+                <label class="chk-wrap solo-admin">
+                    <input type="checkbox" id="chk-sin-vendedor" onchange="aplicarFiltros()">
+                    <span>Sin vendedor</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="dot"></span>Todos los pedidos</div>
+                <span class="result-count" id="result-count">Cargando...</span>
+            </div>
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>N° Pedido</th>
+                            <th>Fecha</th>
+                            <th>Artículo</th>
+                            <th>Tienda</th>
+                            <th>SKU</th>
+                            <th>Cliente</th>
+                            <th class="solo-admin">Vendedor</th>
+                            <th>Descripción</th>
+                            <th>Peso (lb)</th>
+                            <th>Talla</th>
+                            <th>Precio</th>
+                            <th style="color:#ef4444">P. Sugerido</th>
+                            <th>Tracking</th>
+                            <th>Estado</th>
+                            <th>Entregado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-pedidos">
+                        <tr><td colspan="16" style="color:#374151;text-align:center;padding:30px">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="paginacion" id="paginacion"></div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal descripción completa -->
+<div class="modal-desc" id="modal-desc">
+    <div class="modal-desc-box">
+        <div class="desc-titulo" id="desc-titulo"></div>
+        <div class="desc-talla" id="desc-talla"></div>
+        <div class="desc-texto" id="desc-texto"></div>
+        <button class="btn-cerrar-desc" onclick="cerrarDesc()">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    // ===== AUTH =====
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    document.getElementById('avatar').textContent = (usuario.nombres[0] + usuario.apellidos[0]).toUpperCase();
+    document.getElementById('user-name').textContent = usuario.nombres + ' ' + usuario.apellidos;
+    document.getElementById('user-rol').textContent = usuario.esAdmin ? 'Administrador' : 'Vendedor';
+    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {
+        weekday:'long', year:'numeric', month:'long', day:'numeric'
+    });
+
+    if (usuario.esAdmin) {
+        document.querySelectorAll('.solo-admin').forEach(el => {
+            el.style.display = el.tagName === 'TD' || el.tagName === 'TH' ? 'table-cell' : 'flex';
+        });
     }
-};
 
-const getPedidosRecientes = async (req, res) => {
-    try {
-        const { idVendedor, esAdmin } = req.query;
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('IdVendedor', sql.Int, parseInt(idVendedor))
-            .input('EsAdmin', sql.Bit, parseInt(esAdmin))
-            .execute('SP_PedidosRecientes');
-
-        res.json({ ok: true, data: result.recordset });
-    } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
+    // ===== MENÚ MOBILE =====
+    function abrirMenu() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('overlay').classList.add('active');
     }
-};
-
-const getPedidos = async (req, res) => {
-    try {
-        const { idVendedor, esAdmin } = req.query;
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('IdVendedor', sql.Int, parseInt(idVendedor))
-            .input('EsAdmin', sql.Bit, parseInt(esAdmin))
-            .execute('SP_PedidosRecientes');
-
-        res.json({ ok: true, data: result.recordset });
-    } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
+    function cerrarMenu() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('active');
     }
-};
+    function cerrarSesion() {
+        localStorage.removeItem('ms_usuario');
+        window.location.href = '/login.html';
+    }
 
-module.exports = { getDashboardStats, getPedidosRecientes, getPedidos };
+    // ===== DATOS =====
+    let todosPedidos  = [];
+    let pedidosFiltrados = [];
+    let paginaActual  = 1;
+    const POR_PAGINA  = 25;
+
+    function formatFecha(f) {
+        if (!f) return '';
+        const p = f.substring(0,10).split('-');
+        return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    function redondearMultiplo5(v) {
+        if (!v || v <= 0) return 0;
+        return Math.round(v / 5) * 5;
+    }
+
+    async function cargarPedidos() {
+        try {
+            const res  = await fetch(`/api/pedidos/todos?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
+            const json = await res.json();
+            if (json.ok) {
+                todosPedidos = json.data;
+                document.getElementById('badge-pedidos').textContent = todosPedidos.length;
+                pedidosFiltrados = todosPedidos;
+                renderizarPagina();
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // ===== FILTROS =====
+    function aplicarFiltros() {
+        const sku         = document.getElementById('f-sku').value.trim().toLowerCase();
+        const desc        = document.getElementById('f-desc').value.trim().toLowerCase();
+        const cliente     = document.getElementById('f-cliente').value.trim().toLowerCase();
+        const articulo    = document.getElementById('f-articulo').value.trim().toLowerCase();
+        const tienda      = document.getElementById('f-tienda').value;
+        const vendedor    = document.getElementById('f-vendedor')?.value.trim().toLowerCase() || '';
+        const sinCliente  = document.getElementById('chk-sin-cliente').checked;
+        const sinPrecio   = document.getElementById('chk-sin-precio').checked;
+        const sinTracking = document.getElementById('chk-sin-tracking').checked;
+        const soloEntreg  = document.getElementById('chk-entregados').checked;
+        const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
+
+        pedidosFiltrados = todosPedidos.filter(p => {
+            if (sku         && !(p.CodigoArticulo   || '').toLowerCase().includes(sku))      return false;
+            if (desc        && !(p.DescripcionArticulo || '').toLowerCase().includes(desc))   return false;
+            if (cliente     && !(p.NombreCliente    || '').toLowerCase().includes(cliente))   return false;
+            if (articulo    && !(p.NombreArticulo   || '').toLowerCase().includes(articulo))  return false;
+            if (tienda      && p.NombreEmpresa !== tienda)                                    return false;
+            if (vendedor    && !((p.NombreVendedor  || '') + ' ' + (p.CodigoVendedor || '')).toLowerCase().includes(vendedor)) return false;
+            if (sinCliente  && p.IdCliente)                                                   return false;
+            if (sinPrecio   && p.ValorCobroCliente)                                           return false;
+            if (sinTracking && p.IdSeguimiento)                                               return false;
+            if (soloEntreg  && !p.EstaEntregado)                                              return false;
+            if (sinVendedor && p.IdVendedor)                                                  return false;
+            return true;
+        });
+        paginaActual = 1;
+        renderizarPagina();
+    }
+
+    function filtrarLocal(texto) {
+        const q = texto.trim().toLowerCase();
+        if (!q) { pedidosFiltrados = todosPedidos; paginaActual = 1; renderizarPagina(); return; }
+        pedidosFiltrados = todosPedidos.filter(p =>
+            (p.NombreArticulo      || '').toLowerCase().includes(q) ||
+            (p.NombreCliente       || '').toLowerCase().includes(q) ||
+            (p.CodigoArticulo      || '').toLowerCase().includes(q) ||
+            (p.Seguimiento         || '').toLowerCase().includes(q) ||
+            (p.NumeroPedido        || '').toLowerCase().includes(q)
+        );
+        paginaActual = 1;
+        renderizarPagina();
+    }
+
+    function limpiarFiltros() {
+        ['f-sku','f-desc','f-cliente','f-articulo'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('f-tienda').value = '';
+        if (document.getElementById('f-vendedor')) document.getElementById('f-vendedor').value = '';
+        ['chk-sin-cliente','chk-sin-precio','chk-sin-tracking','chk-entregados'].forEach(id => {
+            document.getElementById(id).checked = false;
+        });
+        if (document.getElementById('chk-sin-vendedor')) document.getElementById('chk-sin-vendedor').checked = false;
+        document.getElementById('search-global').value = '';
+        pedidosFiltrados = todosPedidos;
+        paginaActual = 1;
+        renderizarPagina();
+    }
+
+    // ===== RENDER =====
+    function renderizarPagina() {
+        const tbody   = document.getElementById('tabla-pedidos');
+        const inicio  = (paginaActual - 1) * POR_PAGINA;
+        const fin     = inicio + POR_PAGINA;
+        const pagina  = pedidosFiltrados.slice(inicio, fin);
+        const total   = pedidosFiltrados.length;
+        const totalPag = Math.ceil(total / POR_PAGINA) || 1;
+
+        document.getElementById('result-count').textContent = `${total} pedido${total !== 1 ? 's' : ''}`;
+
+        if (pagina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="16" style="color:#374151;text-align:center;padding:30px;">Sin resultados</td></tr>`;
+            document.getElementById('paginacion').innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = pagina.map((p, i) => {
+            const num         = inicio + i + 1;
+            const sugerido    = redondearMultiplo5(p.PrecioSugerido || 0);
+            const descCorta   = p.DescripcionArticulo
+                ? p.DescripcionArticulo.trim().substring(0,40) + (p.DescripcionArticulo.length > 40 ? '...' : '')
+                : '—';
+            const pesoLb      = p.Peso ? (p.Peso / 454).toFixed(2) : '—';
+            const tracking    = p.Seguimiento ? p.Seguimiento.substring(0,14) + '...' : '<span style="color:#4b5563">Sin tracking</span>';
+            const estado      = getEstadoBadge(p.IdSeguimiento, p.IdEstado);
+            const entregado   = p.EstaEntregado
+                ? '<span class="entregado-badge entregado-si">✓ Sí</span>'
+                : '<span class="entregado-badge entregado-no">✗ No</span>';
+            const vendedorTxt = p.CodigoVendedor
+                ? `<span style="color:#c084fc;font-weight:600;">${p.CodigoVendedor}</span><br><span style="font-size:10px;color:#6b7280;">${(p.NombreVendedor||'').trim()}</span>`
+                : '<span style="color:#ef4444;font-size:10px;">Sin vendedor</span>';
+            const tieneDesc   = p.DescripcionArticulo && p.DescripcionArticulo.length > 40;
+
+            return `<tr>
+                <td style="color:#4b5563;font-size:11px;">${num}</td>
+                <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${p.NumeroPedido || '—'}</td>
+                <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${formatFecha(p.FechaPedido)}</td>
+                <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
+                <td style="font-size:11px;color:#9ca3af;">${p.NombreEmpresa || '—'}</td>
+                <td style="font-size:10px;font-family:monospace;color:#6b7280;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.CodigoArticulo||''}">${p.CodigoArticulo ? p.CodigoArticulo.substring(0,12)+'...' : '—'}</td>
+                <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap;">${p.NombreCliente || 'Sin cliente'}</td>
+                <td class="solo-admin" style="font-size:11px;white-space:nowrap;">${vendedorTxt}</td>
+                <td style="max-width:140px;font-size:11px;color:#6b7280;">
+                    ${descCorta}
+                    ${tieneDesc ? `<button onclick="verDesc('${(p.NombreArticulo||'').replace(/'/g,"\\'")}','${(p.TallaColor||'').replace(/'/g,"\\'")}','${(p.DescripcionArticulo||'').replace(/[\r\n]/g,' ').replace(/'/g,"\\'")}')" style="background:none;border:none;color:#3b82f6;cursor:pointer;font-size:10px;padding:0 3px;">ver más</button>` : ''}
+                </td>
+                <td style="font-size:11px;color:#9ca3af;text-align:center;">${pesoLb}</td>
+                <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${p.TallaColor || '—'}</td>
+                <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap;font-weight:600;">
+                    ${p.ValorCobroCliente ? 'L ' + parseFloat(p.ValorCobroCliente).toFixed(2) : 'Sin precio'}
+                </td>
+                <td style="white-space:nowrap;">
+                    ${sugerido > 0 ? `<span class="precio-sugerido">L ${sugerido.toFixed(2)}</span>` : '<span style="color:#4b5563">—</span>'}
+                </td>
+                <td style="font-size:10px;font-family:monospace;color:#6b7280;white-space:nowrap;">${tracking}</td>
+                <td>${estado}</td>
+                <td style="text-align:center;">${entregado}</td>
+            </tr>`;
+        }).join('');
+
+        // Aplicar table-cell a celdas solo-admin
+        if (usuario.esAdmin) {
+            document.querySelectorAll('#tabla-pedidos td.solo-admin').forEach(td => {
+                td.style.display = 'table-cell';
+            });
+        }
+
+        // Paginación
+        document.getElementById('paginacion').innerHTML = `
+            <span class="pag-info">Mostrando ${total === 0 ? 0 : inicio+1}–${Math.min(fin,total)} de ${total}</span>
+            <div class="pag-btns">
+                <button class="pag-btn" onclick="cambiarPagina(${paginaActual-1})" ${paginaActual===1?'disabled':''}>← Anterior</button>
+                <span class="pag-current">${paginaActual} / ${totalPag}</span>
+                <button class="pag-btn" onclick="cambiarPagina(${paginaActual+1})" ${paginaActual===totalPag?'disabled':''}>Siguiente →</button>
+            </div>
+        `;
+    }
+
+    function cambiarPagina(p) {
+        const total = Math.ceil(pedidosFiltrados.length / POR_PAGINA) || 1;
+        if (p < 1 || p > total) return;
+        paginaActual = p;
+        renderizarPagina();
+        document.querySelector('.content').scrollTop = 0;
+    }
+
+    function getEstadoBadge(idSeg, idEstado) {
+        if (!idSeg) return '<span class="status sin-tracking">Sin tracking</span>';
+        switch(idEstado) {
+            case 1: return '<span class="status nuevo">Creado</span>';
+            case 2: return '<span class="status pendiente">En Miami</span>';
+            case 3: return '<span class="status en-camino">A Honduras</span>';
+            case 4: return '<span class="status entregado">Recibido</span>';
+            default: return '<span class="status pendiente">Pendiente</span>';
+        }
+    }
+
+    // ===== MODAL DESCRIPCIÓN =====
+    function verDesc(nombre, talla, desc) {
+        document.getElementById('desc-titulo').textContent = nombre;
+        document.getElementById('desc-talla').textContent  = talla ? '📐 ' + talla : '';
+        document.getElementById('desc-texto').textContent  = desc;
+        document.getElementById('modal-desc').style.display = 'flex';
+    }
+    function cerrarDesc() {
+        document.getElementById('modal-desc').style.display = 'none';
+    }
+
+    // ===== INIT =====
+    cargarPedidos();
+</script>
+</body>
+</html>

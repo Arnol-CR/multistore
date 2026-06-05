@@ -33,4 +33,15 @@ const getPedidos = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { getDashboardStats, getPedidosRecientes, getPedidos };
+const getTodosPedidos = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('IdVendedor', sql.Int, parseInt(req.query.idVendedor))
+      .input('EsAdmin', sql.Bit, parseInt(req.query.esAdmin))
+      .execute('SP_TodosLosPedidos');
+    res.json({ ok: true, data: result.recordset });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+module.exports = { getDashboardStats, getPedidosRecientes, getPedidos, getTodosPedidos };
