@@ -99,7 +99,6 @@
         .cliente-info-item span { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:2px; }
 
         /* Historial tabla */
-        .mov-compra td { }
         .mov-pago td { background:#0a100e; }
         .mov-devolucion td { background:#0a0e18; }
         .mov-tipo { font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; white-space:nowrap; }
@@ -148,7 +147,7 @@
         <div class="nav-label">Principal</div>
         <a class="nav-item" href="/dashboard.html">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            Dashboard
+            Inicio
         </a>
         <a class="nav-item" href="/pedidos.html">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -424,7 +423,8 @@
                 (c.NombreCompleto  || '').toLowerCase().includes(q) ||
                 (c.CodigoCliente   || '').toLowerCase().includes(q) ||
                 (c.NombreVendedor  || '').toLowerCase().includes(q) ||
-                (c.CodigoVendedor  || '').toLowerCase().includes(q)
+                (c.CodigoVendedor  || '').toLowerCase().includes(q) ||
+                (c.Telefeno        || '').toLowerCase().includes(q)
               )
             : todosClientes;
         renderizarResumen(clientesFiltrados);
@@ -454,7 +454,7 @@
         let totalGlobal = 0;
 
         Object.entries(grupos).forEach(([key, grupo]) => {
-            const totalGrupo = grupo.clientes.reduce((acc,c) => acc + (parseFloat(c.Saldo)||0), 0);
+            const totalGrupo = grupo.clientes.reduce((acc,c) => acc + (parseFloat(c.SaldoCalculado)||0), 0);
             totalGlobal += totalGrupo;
             const grupoId = 'grupo-' + key;
 
@@ -610,8 +610,11 @@
             c.NombreVendedor || '',
             c.CodigoVendedor || '',
             c.Telefeno || '',
-            c.CorreoElectronico || '',
-            parseFloat(c.Saldo||0).toFixed(2)
+            c.CantidadArticulos || 0,
+            parseFloat(c.TotalCompras||0).toFixed(2),
+            parseFloat(c.TotalPagado||0).toFixed(2),
+            c.PorcentajePagado || '0%',
+            parseFloat(c.SaldoCalculado||0).toFixed(2)
         ]);
         descargarCSV([cols,...filas], `saldos_clientes_${hoy()}.csv`);
     }

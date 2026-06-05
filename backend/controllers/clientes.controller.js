@@ -59,7 +59,9 @@ const desbloquearPrecio = async (req, res) => {
 const getTodosClientes = async (req, res) => {
   try {
     const pool = await poolPromise;
-    const result = await pool.request().execute('Se_Clientes');
+    const result = await pool.request()
+      .input('IdCliente', sql.Int, null)
+      .execute('Se_ClientesBuscarIdCliente');
     res.json({ ok: true, data: result.recordset });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
