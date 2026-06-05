@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Clientes</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+        .overlay.active { display:block; }
+
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; user-select:none; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-item.active svg { opacity:1; }
+        .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; transition:.15s; background:none; border:none; width:100%; }
+        .btn-salir:hover { color:#fca5a5; }
+        .btn-salir svg { width:16px; height:16px; }
+
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
+        .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
+        .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
+        .btn-menu svg { width:22px; height:22px; stroke:#9ca3af; stroke-width:2; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+
+        .content { flex:1; overflow-y:auto; padding:16px; }
+
+        /* Pestañas */
+        .tabs { display:flex; gap:4px; margin-bottom:16px; background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:6px; }
+        .tab { flex:1; padding:9px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:#6b7280; border:none; background:none; transition:.15s; }
+        .tab:hover { color:#e2e8f0; background:#13181f; }
+        .tab.active { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* Cards stats */
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+        .stat-card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; }
+        .stat-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .stat-val { font-size:22px; font-weight:800; color:#fff; }
+        .stat-sub { font-size:11px; color:#6b7280; margin-top:3px; }
+
+        /* Tabla resumen */
+        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:16px; margin-bottom:14px; }
+        .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+        .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
+
+        .tbl-wrap { overflow-x:auto; }
+        .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+        .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:8px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
+        .tbl td { padding:9px 8px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
+        .tbl tr:last-child td { border-bottom:none; }
+        .tbl tr:hover td { background:#0a0f18; }
+
+        /* Fila vendedor (grupo) */
+        .fila-vendedor td { background:#0d1520; color:#60a5fa; font-weight:700; font-size:12px; cursor:pointer; }
+        .fila-vendedor td:first-child { padding-left:12px; }
+        .fila-vendedor:hover td { background:#111e2e; }
+        .fila-cliente td { padding-left:32px; }
+        .fila-cliente.oculto { display:none; }
+        .fila-total td { background:#0a0f18; font-weight:700; color:#34d399; border-top:2px solid #1e2530; }
+
+        /* Saldo colores */
+        .saldo-positivo { color:#ef4444; font-weight:700; }
+        .saldo-cero { color:#34d399; font-weight:700; }
+        .saldo-negativo { color:#60a5fa; font-weight:700; }
+
+        /* Historial */
+        .buscar-cliente-wrap { display:flex; gap:10px; margin-bottom:16px; align-items:flex-end; flex-wrap:wrap; }
+        .buscar-input { flex:1; min-width:200px; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; }
+        .buscar-input:focus { border-color:#3b82f6; }
+        .buscar-resultados { position:absolute; background:#0d1017; border:1px solid #1e2530; border-radius:8px; z-index:50; width:100%; max-height:200px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
+        .buscar-item { padding:10px 14px; cursor:pointer; font-size:13px; color:#d1d5db; border-bottom:1px solid #111827; }
+        .buscar-item:hover { background:#13181f; color:#fff; }
+        .buscar-item:last-child { border-bottom:none; }
+        .buscar-wrap-rel { position:relative; flex:1; min-width:200px; }
+        .cliente-info-card { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; gap:20px; flex-wrap:wrap; }
+        .cliente-info-item { font-size:12px; }
+        .cliente-info-item span { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:2px; }
+
+        /* Historial tabla */
+        .mov-compra td { }
+        .mov-pago td { background:#0a100e; }
+        .mov-devolucion td { background:#0a0e18; }
+        .mov-tipo { font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; white-space:nowrap; }
+        .tipo-compra { background:#2d1f0a; color:#f59e0b; }
+        .tipo-pago { background:#0f2318; color:#34d399; }
+        .tipo-devolucion { background:#0c1f3d; color:#60a5fa; }
+
+        .btn-primary { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; white-space:nowrap; }
+        .btn-primary:hover { background:#2563eb; }
+        .btn-ghost { background:none; border:1px solid #1e2530; border-radius:7px; padding:9px 14px; font-size:12px; color:#6b7280; cursor:pointer; transition:.15s; white-space:nowrap; }
+        .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
+
+        /* Buscador filtro resumen */
+        .filtro-resumen { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+        .filtro-resumen input { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; width:220px; }
+        .filtro-resumen input:focus { border-color:#3b82f6; color:#e2e8f0; }
+
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+
+        @media (max-width:768px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
+            .btn-menu { display:flex; }
+            .stats-grid { grid-template-columns:1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <img src="/assets/Recurso-3.png" alt="logo" onerror="this.style.display='none'">
+        <div class="sidebar-logo-text">Multi<span>Store</span></div>
+    </div>
+    <div class="sidebar-user">
+        <div class="avatar" id="avatar">--</div>
+        <div>
+            <div class="user-info-name" id="user-name">--</div>
+            <div class="user-info-rol" id="user-rol">--</div>
+        </div>
+    </div>
+    <nav class="nav">
+        <div class="nav-label">Principal</div>
+        <a class="nav-item" href="/dashboard.html">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a class="nav-item" href="/pedidos.html">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Pedidos
+        </a>
+        <a class="nav-item" href="/tracking.html">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            Tracking
+        </a>
+        <a class="nav-item active" href="/clientes.html">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            Clientes
+        </a>
+        <div class="nav-label">Administración</div>
+        <a class="nav-item" href="/asignar-vendedor.html">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Asignar Vendedor
+        </a>
+        <a class="nav-item" href="/pagos.html">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Pagos Envíos
+        </a>
+        <a class="nav-item" href="#">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Reportes
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <button class="btn-salir" onclick="cerrarSesion()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Cerrar sesión
+        </button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="btn-menu" id="btn-menu" onclick="abrirMenu()">
+                <svg fill="none" viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/>
+                    <line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/>
+                    <line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/>
+                </svg>
+            </button>
+            <div>
+                <div class="topbar-title">Clientes</div>
+                <div class="topbar-fecha" id="topbar-fecha"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Pestañas -->
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab('resumen')">📊 Resumen de Saldos</button>
+            <button class="tab" onclick="cambiarTab('historial')">📋 Historial</button>
+            <button class="tab" onclick="cambiarTab('nuevo')">➕ Nuevo Cliente</button>
+        </div>
+
+        <!-- ===== TAB RESUMEN ===== -->
+        <div class="tab-content active" id="tab-resumen">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total clientes</div>
+                    <div class="stat-val" id="stat-total-clientes">--</div>
+                    <div class="stat-sub">Registrados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total por cobrar</div>
+                    <div class="stat-val" id="stat-total-saldo" style="color:#ef4444;">--</div>
+                    <div class="stat-sub">Saldo pendiente</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Clientes al día</div>
+                    <div class="stat-val" id="stat-al-dia" style="color:#34d399;">--</div>
+                    <div class="stat-sub">Saldo ≤ 0</div>
+                </div>
+            </div>
+
+            <!-- Filtro -->
+            <div class="filtro-resumen">
+                <input type="text" id="f-buscar-cliente" placeholder="🔍 Buscar cliente o vendedor..." oninput="filtrarResumen(this.value)">
+                <button class="btn-primary" onclick="descargarExcelResumen()">📥 Excel</button>
+            </div>
+
+            <!-- Tabla agrupada -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot"></span>Clientes por vendedor</div>
+                    <span style="font-size:12px;color:#4b5563;" id="resumen-count"></span>
+                </div>
+                <div class="tbl-wrap">
+                    <table class="tbl" id="tabla-resumen">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cliente</th>
+                                <th>Código</th>
+                                <th>Teléfono</th>
+                                <th>Correo</th>
+                                <th>Saldo (L)</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-resumen">
+                            <tr><td colspan="7" style="color:#374151;text-align:center;padding:30px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB HISTORIAL ===== -->
+        <div class="tab-content" id="tab-historial">
+            <!-- Buscador -->
+            <div class="card" style="margin-bottom:14px;">
+                <div style="font-size:11px;color:#4b5563;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Buscar cliente</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                    <div class="buscar-wrap-rel">
+                        <input class="buscar-input" id="input-buscar-hist" type="text"
+                            placeholder="Escribe el nombre del cliente..."
+                            oninput="buscarClienteHistorial(this.value)"
+                            autocomplete="off">
+                        <div class="buscar-resultados" id="resultados-hist" style="display:none;"></div>
+                    </div>
+                    <button class="btn-ghost" onclick="limpiarHistorial()">✕ Limpiar</button>
+                    <button class="btn-primary" onclick="descargarExcelHistorial()" id="btn-excel-hist" style="display:none;">📥 Excel</button>
+                </div>
+            </div>
+
+            <!-- Info cliente seleccionado -->
+            <div class="cliente-info-card" id="cliente-info-card" style="display:none;">
+                <div class="cliente-info-item">
+                    <span>Cliente</span>
+                    <strong id="hist-nombre" style="color:#fff;font-size:14px;"></strong>
+                </div>
+                <div class="cliente-info-item">
+                    <span>Código</span>
+                    <strong id="hist-codigo" style="color:#9ca3af;"></strong>
+                </div>
+                <div class="cliente-info-item">
+                    <span>Vendedor</span>
+                    <strong id="hist-vendedor" style="color:#c084fc;"></strong>
+                </div>
+                <div class="cliente-info-item" style="margin-left:auto;">
+                    <span>Saldo actual</span>
+                    <strong id="hist-saldo" style="font-size:18px;"></strong>
+                </div>
+            </div>
+
+            <!-- Tabla historial -->
+            <div class="card" id="card-historial" style="display:none;">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot" style="background:#f59e0b;"></span>Movimientos</div>
+                    <span style="font-size:12px;color:#4b5563;" id="hist-count"></span>
+                </div>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Transacción</th>
+                                <th>N° Referencia</th>
+                                <th style="text-align:right;">Monto (L)</th>
+                                <th style="text-align:right;">Saldo (L)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-historial">
+                            <tr><td colspan="6" style="color:#374151;text-align:center;padding:30px;">Selecciona un cliente</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB NUEVO CLIENTE ===== -->
+        <div class="tab-content" id="tab-nuevo">
+            <div class="card" style="max-width:500px;">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot" style="background:#34d399;"></span>Registrar nuevo cliente</div>
+                </div>
+                <p style="color:#4b5563;font-size:13px;">Próximamente...</p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    // ===== AUTH =====
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    document.getElementById('avatar').textContent = (usuario.nombres[0] + (usuario.apellidos?.[0] || '')).toUpperCase();
+    document.getElementById('user-name').textContent = usuario.nombres + ' ' + (usuario.apellidos || '');
+    document.getElementById('user-rol').textContent = usuario.esAdmin ? 'Administrador' : 'Vendedor';
+    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {
+        weekday:'long', year:'numeric', month:'long', day:'numeric'
+    });
+
+    // ===== MENÚ =====
+    function abrirMenu() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('overlay').classList.add('active');
+    }
+    function cerrarMenu() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('active');
+    }
+    function cerrarSesion() {
+        localStorage.removeItem('ms_usuario');
+        window.location.href = '/login.html';
+    }
+
+    // ===== PESTAÑAS =====
+    function cambiarTab(tab) {
+        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['resumen','historial','nuevo'][i] === tab));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    // ===== FORMATO =====
+    function fmtSaldo(val) {
+        if (val === null || val === undefined) return '—';
+        const n = parseFloat(val);
+        return 'L ' + Math.abs(n).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+    function fmtFecha(f) {
+        if (!f) return '';
+        const p = (f.substring ? f.substring(0,10) : String(f).substring(0,10)).split('-');
+        return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+    function claseSaldo(val) {
+        const n = parseFloat(val);
+        if (n > 0) return 'saldo-positivo';
+        if (n < 0) return 'saldo-negativo';
+        return 'saldo-cero';
+    }
+
+    // ===== RESUMEN =====
+    let todosClientes = [];
+    let clientesFiltrados = [];
+
+    async function cargarResumen() {
+        try {
+            const res  = await fetch('/api/clientes/todos');
+            const json = await res.json();
+            if (!json.ok) return;
+            todosClientes = json.data;
+            clientesFiltrados = todosClientes;
+            actualizarStats();
+            renderizarResumen(todosClientes);
+        } catch(e) { console.error(e); }
+    }
+
+    function actualizarStats() {
+        const total  = todosClientes.length;
+        const suma   = todosClientes.reduce((acc,c) => acc + (parseFloat(c.Saldo)||0), 0);
+        const alDia  = todosClientes.filter(c => (parseFloat(c.Saldo)||0) <= 0).length;
+        document.getElementById('stat-total-clientes').textContent = total;
+        document.getElementById('stat-total-saldo').textContent = 'L ' + suma.toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
+        document.getElementById('stat-al-dia').textContent = alDia;
+    }
+
+    function filtrarResumen(texto) {
+        const q = texto.trim().toLowerCase();
+        clientesFiltrados = q
+            ? todosClientes.filter(c =>
+                (c.NombreCompleto  || '').toLowerCase().includes(q) ||
+                (c.CodigoCliente   || '').toLowerCase().includes(q) ||
+                (c.NombreVendedor  || '').toLowerCase().includes(q) ||
+                (c.CodigoVendedor  || '').toLowerCase().includes(q)
+              )
+            : todosClientes;
+        renderizarResumen(clientesFiltrados);
+    }
+
+    function renderizarResumen(clientes) {
+        const tbody = document.getElementById('tbody-resumen');
+        document.getElementById('resumen-count').textContent = clientes.length + ' clientes';
+
+        if (clientes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="color:#374151;text-align:center;padding:24px;">Sin resultados</td></tr>';
+            return;
+        }
+
+        // Agrupar por vendedor
+        const grupos = {};
+        clientes.forEach(c => {
+            const key = c.IdVendedor || 'sin';
+            const nom = c.NombreVendedor ? c.NombreVendedor.trim() : 'Sin vendedor';
+            const cod = c.CodigoVendedor || '';
+            if (!grupos[key]) grupos[key] = { nombre: nom, codigo: cod, clientes: [] };
+            grupos[key].clientes.push(c);
+        });
+
+        let html = '';
+        let numGlobal = 1;
+        let totalGlobal = 0;
+
+        Object.entries(grupos).forEach(([key, grupo]) => {
+            const totalGrupo = grupo.clientes.reduce((acc,c) => acc + (parseFloat(c.Saldo)||0), 0);
+            totalGlobal += totalGrupo;
+            const grupoId = 'grupo-' + key;
+
+            // Fila vendedor
+            html += `<tr class="fila-vendedor" onclick="toggleGrupo('${grupoId}')">
+                <td colspan="5">
+                    <span style="margin-right:8px;" id="ico-${grupoId}">▼</span>
+                    👤 ${grupo.nombre} <span style="color:#4b5563;font-size:11px;margin-left:6px;">${grupo.codigo}</span>
+                    <span style="color:#4b5563;font-size:11px;margin-left:8px;">(${grupo.clientes.length} cliente${grupo.clientes.length !== 1 ? 's' : ''})</span>
+                </td>
+                <td class="${claseSaldo(totalGrupo)}" style="text-align:right;">${fmtSaldo(totalGrupo)}</td>
+                <td></td>
+            </tr>`;
+
+            // Filas clientes
+            grupo.clientes.forEach(c => {
+                html += `<tr class="fila-cliente ${grupoId}">
+                    <td style="color:#4b5563;font-size:11px;">${numGlobal++}</td>
+                    <td style="font-weight:600;">${c.NombreCompleto || '—'}</td>
+                    <td style="font-size:11px;color:#6b7280;">${c.CodigoCliente || '—'}</td>
+                    <td style="font-size:11px;color:#9ca3af;">${c.Telefeno || '—'}</td>
+                    <td style="font-size:11px;color:#6b7280;">${c.CorreoElectronico || '—'}</td>
+                    <td class="${claseSaldo(c.Saldo)}" style="text-align:right;">${fmtSaldo(c.Saldo)}</td>
+                    <td>
+                        <button onclick="verHistorialCliente(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.NombreVendedor||'').replace(/'/g,"\\'")} ${c.CodigoVendedor||''}', ${c.Saldo||0})"
+                            style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">
+                            📋 Historial
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        });
+
+        // Fila total global
+        html += `<tr class="fila-total">
+            <td colspan="5" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
+            <td class="${claseSaldo(totalGlobal)}" style="text-align:right;">${fmtSaldo(totalGlobal)}</td>
+            <td></td>
+        </tr>`;
+
+        tbody.innerHTML = html;
+    }
+
+    function toggleGrupo(grupoId) {
+        const filas = document.querySelectorAll('.' + grupoId);
+        const ico = document.getElementById('ico-' + grupoId);
+        let oculto = false;
+        filas.forEach(f => {
+            f.classList.toggle('oculto');
+            oculto = f.classList.contains('oculto');
+        });
+        if (ico) ico.textContent = oculto ? '▶' : '▼';
+    }
+
+    // ===== HISTORIAL =====
+    let buscarTimeout = null;
+    let clienteHistorialActual = null;
+
+    function buscarClienteHistorial(texto) {
+        const drop = document.getElementById('resultados-hist');
+        clearTimeout(buscarTimeout);
+        if (texto.length < 2) { drop.style.display = 'none'; return; }
+        buscarTimeout = setTimeout(async () => {
+            try {
+                const res  = await fetch(`/api/clientes/buscar?nombre=${encodeURIComponent(texto)}`);
+                const json = await res.json();
+                if (json.ok && json.data.length > 0) {
+                    drop.innerHTML = json.data.map(c => `
+                        <div class="buscar-item" onclick="seleccionarClienteHistorial(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.CodigoVendedor||'')}', ${c.Saldo||0})">
+                            <strong>${c.NombreCompleto}</strong>
+                            <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
+                        </div>`).join('');
+                    drop.style.display = 'block';
+                } else {
+                    drop.innerHTML = '<div class="buscar-item" style="color:#4b5563;">Sin resultados</div>';
+                    drop.style.display = 'block';
+                }
+            } catch(e) {}
+        }, 350);
+    }
+
+    async function seleccionarClienteHistorial(idCliente, nombre, codigo, vendedor, saldo) {
+        document.getElementById('input-buscar-hist').value = nombre;
+        document.getElementById('resultados-hist').style.display = 'none';
+        clienteHistorialActual = { idCliente, nombre, codigo, vendedor, saldo };
+
+        // Info card
+        document.getElementById('hist-nombre').textContent  = nombre;
+        document.getElementById('hist-codigo').textContent  = codigo;
+        document.getElementById('hist-vendedor').textContent = vendedor;
+        const saldoEl = document.getElementById('hist-saldo');
+        saldoEl.textContent = fmtSaldo(saldo);
+        saldoEl.className   = claseSaldo(saldo);
+        document.getElementById('cliente-info-card').style.display = 'flex';
+
+        // Cargar historial
+        document.getElementById('card-historial').style.display = 'block';
+        document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="6" style="color:#374151;text-align:center;padding:20px;">Cargando...</td></tr>';
+
+        try {
+            const res  = await fetch(`/api/clientes/historial?idCliente=${idCliente}`);
+            const json = await res.json();
+            if (json.ok) renderizarHistorial(json.data);
+        } catch(e) { console.error(e); }
+    }
+
+    function verHistorialCliente(idCliente, nombre, codigo, vendedor, saldo) {
+        cambiarTab('historial');
+        seleccionarClienteHistorial(idCliente, nombre, codigo, vendedor, saldo);
+    }
+
+    function renderizarHistorial(data) {
+        const tbody = document.getElementById('tbody-historial');
+        document.getElementById('hist-count').textContent = data.length + ' movimientos';
+        document.getElementById('btn-excel-hist').style.display = data.length > 0 ? 'block' : 'none';
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:#374151;text-align:center;padding:24px;">Sin movimientos</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.map(m => {
+            const tipo = m.TipoMovimiento || '';
+            const claseRow = tipo === 'Pago' ? 'mov-pago' : tipo === 'Devolución' ? 'mov-devolucion' : 'mov-compra';
+            const claseTipo = tipo === 'Pago' ? 'tipo-pago' : tipo === 'Devolución' ? 'tipo-devolucion' : 'tipo-compra';
+            return `<tr class="${claseRow}">
+                <td style="color:#4b5563;font-size:11px;">${m.NumeroFila}</td>
+                <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${fmtFecha(m.FechaMovimiento)}</td>
+                <td><span class="mov-tipo ${claseTipo}">${tipo}</span></td>
+                <td style="font-size:11px;font-family:monospace;color:#6b7280;">${m.NumeroReferencia || '—'}</td>
+                <td style="text-align:right;font-size:12px;color:${tipo==='Pago'?'#34d399':'#d1d5db'};font-weight:600;">${m.Monto || '—'}</td>
+                <td style="text-align:right;font-size:12px;font-weight:700;color:${parseFloat((m.SaldoFecha||'').replace(/[^0-9.-]/g,''))>0?'#ef4444':'#34d399'};">${m.SaldoFecha || '—'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function limpiarHistorial() {
+        document.getElementById('input-buscar-hist').value = '';
+        document.getElementById('resultados-hist').style.display = 'none';
+        document.getElementById('cliente-info-card').style.display = 'none';
+        document.getElementById('card-historial').style.display = 'none';
+        document.getElementById('btn-excel-hist').style.display = 'none';
+        clienteHistorialActual = null;
+    }
+
+    // ===== EXCEL RESUMEN =====
+    function descargarExcelResumen() {
+        if (clientesFiltrados.length === 0) { alert('Sin datos'); return; }
+        const cols = ['Cliente','Código','Vendedor','Código Vendedor','Teléfono','Correo','Saldo (L)'];
+        const filas = clientesFiltrados.map(c => [
+            c.NombreCompleto || '',
+            c.CodigoCliente || '',
+            c.NombreVendedor || '',
+            c.CodigoVendedor || '',
+            c.Telefeno || '',
+            c.CorreoElectronico || '',
+            parseFloat(c.Saldo||0).toFixed(2)
+        ]);
+        descargarCSV([cols,...filas], `saldos_clientes_${hoy()}.csv`);
+    }
+
+    // ===== EXCEL HISTORIAL =====
+    function descargarExcelHistorial() {
+        const rows = document.querySelectorAll('#tbody-historial tr');
+        if (!clienteHistorialActual || rows.length === 0) return;
+        const cols = ['#','Fecha','Transacción','N° Referencia','Monto (L)','Saldo (L)'];
+        const filas = [];
+        rows.forEach(r => {
+            const tds = r.querySelectorAll('td');
+            if (tds.length >= 6) filas.push([...tds].map(td => td.textContent.trim()));
+        });
+        descargarCSV([cols,...filas], `historial_${clienteHistorialActual.codigo}_${hoy()}.csv`);
+    }
+
+    function descargarCSV(rows, filename) {
+        const bom = '\uFEFF';
+        const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+        const a = Object.assign(document.createElement('a'), {
+            href: URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})),
+            download: filename
+        });
+        a.click();
+    }
+
+    function hoy() { return new Date().toISOString().substring(0,10); }
+
+    // Cerrar dropdown al click fuera
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.buscar-wrap-rel')) {
+            document.getElementById('resultados-hist').style.display = 'none';
+        }
+    });
+
+    // ===== INIT =====
+    cargarResumen();
+</script>
+</body>
+</html>
