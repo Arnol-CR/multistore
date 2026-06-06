@@ -418,7 +418,7 @@ Si no encuentras un campo, usa null. La fecha debe estar en formato YYYY-MM-DD.`
 
         if (resultados.length > 0) {
             drop.innerHTML = resultados.map(c => `
-                <div class="buscar-drop-item" onclick="seleccionarCliente(${c.IdCliente},'${(c.NombreCompleto||'').replace(/'/g,"\\'")}','${c.CodigoCliente||''}',${c.SaldoCalculado||0})">
+                <div class="buscar-drop-item" onclick="seleccionarCliente(${c.IdCliente},'${(c.NombreCompleto||'').split("'").join(" ")}','${c.CodigoCliente||''}',${c.SaldoCalculado||0})">
                     <strong>${c.NombreCompleto}</strong>
                     <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
                     <span style="color:#f59e0b;font-size:11px;margin-left:8px;">L ${parseFloat(c.SaldoCalculado||0).toLocaleString('es-HN',{minimumFractionDigits:2})}</span>
