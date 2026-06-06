@@ -38,7 +38,41 @@
         .topbar-title { font-size:16px; font-weight:700; color:#fff; }
         .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
 
-        .content { flex:1; overflow-y:auto; padding:16px; display:flex; justify-content:center; align-items:flex-start; }
+        .content { flex:1; overflow-y:auto; padding:16px; }
+        .content-inner { display:grid; grid-template-columns:minmax(0,520px) minmax(0,1fr); gap:16px; align-items:flex-start; max-width:1100px; margin:0 auto; }
+
+        /* Panel recientes */
+        .recientes-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+        .recientes-header .card-title { margin-bottom:0; }
+        .btn-recargar { background:none; border:none; cursor:pointer; color:#4b5563; padding:4px; border-radius:6px; transition:.15s; display:flex; align-items:center; }
+        .btn-recargar:hover { color:#60a5fa; background:#13181f; }
+        .btn-recargar svg { width:15px; height:15px; }
+        .btn-recargar.spin svg { animation:giro .6s linear infinite; }
+        @keyframes giro { to { transform:rotate(360deg); } }
+
+        .pago-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #111827; }
+        .pago-row:last-child { border-bottom:none; }
+        .pago-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0; }
+        .pago-info { flex:1; min-width:0; }
+        .pago-nombre { font-size:12.5px; font-weight:600; color:#d1d5db; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .pago-meta  { font-size:11px; color:#4b5563; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .pago-monto { text-align:right; flex-shrink:0; }
+        .pago-monto-val { font-size:13px; font-weight:700; color:#34d399; }
+        .pago-monto-fecha { font-size:10px; color:#374151; margin-top:1px; }
+
+        .recientes-empty { text-align:center; padding:32px 16px; color:#374151; font-size:13px; }
+        .recientes-empty svg { width:32px; height:32px; stroke:#1e2530; margin:0 auto 10px; display:block; }
+
+        .recientes-total { margin-top:14px; padding-top:14px; border-top:1px solid #1e2530; display:flex; justify-content:space-between; align-items:center; }
+        .recientes-total-label { font-size:11px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .recientes-total-val { font-size:15px; font-weight:700; color:#34d399; }
+
+        @media (max-width:900px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
+            .btn-menu { display:flex; }
+            .content-inner { grid-template-columns:1fr; }
+        }
 
         .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:20px; }
         .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
@@ -101,11 +135,6 @@
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
-        @media (max-width:900px) {
-            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
-            .btn-menu { display:flex; }
-        }
         @media (max-width:600px) {
             .content { padding:10px; }
             .card { padding:14px; }
@@ -161,9 +190,10 @@
     </div>
 
     <div class="content">
+      <div class="content-inner">
 
         <!-- PANEL FORMULARIO -->
-        <div class="card" style="width:100%;max-width:600px;margin:0 auto;">
+        <div class="card" style="width:100%;">
             <div class="card-title"><span class="dot" style="background:#34d399;"></span>Datos del pago</div>
 
             <!-- Cliente -->
@@ -229,6 +259,23 @@
             <button class="btn-limpiar" onclick="limpiarFormulario()">✕ Limpiar todo</button>
         </div>
 
+        <!-- PANEL PAGOS RECIENTES -->
+        <div class="card" style="width:100%;">
+            <div class="recientes-header">
+                <div class="card-title" style="margin-bottom:0;"><span class="dot" style="background:#3b82f6;"></span>Pagos recientes</div>
+                <button class="btn-recargar" id="btn-recargar" onclick="cargarRecientes()" title="Actualizar">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                </button>
+            </div>
+            <div id="recientes-lista">
+                <div class="recientes-empty">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Cargando pagos...
+                </div>
+            </div>
+        </div>
+
+      </div><!-- /content-inner -->
     </div>
 </main>
 
@@ -296,101 +343,6 @@
         document.getElementById('upload-area').classList.remove('drag');
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) handleFile(file);
-    }
-
-    // ===== IA EXTRACCIÓN =====
-    async function extraerConIA() {
-        const texto  = document.getElementById('texto-comprobante').value.trim();
-        const resEl  = document.getElementById('ia-resultado');
-        const btnIA  = document.getElementById('btn-ia');
-
-        if (!imagenBase64 && !texto) {
-            resEl.className = 'ia-resultado error';
-            resEl.style.display = 'block';
-            resEl.textContent = '⚠️ Sube una imagen o pega el texto del comprobante primero';
-            return;
-        }
-
-        btnIA.disabled = true;
-        btnIA.textContent = '⏳ Analizando comprobante...';
-        resEl.style.display = 'none';
-
-        try {
-            const messages = [];
-            const content  = [];
-
-            if (imagenBase64) {
-                content.push({ type:'image', source:{ type:'base64', media_type:'image/png', data:imagenBase64 } });
-            }
-            content.push({ type:'text', text: `Eres un asistente que extrae datos de comprobantes de pago bancarios hondureños.
-${texto ? 'Texto del comprobante:\n' + texto : ''}
-Extrae SOLO estos campos en JSON (sin markdown, sin explicaciones):
-{
-  "fecha": "YYYY-MM-DD o null",
-  "monto": numero_decimal_o_null,
-  "referencia": "string_o_null",
-  "metodo": "Efectivo|Transferencia|null",
-  "observaciones": "descripcion_breve_o_null"
-}
-Si no encuentras un campo, usa null. La fecha debe estar en formato YYYY-MM-DD.` });
-
-            messages.push({ role:'user', content });
-
-            const res  = await fetch('https://api.anthropic.com/v1/messages', {
-                method:'POST',
-                headers:{ 'Content-Type':'application/json' },
-                body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, messages })
-            });
-            const data = await res.json();
-            const raw  = data.content?.find(b => b.type==='text')?.text || '{}';
-
-            // Llenar formulario con clase ia-filled
-            let extraidos = [];
-            if (json.fecha) {
-                document.getElementById('f-fecha').value = json.fecha;
-                document.getElementById('f-fecha').classList.add('ia-filled');
-                extraidos.push('fecha');
-            }
-            if (json.monto) {
-                document.getElementById('f-monto').value = json.monto;
-                document.getElementById('f-monto').classList.add('ia-filled');
-                extraidos.push('monto');
-            }
-            if (json.referencia) {
-                document.getElementById('f-referencia').value = json.referencia;
-                document.getElementById('f-referencia').classList.add('ia-filled');
-                extraidos.push('referencia');
-            }
-            if (json.metodo) {
-                const sel = document.getElementById('f-metodo');
-                for (let opt of sel.options) {
-                    if (opt.text.toLowerCase().includes(json.metodo.toLowerCase())) {
-                        sel.value = opt.value;
-                        sel.classList.add('ia-filled');
-                        extraidos.push('método');
-                        break;
-                    }
-                }
-            }
-            if (json.observaciones) {
-                document.getElementById('f-observaciones').value = json.observaciones;
-                extraidos.push('observaciones');
-            }
-
-            resEl.className = 'ia-resultado';
-            resEl.style.display = 'block';
-            resEl.textContent = extraidos.length > 0
-                ? `✅ Datos extraídos: ${extraidos.join(', ')}. Verifica y completa lo que falta.`
-                : '⚠️ No se pudieron extraer datos. Completa el formulario manualmente.';
-
-        } catch(e) {
-            resEl.className = 'ia-resultado error';
-            resEl.style.display = 'block';
-            resEl.textContent = '❌ Error al procesar: ' + e.message;
-        } finally {
-            btnIA.disabled = false;
-            btnIA.innerHTML = '✨ Extraer datos con IA';
-        }
     }
 
     // ===== BÚSQUEDA CLIENTE =====
@@ -481,6 +433,7 @@ Si no encuentras un campo, usa null. La fecha debe estar en formato YYYY-MM-DD.`
                 msg.style.display = 'block';
                 msg.textContent = `✅ Pago de L ${parseFloat(monto).toLocaleString('es-HN',{minimumFractionDigits:2})} registrado correctamente`;
                 limpiarFormulario();
+                cargarRecientes();
             } else {
                 msg.className = 'msg-box err';
                 msg.style.display = 'block';
@@ -505,18 +458,51 @@ Si no encuentras un campo, usa null. La fecha debe estar en formato YYYY-MM-DD.`
         document.getElementById('f-cuenta').value = '';
         document.getElementById('f-referencia').value = '';
         document.getElementById('f-observaciones').value = '';
-        document.getElementById('texto-comprobante').value = '';
-        document.getElementById('preview-img').style.display = 'none';
-        document.getElementById('upload-placeholder').style.display = 'block';
-        document.getElementById('ia-resultado').style.display = 'none';
-        document.getElementById('input-imagen').value = '';
         ['f-fecha','f-monto','f-referencia','f-metodo'].forEach(id => {
             document.getElementById(id).classList.remove('ia-filled');
         });
     }
 
+    // ===== PAGOS RECIENTES =====
+    async function cargarRecientes() {
+        const btn  = document.getElementById('btn-recargar');
+        const lista = document.getElementById('recientes-lista');
+        btn.classList.add('spin');
+        try {
+            const res  = await fetch('/api/pagos/recientes?limit=10');
+            const json = await res.json();
+            btn.classList.remove('spin');
+            if (!json.ok || !json.data || json.data.length === 0) {
+                lista.innerHTML = '<div class="recientes-empty"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Sin pagos registrados aún</div>';
+                document.getElementById('recientes-total').style.display = 'none';
+                return;
+            }
+            // Calcular total del día
+            const hoy = new Date().toISOString().substring(0,10);
+            lista.innerHTML = json.data.map(p => {
+                const iniciales = ((p.NombreCliente||'?')[0] + ((p.NombreCliente||'?').split(' ')[1]?.[0]||'')).toUpperCase();
+                const fechaStr  = p.FechaPago ? new Date(p.FechaPago).toLocaleDateString('es-HN',{day:'2-digit',month:'short'}) : '—';
+                return `<div class="pago-row">
+                    <div class="pago-avatar">${iniciales}</div>
+                    <div class="pago-info">
+                        <div class="pago-nombre">${p.NombreCliente||'—'}</div>
+                        <div class="pago-meta">${p.Metodo||''} · ${p.NombreCuenta||''} ${p.Referencia ? '· #'+p.Referencia : ''}</div>
+                    </div>
+                    <div class="pago-monto">
+                        <div class="pago-monto-val">L ${parseFloat(p.Cantidad||0).toLocaleString('es-HN',{minimumFractionDigits:2})}</div>
+                        <div class="pago-monto-fecha">${fechaStr}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch(e) {
+            btn.classList.remove('spin');
+            lista.innerHTML = '<div class="recientes-empty" style="color:#ef4444;">Error al cargar pagos</div>';
+        }
+    }
+
     cargarCatalogos();
     cargarClientesPagos();
+    cargarRecientes();
 </script>
 </body>
 </html>

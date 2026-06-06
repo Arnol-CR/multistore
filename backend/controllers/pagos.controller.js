@@ -34,4 +34,26 @@ const registrarPago = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { getMetodosPagos, getCuentasBanco, registrarPago };
+const getPagosRecientes = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 15;
+    const pool  = await poolPromise;
+    const result = await pool.request()
+      .input('Limit', sql.Int, limit)
+      .query(`
+        SELECT TOP (@Limit)
+          IdMovimientoCliente AS IdPago,
+          CONVERT(varchar(10), FechaMovimiento, 120) AS FechaPago,
+          Monto AS Cantidad,
+          NumeroReferencia AS Referencia,
+          NombreCompleto AS NombreCliente,
+          Metodo,
+          NombreCuenta
+        FROM vw_pagos
+        ORDER BY FechaMovimiento DESC, IdMovimientoCliente DESC
+      `);
+    res.json({ ok: true, data: result.recordset });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+module.exports = { getMetodosPagos, getCuentasBanco, registrarPago, getPagosRecientes };
