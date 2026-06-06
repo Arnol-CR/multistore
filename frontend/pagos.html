@@ -269,7 +269,7 @@
                 cuentas.data.forEach(c => {
                     const o = document.createElement('option');
                     o.value = c.IdCuentaBanco;
-                    o.textContent = `${c.NombreCuenta} · ${c.Banco} · ${c.NumeroCuenta||''}`.split("'").join(" ");
+                   o.textContent = (c.NombreCuenta || '') + ' · ' + (c.Banco || '') + ' · ' + (c.NumeroCuenta || '');
                     sel.appendChild(o);
                 });
             }
