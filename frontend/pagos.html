@@ -343,7 +343,6 @@ Si no encuentras un campo, usa null. La fecha debe estar en formato YYYY-MM-DD.`
             });
             const data = await res.json();
             const raw  = data.content?.find(b => b.type==='text')?.text || '{}';
-            const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
 
             // Llenar formulario con clase ia-filled
             let extraidos = [];
