@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Crear Pedido</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
+        .overlay.active { display:block; }
+
+        /* ── Sidebar ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; transition:transform .25s; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,.3)); }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; text-decoration:none; cursor:pointer; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-item.active svg { opacity:1; }
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
+        .nav-badge.warn { background:#3d1f00; color:#f59e0b; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
+
+        /* ── Main ── */
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+        .btn-menu { display:none; background:none; border:none; cursor:pointer; padding:4px; }
+        .btn-menu svg { width:22px; height:22px; stroke:#9ca3af; stroke-width:2; }
+        .topbar-left { display:flex; align-items:center; gap:12px; flex:1; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-sub { font-size:11px; color:#4b5563; margin-top:1px; }
+
+        /* ── Tabs ── */
+        .tabs-bar { display:flex; background:#0d1017; border-bottom:1px solid #1e2530; flex-shrink:0; padding:0 8px; gap:2px; }
+        .tab-btn { padding:13px 20px; font-size:13px; font-weight:600; color:#4b5563; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; transition:.15s; display:flex; align-items:center; gap:7px; }
+        .tab-btn.active { color:#60a5fa; border-bottom-color:#3b82f6; }
+        .tab-btn:hover:not(.active) { color:#9ca3af; }
+        .tab-btn .tab-icon { width:15px; height:15px; }
+
+        .content { flex:1; overflow-y:auto; padding:20px; background:#070910; }
+        .tab-pane { display:none; }
+        .tab-pane.active { display:block; }
+
+        /* ── Cards ── */
+        .card { background:#0d1017; border:1px solid #1e2530; border-radius:12px; padding:20px; margin-bottom:16px; }
+        .card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+        .card-title { font-size:11px; font-weight:700; color:#4b5563; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+        .card-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+        /* ── Formulario ── */
+        .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; }
+        .form-group { display:flex; flex-direction:column; gap:6px; }
+        .form-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .form-input { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:10px 13px; color:#e2e8f0; font-size:13px; outline:none; font-family:inherit; transition:.15s; }
+        .form-input:focus { border-color:#3b82f6; background:#0c1525; }
+        .form-input::placeholder { color:#374151; }
+        select.form-input option { background:#0d1017; }
+        .num-pedido { background:#071a11; border:1px solid #14532d; border-radius:8px; padding:10px 14px; color:#4ade80; font-size:15px; font-weight:800; font-family:monospace; letter-spacing:.5px; }
+
+        /* ── Botones ── */
+        .btn { border:none; border-radius:8px; padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+        .btn-blue { background:#1d4ed8; color:#fff; }
+        .btn-blue:hover { background:#2563eb; }
+        .btn-green { background:#065f46; color:#34d399; border:1px solid #14532d; }
+        .btn-green:hover { background:#047857; color:#6ee7b7; }
+        .btn-ghost { background:transparent; color:#6b7280; border:1px solid #1e2530; }
+        .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
+        .btn-danger { background:#3f0f0f; color:#f87171; border:1px solid #7f1d1d; }
+        .btn-danger:hover { background:#5a1010; }
+        .btn-sm { padding:6px 12px; font-size:11px; border-radius:6px; }
+        .btn-icon { width:36px; height:36px; padding:0; justify-content:center; }
+
+        /* ── Tabla ── */
+        .tbl-wrap { overflow-x:auto; border-radius:8px; border:1px solid #111827; }
+        .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+        .tbl thead tr { background:#0a0e18; }
+        .tbl th { color:#374151; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:10px 12px; text-align:left; white-space:nowrap; border-bottom:1px solid #111827; font-weight:700; }
+        .tbl td { padding:10px 12px; border-bottom:1px solid #0d1017; color:#9ca3af; vertical-align:middle; white-space:nowrap; }
+        .tbl tbody tr:last-child td { border-bottom:none; }
+        .tbl tbody tr:hover td { background:#0a0f18; }
+        .tbl tbody tr.sel td { background:#0c1f3d; color:#93c5fd; }
+        .tbl-empty { text-align:center; color:#374151; padding:28px; font-size:13px; }
+
+        /* ── Badges ── */
+        .badge { font-size:10px; padding:3px 9px; border-radius:20px; font-weight:700; display:inline-block; }
+        .badge-green { background:#052e16; color:#4ade80; }
+        .badge-amber { background:#1c0d00; color:#fbbf24; }
+        .badge-blue  { background:#0c1f3d; color:#60a5fa; }
+
+        /* ── Info bar pedido ── */
+        .pedido-infobar { background:#0c1a30; border:1px solid #1e3a5f; border-radius:8px; padding:10px 16px; margin-bottom:14px; font-size:12px; color:#60a5fa; display:none; align-items:center; gap:12px; flex-wrap:wrap; }
+        .pedido-infobar span { color:#4b5563; }
+        .pedido-infobar strong { color:#93c5fd; }
+
+        /* ── Panel 2 columnas ── */
+        .panel-2col { display:grid; grid-template-columns:360px 1fr; gap:16px; align-items:start; }
+
+        /* ── Foto upload ── */
+        .foto-box { border:2px dashed #1e2530; border-radius:8px; padding:14px; text-align:center; cursor:pointer; position:relative; transition:.2s; }
+        .foto-box:hover { border-color:#3b82f6; background:#080e1a; }
+        .foto-box input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+        .foto-box p { color:#374151; font-size:12px; pointer-events:none; }
+        .foto-preview { width:100%; max-height:110px; object-fit:contain; border-radius:6px; margin-top:8px; display:none; }
+
+        /* ── Totales ── */
+        .totales-row { display:flex; gap:20px; padding:12px 16px; background:#0a0f18; border-top:1px solid #111827; flex-wrap:wrap; }
+        .tot-item { font-size:12px; display:flex; gap:6px; }
+        .tot-item .lbl { color:#374151; }
+        .tot-item .val { color:#e2e8f0; font-weight:700; }
+        .tot-item .val.green { color:#4ade80; }
+
+        /* ── Msg ── */
+        .msg { border-radius:8px; padding:10px 14px; font-size:13px; margin-top:12px; display:none; }
+        .msg.ok  { background:#052e16; border:1px solid #14532d; color:#4ade80; }
+        .msg.err { background:#1f0707; border:1px solid #7f1d1d; color:#f87171; }
+
+        /* ── Buscador artículo ── */
+        .art-wrap { position:relative; }
+        .art-drop { position:absolute; top:calc(100% + 4px); left:0; right:0; background:#0d1017; border:1px solid #1e2530; border-radius:8px; z-index:50; max-height:200px; overflow-y:auto; box-shadow:0 10px 28px rgba(0,0,0,.6); display:none; }
+        .art-item { padding:9px 13px; cursor:pointer; font-size:12px; color:#d1d5db; border-bottom:1px solid #111827; display:flex; justify-content:space-between; align-items:center; }
+        .art-item:last-child { border-bottom:none; }
+        .art-item:hover { background:#13181f; }
+        .art-item .art-cod { font-size:11px; color:#4b5563; font-family:monospace; }
+
+        .btn-purple { background:#2e1065; color:#c084fc; border:1px solid #581c87; }
+        .btn-purple:hover { background:#3b1080; }
+        .btn-red    { background:#3f0f0f; color:#f87171; border:1px solid #7f1d1d; }
+        .btn-red:hover { background:#5a1010; }
+        /* Modales */
+        .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:20px; }
+        .modal-bg.open { display:flex; }
+        .modal { background:#0d1017; border:1px solid #1e2530; border-radius:14px; width:100%; max-width:420px; }
+        .modal-head { padding:16px 20px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; }
+        .modal-title { font-size:14px; font-weight:700; color:#e2e8f0; }
+        .modal-body { padding:20px; }
+        .modal-foot { padding:14px 20px; border-top:1px solid #1e2530; display:flex; gap:8px; justify-content:flex-end; }
+        .modal-x { background:none; border:none; color:#4b5563; cursor:pointer; font-size:22px; line-height:1; }
+        .modal-x:hover { color:#e2e8f0; }
+        .mfg { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+        .mfl { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+
+        /* ── Responsive ── */
+        @media (max-width:900px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
+            .btn-menu { display:flex; }
+            .panel-2col { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<aside class="sidebar" id="sidebar"></aside>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <button class="btn-menu" onclick="abrirMenu()">
+            <svg fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        </button>
+        <div class="topbar-left">
+            <div>
+                <div class="topbar-title">Crear Pedido</div>
+                <div class="topbar-sub" id="topbar-fecha"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-bar">
+        <button class="tab-btn active" onclick="cambiarTab('crear')" id="tbtn-crear">
+            <svg class="tab-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Nuevo Pedido
+        </button>
+        <button class="tab-btn" onclick="cambiarTab('agregar')" id="tbtn-agregar">
+            <svg class="tab-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar Artículos
+        </button>
+    </div>
+
+    <div class="content">
+
+        <!-- ══════ TAB: NUEVO PEDIDO ══════ -->
+        <div class="tab-pane active" id="tab-crear">
+
+            <div class="card">
+                <div class="card-head">
+                    <div class="card-title">
+                        <span class="card-dot" style="background:#3b82f6"></span>
+                        Datos del pedido
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Tienda *</label>
+                        <select class="form-input" id="c-tienda" onchange="generarNumeroPedido()">
+                            <option value="">— Selecciona —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Casillero *</label>
+                        <select class="form-input" id="c-casillero">
+                            <option value="">— Selecciona —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Moneda *</label>
+                        <select class="form-input" id="c-moneda">
+                            <option value="">— Selecciona —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha *</label>
+                        <input class="form-input" id="c-fecha" type="date" onchange="generarNumeroPedido()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">N° Pedido generado</label>
+                        <div class="num-pedido" id="c-numero">—</div>
+                    </div>
+                    <div class="form-group" style="align-self:end">
+                        <button class="btn btn-green" onclick="crearPedido()" style="width:100%;justify-content:center;padding:11px;">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                            Crear Pedido
+                        </button>
+                    </div>
+                </div>
+                <div class="msg" id="msg-crear"></div>
+            </div>
+
+            <!-- Pedidos abiertos -->
+            <div class="card">
+                <div class="card-head">
+                    <div class="card-title">
+                        <span class="card-dot" style="background:#f59e0b"></span>
+                        Pedidos abiertos
+                        <span class="badge badge-amber" id="cnt-abiertos">0</span>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="cargarPedidosAbiertos()">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                        Actualizar
+                    </button>
+                </div>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>N° Pedido</th>
+                                <th>Fecha</th>
+                                <th>Tienda</th>
+                                <th>Casillero</th>
+                                <th>Moneda</th>
+                                <th style="text-align:right">Artículos</th>
+                                <th style="text-align:right">Total</th>
+                                <th style="text-align:right">Tasa L/$</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-pedidos">
+                            <tr><td colspan="9" class="tbl-empty">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /tab-crear -->
+
+        <!-- ══════ TAB: AGREGAR ARTÍCULOS ══════ -->
+        <div class="tab-pane" id="tab-agregar">
+
+            <!-- Selector de pedido -->
+            <div class="card" style="margin-bottom:14px">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <div style="flex:1;min-width:260px">
+                        <label class="form-label" style="margin-bottom:6px;display:block">Pedido activo</label>
+                        <select class="form-input" id="a-pedido" onchange="seleccionarPedido()" style="width:100%">
+                            <option value="">— Selecciona un pedido —</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-ghost btn-icon" onclick="cargarPedidosAbiertos()" title="Actualizar" style="margin-top:20px">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                    </button>
+                </div>
+                <div class="pedido-infobar" id="pedido-infobar">
+                    <svg width="14" height="14" fill="none" stroke="#60a5fa" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <strong id="pi-numero">—</strong>
+                    <span>·</span><span id="pi-tienda"></span>
+                    <span>·</span><span id="pi-fecha"></span>
+                    <span class="badge badge-blue" id="pi-cant">0 arts.</span>
+                </div>
+            </div>
+
+            <!-- Formulario artículo horizontal -->
+            <div class="card" style="margin-bottom:14px">
+                <div class="card-head">
+                    <div class="card-title">
+                        <span class="card-dot" style="background:#34d399"></span>
+                        <span id="form-art-titulo">Datos del artículo</span>
+                    </div>
+                    <div id="edit-badge" style="display:none;align-items:center;gap:8px">
+                        <span class="badge badge-amber">✏️ Editando</span>
+                        <button class="btn btn-ghost btn-sm" onclick="cancelarEdicion()">✕ Cancelar</button>
+                    </div>
+                </div>
+                <input type="hidden" id="a-detalle-id">
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:14px">
+                    <div class="form-group">
+                        <label class="form-label">Artículo *</label>
+                        <div class="art-wrap">
+                            <input class="form-input" id="a-articulo-txt" type="text" placeholder="Buscar artículo..." oninput="buscarArticulo(this.value)" autocomplete="off">
+                            <div class="art-drop" id="art-drop"></div>
+                        </div>
+                        <input type="hidden" id="a-articulo-id">
+                        <input type="hidden" id="a-articulo-id-orig">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">SKU / Código *</label>
+                        <input class="form-input" id="a-sku" type="text" placeholder="Ej: SKU-12345">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">N° Pedido Tienda</label>
+                        <input class="form-input" id="a-nopedido" type="text" placeholder="ORDER-12345">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Talla / Color</label>
+                        <input class="form-input" id="a-talla" type="text" placeholder="M / Rojo">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Peso (g)</label>
+                        <input class="form-input" id="a-peso" type="number" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Precio U. ($)</label>
+                        <input class="form-input" id="a-precio" type="number" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cantidad</label>
+                        <input class="form-input" id="a-cantidad" type="number" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Link (opcional)</label>
+                        <input class="form-input" id="a-link" type="text" placeholder="https://...">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label class="form-label">Descripción</label>
+                        <input class="form-input" id="a-desc" type="text" placeholder="Descripción del artículo...">
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+                    <div class="form-group" style="margin:0">
+                        <label class="form-label">Fotografía (opcional)</label>
+                        <div class="foto-box" id="foto-box" style="width:110px;height:72px;display:flex;align-items:center;justify-content:center"
+                            ondragover="event.preventDefault();this.style.borderColor='#3b82f6'"
+                            ondragleave="this.style.borderColor='#1e2530'"
+                            ondrop="handleFotoDrop(event)">
+                            <input type="file" id="foto-input" accept="image/*" onchange="handleFotoFile(this.files[0])">
+                            <div id="foto-ph" style="text-align:center;pointer-events:none">
+                                <svg width="16" height="16" fill="none" stroke="#374151" stroke-width="1.5" viewBox="0 0 24 24" style="display:block;margin:0 auto 3px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <span style="font-size:10px;color:#374151">Foto</span>
+                            </div>
+                            <img id="foto-preview" class="foto-preview">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex:1;justify-content:flex-end">
+                        <button class="btn btn-ghost" onclick="limpiarArticulo()">✕ Limpiar</button>
+                        <button class="btn btn-green" id="btn-guardar-art" onclick="guardarArticulo()" style="min-width:170px;justify-content:center">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Agregar artículo
+                        </button>
+                    </div>
+                </div>
+                <div class="msg" id="msg-agregar"></div>
+            </div>
+
+            <!-- Tabla artículos -->
+            <div class="card" style="padding:0;overflow:hidden">
+                <div style="padding:14px 20px;border-bottom:1px solid #111827;display:flex;align-items:center;justify-content:space-between">
+                    <div class="card-title" style="margin:0"><span class="card-dot" style="background:#f59e0b"></span>Artículos del pedido</div>
+                    <span class="badge badge-amber" id="art-count">0</span>
+                </div>
+                <div class="tbl-wrap" style="border:none;border-radius:0">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th><th>SKU</th><th>Artículo</th><th>N° Tienda</th>
+                                <th>Talla</th>
+                                <th style="text-align:right">Peso</th>
+                                <th style="text-align:right">Cant.</th>
+                                <th style="text-align:right">Precio</th>
+                                <th style="text-align:right">Total</th>
+                                <th>📷</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-articulos">
+                            <tr><td colspan="11" class="tbl-empty">Selecciona un pedido para ver sus artículos</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="totales-row">
+                    <div class="tot-item"><span class="lbl">Peso total:</span><span class="val" id="tot-peso">0 g</span></div>
+                    <div class="tot-item"><span class="lbl">Artículos:</span><span class="val" id="tot-arts">0</span></div>
+                    <div class="tot-item"><span class="lbl">Total:</span><span class="val green" id="tot-precio">$0.00</span></div>
+                </div>
+            </div>
+
+        </div><!-- /tab-agregar -->
+
+    </div><!-- /content -->
+</main>
+
+<script src="/assets/sidebar.js"></script>
+    <script>
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    // Info usuario
+            document.getElementById('c-fecha').value = new Date().toISOString().substring(0,10);
+
+    // Solo admin ve items admin
+    function cambiarTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.getElementById('tbtn-' + tab).classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    // ── CATÁLOGOS ──
+    var todosArticulos = [];
+    var todosPedidosAbiertos = [];
+
+    async function cargarCatalogos() {
+        try {
+            const [t, c, m, a] = await Promise.all([
+                fetch('/api/crear-pedidos/tiendas').then(r => r.json()),
+                fetch('/api/crear-pedidos/casilleros').then(r => r.json()),
+                fetch('/api/crear-pedidos/monedas').then(r => r.json()),
+                fetch('/api/crear-pedidos/articulos').then(r => r.json())
+            ]);
+            if (t.ok) t.data.forEach(x => addOpt('c-tienda',   x.IdEmpresa, x.NombreEmpresa));
+            if (c.ok) c.data.forEach(x => addOpt('c-casillero', x.IdEmpresa, x.NombreEmpresa));
+            if (m.ok) m.data.forEach(x => addOpt('c-moneda',   x.IdMoneda,  x.MonedaSim || x.Simbolo || x.NombreMoneda));
+            if (a.ok) todosArticulos = a.data;
+        } catch(e) { console.error(e); }
+    }
+
+    function addOpt(selId, val, txt) {
+        const o = document.createElement('option');
+        o.value = val; o.textContent = txt;
+        document.getElementById(selId).appendChild(o);
+    }
+
+    // ── NÚMERO PEDIDO ──
+    async function generarNumeroPedido() {
+        const fecha = document.getElementById('c-fecha').value;
+        if (!fecha) return;
+        try {
+            const d = await fetch('/api/crear-pedidos/numero-pedido?fecha=' + fecha).then(r => r.json());
+            if (d.ok) document.getElementById('c-numero').textContent = d.numero;
+        } catch(e) {}
+    }
+
+    // ── CREAR PEDIDO ──
+    async function crearPedido() {
+        const msg    = document.getElementById('msg-crear');
+        const tienda = document.getElementById('c-tienda').value;
+        const cas    = document.getElementById('c-casillero').value;
+        const mon    = document.getElementById('c-moneda').value;
+        const fecha  = document.getElementById('c-fecha').value;
+        const numero = document.getElementById('c-numero').textContent;
+
+        if (!tienda || !cas || !mon || !fecha || numero === '—') {
+            mostrarMsg(msg, 'err', 'Completa todos los campos obligatorios'); return;
+        }
+        try {
+            const d = await fetch('/api/crear-pedidos/crear', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ fechaPedido:fecha, numeroPedido:numero, idEmpresa:+tienda, idMoneda:+mon, idCasillero:+cas })
+            }).then(r => r.json());
+            if (d.ok) {
+                mostrarMsg(msg, 'ok', '✓ Pedido ' + d.numeroPedido + ' creado correctamente');
+                await cargarPedidosAbiertos();
+                generarNumeroPedido();
+            } else { mostrarMsg(msg, 'err', 'Error: ' + d.error); }
+        } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
+    }
+
+    // ── PEDIDOS ABIERTOS ──
+    async function cargarPedidosAbiertos() {
+        try {
+            const d = await fetch('/api/crear-pedidos/pedidos-abiertos').then(r => r.json());
+            if (!d.ok) return;
+            todosPedidosAbiertos = d.data;
+            document.getElementById('cnt-abiertos').textContent = d.data.length;
+            renderTablaPedidos(d.data);
+            // Actualizar select
+            const sel = document.getElementById('a-pedido');
+            const valActual = sel.value;
+            sel.innerHTML = '<option value="">— Selecciona un pedido —</option>';
+            d.data.forEach(p => {
+                const o = document.createElement('option');
+                o.value = p.IdPedido;
+                o.dataset.numero = p.NumeroPedido;
+                o.dataset.tienda = p.Tienda || '';
+                o.dataset.fecha  = p.FechaPedido ? p.FechaPedido.substring(0,10) : '';
+                o.dataset.cant   = p.CantArticulos || 0;
+                o.textContent = p.NumeroPedido + ' — ' + (p.Tienda || '') + ' (' + (p.CantArticulos || 0) + ' arts.)';
+                sel.appendChild(o);
+            });
+            if (valActual) sel.value = valActual;
+        } catch(e) {}
+    }
+
+    function renderTablaPedidos(data) {
+        const tbody = document.getElementById('tbody-pedidos');
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="tbl-empty">Sin pedidos abiertos</td></tr>'; return; }
+        tbody.innerHTML = data.map(p => {
+            const f = p.FechaPedido ? p.FechaPedido.substring(0,10).split('-').reverse().join('/') : '—';
+            const tot = parseFloat(p.TotalCompra || 0).toFixed(2);
+            const tasa = p.TasaCambio ? `<span style="color:#4ade80;font-family:monospace;font-size:11px">L ${parseFloat(p.TasaCambio).toFixed(2)}</span>` : '<span style="color:#374151;font-size:11px">—</span>';
+            return `<tr onclick="irAgregar(${p.IdPedido})">
+                <td style="color:#374151;font-size:11px">${p.IdPedido}</td>
+                <td style="font-family:monospace;font-weight:700;color:#60a5fa">${p.NumeroPedido || '—'}</td>
+                <td style="color:#6b7280">${f}</td>
+                <td style="color:#d1d5db">${p.Tienda || '—'}</td>
+                <td style="color:#4b5563">${p.Casillero || '—'}</td>
+                <td><span class="badge badge-blue">${p.Simbolo || '$'}</span></td>
+                <td style="text-align:right;color:#9ca3af">${p.CantArticulos || 0}</td>
+                <td style="text-align:right;color:#4ade80;font-weight:700">${p.Simbolo || '$'} ${tot}</td>
+                <td style="text-align:right">${tasa}</td>
+                <td onclick="event.stopPropagation()" style="display:flex;gap:5px;padding:7px 12px;white-space:nowrap">
+                    <button onclick="irAgregar(${p.IdPedido})" class="btn btn-blue btn-sm">+ Artículos</button>
+                    <button onclick="abrirModalTasa(${p.IdPedido},'${p.NumeroPedido}',${p.TasaCambio||0})" class="btn btn-purple btn-sm">💱 Tasa</button>
+                    <button onclick="confirmarCerrarPedido(${p.IdPedido},'${p.NumeroPedido}')" class="btn btn-red btn-sm">🔒 Cerrar</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function irAgregar(idPedido) {
+        document.getElementById('a-pedido').value = idPedido;
+        seleccionarPedido();
+        cambiarTab('agregar');
+    }
+
+    // ── SELECTOR PEDIDO ──
+    function seleccionarPedido() {
+        const sel = document.getElementById('a-pedido');
+        const opt = sel.options[sel.selectedIndex];
+        const bar = document.getElementById('pedido-infobar');
+        if (!sel.value) { bar.style.display = 'none'; return; }
+        document.getElementById('pi-numero').textContent = opt.dataset.numero || '';
+        document.getElementById('pi-tienda').textContent = opt.dataset.tienda || '';
+        document.getElementById('pi-fecha').textContent  = opt.dataset.fecha  || '';
+        document.getElementById('pi-cant').textContent   = (opt.dataset.cant || 0) + ' arts.';
+        bar.style.display = 'flex';
+        cargarArticulosPedido(+sel.value);
+    }
+
+    // ── ARTÍCULOS DEL PEDIDO ──
+    async function cargarArticulosPedido(idPedido) {
+        document.getElementById('tbody-articulos').innerHTML = '<tr><td colspan="9" class="tbl-empty">Cargando...</td></tr>';
+        try {
+            const d = await fetch('/api/crear-pedidos/detalles?idPedido=' + idPedido).then(r => r.json());
+            if (d.ok) renderTablaArticulos(d.data);
+        } catch(e) {}
+    }
+
+    function renderTablaArticulos(data) {
+        const tbody = document.getElementById('tbody-articulos');
+        document.getElementById('art-count').textContent = data.length;
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="11" class="tbl-empty">Sin artículos en este pedido</td></tr>'; actualizarTotales([]); return; }
+        tbody.innerHTML = data.map((a, i) => {
+            const precio = parseFloat(a.ValorCompra || 0);
+            const cant   = parseInt(a.CantidadArticulos || 1);
+            const foto   = a.Fotografia ? `<img src="${a.Fotografia}" style="width:28px;height:28px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'">` : '—';
+            return `<tr>
+                <td style="color:#374151">${i+1}</td>
+                <td style="font-family:monospace;font-size:11px;color:#4b5563" title="${a.CodigoArticulo||''}">${a.CodigoArticulo||'—'}</td>
+                <td style="font-weight:600;color:#d1d5db;max-width:130px;overflow:hidden;text-overflow:ellipsis" title="${a.NombreArticulo||a.DescripcionArticulo||''}">${a.NombreArticulo||'—'}</td>
+                <td style="color:#4b5563;font-size:11px">${a.NoPedidoAplicacion||'—'}</td>
+                <td style="color:#6b7280">${a.TallaColor||'—'}</td>
+                <td style="text-align:right;color:#6b7280">${a.Peso||0}g</td>
+                <td style="text-align:right">${cant}</td>
+                <td style="text-align:right;color:#9ca3af">$${precio.toFixed(2)}</td>
+                <td style="text-align:right;color:#4ade80;font-weight:700">$${(precio*cant).toFixed(2)}</td>
+                <td>${foto}</td>
+                <td><button onclick="editarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Editar">✏️</button></td>
+            </tr>`;
+        }).join('');
+        actualizarTotales(data);
+    }
+
+    function actualizarTotales(data) {
+        const peso   = data.reduce((a, x) => a + parseFloat(x.Peso||0), 0);
+        const arts   = data.reduce((a, x) => a + parseInt(x.CantidadArticulos||1), 0);
+        const precio = data.reduce((a, x) => a + parseFloat(x.ValorCompra||0) * parseInt(x.CantidadArticulos||1), 0);
+        document.getElementById('tot-peso').textContent  = peso.toFixed(0) + ' g';
+        document.getElementById('tot-arts').textContent  = arts;
+        document.getElementById('tot-precio').textContent = '$' + precio.toFixed(2);
+    }
+
+    // ── BUSCADOR ARTÍCULO ──
+    function buscarArticulo(txt) {
+        const drop = document.getElementById('art-drop');
+        if (txt.length < 1) { drop.style.display = 'none'; return; }
+        const q = txt.toLowerCase();
+        const res = todosArticulos.filter(a =>
+            (a.NombreArticulo||'').toLowerCase().includes(q) ||
+            (a.CodigoArticulo||'').toLowerCase().includes(q)
+        ).slice(0,10);
+        if (res.length) {
+            drop.innerHTML = res.map(a =>
+                `<div class="art-item" onclick="seleccionarArticulo(${a.IdArticulo},'${(a.NombreArticulo||'').replace(/'/g,' ')}','${(a.CodigoArticulo||'')}',${a.PesoArticulo||0})">
+                    <span>${a.NombreArticulo||''}</span>
+                    <span class="art-cod">${a.CodigoArticulo||''}</span>
+                </div>`
+            ).join('');
+        } else {
+            drop.innerHTML = '<div class="art-item" style="color:#374151;justify-content:center">Sin resultados</div>';
+        }
+        drop.style.display = 'block';
+    }
+
+    function seleccionarArticulo(id, nombre, codigo, peso) {
+        document.getElementById('a-articulo-id').value      = id;
+        document.getElementById('a-articulo-id-orig').value = id;
+        document.getElementById('a-articulo-txt').value     = nombre;
+        // Solo poner peso si el campo está vacío
+        if (!document.getElementById('a-peso').value) document.getElementById('a-peso').value = peso;
+        // NO tocar el SKU — el usuario lo escribe libremente
+        document.getElementById('art-drop').style.display = 'none';
+    }
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.art-wrap')) document.getElementById('art-drop').style.display = 'none';
+    });
+
+    // ── FOTO ──
+    var fotoBase64 = null, fotoMime = null;
+
+    function handleFotoFile(file) {
+        if (!file) return;
+        fotoMime = file.type;
+        const r = new FileReader();
+        r.onload = e => {
+            fotoBase64 = e.target.result.split(',')[1];
+            document.getElementById('foto-preview').src = e.target.result;
+            document.getElementById('foto-preview').style.display = 'block';
+            document.getElementById('foto-ph').style.display = 'none';
+        };
+        r.readAsDataURL(file);
+    }
+
+    function handleFotoDrop(e) {
+        e.preventDefault();
+        document.getElementById('foto-box').style.borderColor = '#1e2530';
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) handleFotoFile(file);
+    }
+
+    // ── AGREGAR / EDITAR ARTÍCULO ──
+    async function guardarArticulo() {
+        const msg      = document.getElementById('msg-agregar');
+        const idPed    = document.getElementById('a-pedido').value;
+        const idArt    = document.getElementById('a-articulo-id').value;
+        const sku      = document.getElementById('a-sku').value.trim();
+        const detalleId = document.getElementById('a-detalle-id').value;
+
+        // Usar el IdArticulo del objeto guardado al abrir edición, o el seleccionado del catálogo
+        const idOrig = (window._artEditando && window._artEditando.IdArticulo) ? window._artEditando.IdArticulo : null;
+        const idArticuloFinal = idArt ? +idArt : (idOrig ? +idOrig : null);
+
+        if (!idPed) { mostrarMsg(msg,'err','Selecciona un pedido primero'); return; }
+        if (!sku) { mostrarMsg(msg,'err','El SKU / Código es obligatorio'); return; }
+
+
+        const body = {
+            codigoArticulo:      sku,
+            descripcionArticulo: document.getElementById('a-desc').value.trim(),
+            peso:                parseFloat(document.getElementById('a-peso').value) || 0,
+            idArticulo:          idArticuloFinal,
+            idPedido:            +idPed,
+            tallaColor:          document.getElementById('a-talla').value.trim(),
+            valorCompra:         parseFloat(document.getElementById('a-precio').value) || 0,
+            cantidadArticulos:   parseInt(document.getElementById('a-cantidad').value) || 1,
+            link:                document.getElementById('a-link').value.trim() || null,
+            noPedidoAplicacion:  document.getElementById('a-nopedido').value.trim() || null,
+            fotoBase64, fotoMime
+        };
+
+        try {
+            let d;
+            if (detalleId) {
+                // EDITAR
+                d = await fetch('/api/crear-pedidos/editar-articulo', {
+                    method:'PUT', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ ...body, idDetallePedido: +detalleId })
+                }).then(r => r.json());
+            } else {
+                // AGREGAR
+                d = await fetch('/api/crear-pedidos/agregar', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(body)
+                }).then(r => r.json());
+            }
+            if (d.ok) {
+                mostrarMsg(msg,'ok', detalleId ? '✓ Artículo actualizado' : '✓ Artículo agregado');
+                limpiarArticulo();
+                cargarArticulosPedido(+idPed);
+                cargarPedidosAbiertos();
+            } else { mostrarMsg(msg,'err','Error: ' + d.error); }
+        } catch(e) { mostrarMsg(msg,'err','Error de conexión'); }
+    }
+
+    // Alias para compatibilidad
+    function agregarArticulo() { guardarArticulo(); }
+
+    function editarEnForm(a) {
+        window._artEditando = a; // Guardar objeto completo
+        document.getElementById('a-detalle-id').value   = a.IdDetallePedido;
+        document.getElementById('a-articulo-id').value      = a.IdArticulo || '';
+        document.getElementById('a-articulo-id-orig').value  = a.IdArticulo || '';
+        // El texto del artículo muestra NombreArticulo del catálogo
+        document.getElementById('a-articulo-txt').value = a.NombreArticulo || '';
+        // El SKU es el CodigoArticulo guardado libremente — puede ser cualquier texto
+        document.getElementById('a-sku').value          = a.CodigoArticulo || '';
+        document.getElementById('a-desc').value         = a.DescripcionArticulo || '';
+        document.getElementById('a-nopedido').value     = a.NoPedidoAplicacion || '';
+        document.getElementById('a-talla').value        = a.TallaColor || '';
+        document.getElementById('a-peso').value         = a.Peso || '';
+        document.getElementById('a-precio').value       = a.ValorCompra || '';
+        document.getElementById('a-cantidad').value     = a.CantidadArticulos || 1;
+        document.getElementById('a-link').value         = a.Link || '';
+        // Mostrar badge edición
+        document.getElementById('edit-badge').style.display = 'flex';
+        document.getElementById('btn-guardar-art').innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar cambios';
+        document.getElementById('btn-guardar-art').className = 'btn btn-amber';
+        // Scroll al form
+        document.getElementById('form-art-titulo').closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    function cancelarEdicion() {
+        limpiarArticulo();
+    }
+
+    function limpiarArticulo() {
+        fotoBase64 = null; fotoMime = null;
+        ['a-detalle-id','a-articulo-txt','a-articulo-id','a-articulo-id-orig','a-sku','a-desc','a-nopedido','a-talla','a-peso','a-precio','a-link'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('a-cantidad').value = '1';
+        document.getElementById('foto-preview').style.display = 'none';
+        document.getElementById('foto-ph').style.display = 'block';
+        document.getElementById('foto-input').value = '';
+        window._artEditando = null;
+        document.getElementById('edit-badge').style.display = 'none';
+        document.getElementById('btn-guardar-art').innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar artículo';
+        document.getElementById('btn-guardar-art').className = 'btn btn-green';
+    }
+
+    function mostrarMsg(el, tipo, txt) {
+        el.className = 'msg ' + tipo;
+        el.textContent = txt;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    // ── TASA DE CAMBIO PEDIDO ──
+    function abrirModalTasa(idPedido, numeroPedido, tasaActual) {
+        document.getElementById('cp-tasa-id').value = idPedido;
+        document.getElementById('cp-tasa-numero').textContent = numeroPedido;
+        document.getElementById('cp-tasa-valor').value = tasaActual > 0 ? parseFloat(tasaActual).toFixed(2) : '';
+        document.getElementById('modal-tasa-cp').classList.add('open');
+    }
+
+    async function guardarTasaPedidoCP() {
+        const msg  = document.getElementById('msg-tasa-cp');
+        const tasa = parseFloat(document.getElementById('cp-tasa-valor').value);
+        if (!tasa || tasa < 1) { mostrarMsgCP(msg,'err','Ingresa una tasa válida (ej: 24.90)'); return; }
+        try {
+            const d = await fetch('/api/listado-pedidos/tasa', {
+                method:'PUT', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ idPedido: +document.getElementById('cp-tasa-id').value, tasaCambio: tasa })
+            }).then(r=>r.json());
+            if (d.ok) {
+                document.getElementById('modal-tasa-cp').classList.remove('open');
+                cargarPedidosAbiertos();
+            } else { mostrarMsgCP(msg,'err','Error: '+d.error); }
+        } catch(e) { mostrarMsgCP(msg,'err','Error de conexión'); }
+    }
+
+    // ── CERRAR PEDIDO ──
+    function confirmarCerrarPedido(idPedido, numeroPedido) {
+        document.getElementById('cp-cerrar-id').value = idPedido;
+        document.getElementById('cp-cerrar-numero').textContent = numeroPedido;
+        document.getElementById('modal-cerrar-cp').classList.add('open');
+    }
+
+    async function ejecutarCerrarPedido() {
+        const msg = document.getElementById('msg-cerrar-cp');
+        try {
+            const d = await fetch('/api/listado-pedidos/cerrar', {
+                method:'PUT', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ idPedido: +document.getElementById('cp-cerrar-id').value })
+            }).then(r=>r.json());
+            if (d.ok) {
+                document.getElementById('modal-cerrar-cp').classList.remove('open');
+                cargarPedidosAbiertos();
+            } else { mostrarMsgCP(msg,'err','Error: '+d.error); }
+        } catch(e) { mostrarMsgCP(msg,'err','Error de conexión'); }
+    }
+
+    function mostrarMsgCP(el, tipo, txt) {
+        el.className = 'msg '+tipo; el.textContent = txt; el.style.display = 'block';
+        setTimeout(()=>{ el.style.display='none'; }, 4000);
+    }
+
+    // ── INIT ──
+    generarNumeroPedido();
+    cargarCatalogos();
+    cargarPedidosAbiertos();
+</script>
+
+<!-- ══ MODAL TASA ══ -->
+<div class="modal-bg" id="modal-tasa-cp">
+    <div class="modal">
+        <div class="modal-head">
+            <div class="modal-title">💱 Tasa de Cambio</div>
+            <button class="modal-x" onclick="document.getElementById('modal-tasa-cp').classList.remove('open')">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="cp-tasa-id">
+            <div class="mfg">
+                <label class="mfl">Pedido</label>
+                <div style="font-family:monospace;color:#60a5fa;font-size:14px;font-weight:700" id="cp-tasa-numero">—</div>
+            </div>
+            <div class="mfg">
+                <label class="mfl">Tasa (Lempiras por $1)</label>
+                <input class="form-input" id="cp-tasa-valor" type="number" step="0.01" min="1" placeholder="Ej: 24.90" style="font-size:20px;font-family:monospace;color:#4ade80;font-weight:700">
+            </div>
+            <div style="font-size:11px;color:#4b5563">Se aplica a este pedido para el cálculo de cobros en lempiras.</div>
+            <div class="msg" id="msg-tasa-cp"></div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="document.getElementById('modal-tasa-cp').classList.remove('open')">Cancelar</button>
+            <button class="btn btn-green" onclick="guardarTasaPedidoCP()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Guardar tasa
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══ MODAL CERRAR PEDIDO ══ -->
+<div class="modal-bg" id="modal-cerrar-cp">
+    <div class="modal">
+        <div class="modal-head">
+            <div class="modal-title">🔒 Cerrar Pedido</div>
+            <button class="modal-x" onclick="document.getElementById('modal-cerrar-cp').classList.remove('open')">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="cp-cerrar-id">
+            <p style="color:#d1d5db;font-size:13px;margin-bottom:12px">
+                ¿Estás seguro que deseas cerrar el pedido
+                <strong style="color:#60a5fa" id="cp-cerrar-numero">—</strong>?
+            </p>
+            <p style="color:#6b7280;font-size:12px">El pedido ya no aparecerá en la lista de pedidos abiertos.</p>
+            <div class="msg" id="msg-cerrar-cp"></div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="document.getElementById('modal-cerrar-cp').classList.remove('open')">Cancelar</button>
+            <button class="btn btn-red" onclick="ejecutarCerrarPedido()">🔒 Sí, cerrar pedido</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
