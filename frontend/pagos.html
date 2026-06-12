@@ -147,36 +147,7 @@
 
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
 
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-        <img src="/assets/Recurso-3.png" alt="logo" onerror="this.style.display='none'">
-        <div class="sidebar-logo-text">Multi<span>Store</span></div>
-    </div>
-    <div class="sidebar-user">
-        <div class="avatar" id="avatar">--</div>
-        <div>
-            <div class="user-info-name" id="user-name">--</div>
-            <div class="user-info-rol" id="user-rol">--</div>
-        </div>
-    </div>
-    <nav class="nav">
-        <div class="nav-label">Principal</div>
-        <a class="nav-item" href="/dashboard.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio</a>
-        <a class="nav-item" href="/pedidos.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Pedidos</a>
-        <a class="nav-item" href="/tracking.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Tracking</a>
-        <a class="nav-item" href="/clientes.html"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clientes</a>
-        <div class="nav-label">Administración</div>
-        <a class="nav-item" href="/asignar-vendedor.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Asignar Vendedor</a>
-        <a class="nav-item active" href="/pagos.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pagos</a>
-        <a class="nav-item" href="#"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Reportes</a>
-    </nav>
-    <div class="sidebar-bottom">
-        <button class="btn-salir" onclick="cerrarSesion()">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-            Cerrar sesión
-        </button>
-    </div>
-</aside>
+<aside class="sidebar" id="sidebar"></aside>
 
 <main class="main">
     <div class="topbar">
@@ -279,21 +250,21 @@
     </div>
 </main>
 
-<script>
+<script src="/assets/sidebar.js"></script>
+    <script>
     // ===== AUTH =====
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
 
-    document.getElementById('avatar').textContent = (usuario.nombres[0] + (usuario.apellidos?.[0]||'')).toUpperCase();
-    document.getElementById('user-name').textContent = usuario.nombres + ' ' + (usuario.apellidos||'');
-    document.getElementById('user-rol').textContent = usuario.esAdmin ? 'Administrador' : 'Vendedor';
-    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    // Fecha por defecto = hoy
+    
+    
+    
+        // Fecha por defecto = hoy
     document.getElementById('f-fecha').value = new Date().toISOString().substring(0,10);
 
-    function abrirMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('active'); }
-    function cerrarMenu() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('active'); }
-    function cerrarSesion() { localStorage.removeItem('ms_usuario'); window.location.href = '/login.html'; }
+    
+    
+    
 
     // ===== CATÁLOGOS =====
     async function cargarCatalogos() {
