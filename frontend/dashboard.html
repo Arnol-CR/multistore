@@ -1092,12 +1092,12 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
 <script>
     // ===== MODAL VENDEDOR =====
     let idDetallePedidoVendedor = null;
-    let idVendedorSeleccionado  = null;
+    idVendedorSeleccionado = undefined;
     let vendedoresCargados      = [];
 
     async function abrirModalVendedor(idDetalle, nombreArticulo, descripcion, talla, sku) {
         idDetallePedidoVendedor = idDetalle;
-        idVendedorSeleccionado  = null;
+        idVendedorSeleccionado = undefined;
         document.getElementById('mv-articulo-nombre').textContent = nombreArticulo || 'Artículo';
         document.getElementById('mv-articulo-desc').textContent   = descripcion ? 'Descripción: ' + descripcion : '';
         document.getElementById('mv-articulo-talla').textContent  = talla ? '📐 Talla: ' + talla : '';
@@ -1158,7 +1158,25 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
             lista.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;font-size:13px;">No se pudieron cargar los vendedores</p>';
             return;
         }
-        lista.innerHTML = vendedoresCargados.map(v => {
+
+        const itemSinVendedor = `
+    <div onclick="seleccionarVendedor(null)"
+        style="padding:11px 14px;border-bottom:1px solid #1e2530;cursor:pointer;display:flex;align-items:center;gap:10px;
+               background:${idVendedorSeleccionado === null ? '#2d0a0a' : 'transparent'};transition:.15s;"
+        onmouseover="if(${idVendedorSeleccionado !== null}) this.style.background='#13181f'"
+        onmouseout="if(${idVendedorSeleccionado !== null}) this.style.background='transparent'">
+        <div style="width:32px;height:32px;border-radius:50%;background:#2d0a0a;border:1px solid #7f1d1d;
+                    display:flex;align-items:center;justify-content:center;font-size:14px;color:#ef4444;flex-shrink:0;">
+            ✕
+        </div>
+        <div style="flex:1;">
+            <div style="color:#ef4444;font-size:13px;font-weight:600;">Sin vendedor</div>
+            <div style="color:#4b5563;font-size:11px;">Dejar en NULL</div>
+        </div>
+        ${idVendedorSeleccionado === null ? '<span style="color:#ef4444;font-size:16px;">✓</span>' : ''}
+    </div>`;
+
+lista.innerHTML = itemSinVendedor + vendedoresCargados.map(v => {
             const nombre = `${v.Nombres} ${v.Apellidos || ''}`.trim();
             const esYo   = v.IdVendedor === usuario.id;
             const activo = idVendedorSeleccionado === v.IdVendedor;
@@ -1192,14 +1210,14 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
     function cerrarModalVendedor() {
         document.getElementById('modal-vendedor').style.display = 'none';
         idDetallePedidoVendedor = null;
-        idVendedorSeleccionado  = null;
+        idVendedorSeleccionado = undefined;;
     }
 
     async function confirmarVendedor() {
-        if (!idVendedorSeleccionado) {
-            alert('⚠️ Selecciona un vendedor primero');
-            return;
-        }
+        if (idVendedorSeleccionado === undefined) {
+    alert('⚠️ Selecciona una opción');
+    return;
+}
         const checkboxes = document.querySelectorAll('#mv-lista-articulos input[type=checkbox]:checked');
         const idsExtra   = Array.from(checkboxes).map(c => parseInt(c.value));
         const todosIds   = [idDetallePedidoVendedor, ...idsExtra];
