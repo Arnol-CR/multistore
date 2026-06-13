@@ -158,63 +158,7 @@
 
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
 
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-        <img src="/assets/Recurso 3.png" alt="Logo">
-        <div class="sidebar-logo-text">Multi<span>Store</span></div>
-    </div>
-    <div class="sidebar-user">
-        <div class="avatar" id="avatar">--</div>
-        <div>
-            <div class="user-info-name" id="user-name">Cargando...</div>
-            <div class="user-info-rol" id="user-rol">--</div>
-        </div>
-    </div>
-    <nav class="nav">
-        <div class="nav-label">Principal</div>
-        <a class="nav-item active" href="/dashboard.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            Inicio
-        </a>
-        <a class="nav-item" href="/pedidos.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-            Pedidos
-            <span class="nav-badge" id="badge-pedidos">0</span>
-        </a>
-        <a class="nav-item" href="/tracking.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            Tracking
-        </a>
-        <a class="nav-item" href="/asignar-precios.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-            Mis Precios
-        </a>
-        <a class="nav-item" href="/clientes.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-            Clientes
-        </a>
-        <div class="nav-label solo-admin">Administración</div>
-        <a class="nav-item solo-admin" href="/asignar-vendedor.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-            Asignar Vendedor
-            <span class="nav-badge warn" id="badge-asignar">0</span>
-        </a>
-        <a class="nav-item solo-admin" href="/pagos.html" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Pagos Envíos
-        </a>
-        <a class="nav-item solo-admin" href="#" onclick="cerrarMenu()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Reportes
-        </a>
-    </nav>
-    <div class="sidebar-bottom">
-        <button class="btn-salir" onclick="cerrarSesion()">
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-            Cerrar sesión
-        </button>
-    </div>
-</aside>
+<aside class="sidebar" id="sidebar"></aside>
 
 <main class="main">
     <div class="topbar">
@@ -318,6 +262,24 @@
                         </div>
                         <div><div class="modulo-name">Pedidos</div><div class="modulo-desc">Ver activos</div></div>
                     </a>
+                    <a class="modulo solo-admin" href="/crear-pedidos.html">
+                        <div class="modulo-icon" style="background:#0c2240">
+                            <svg fill="none" stroke="#38bdf8" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </div>
+                        <div><div class="modulo-name">Crear Pedido</div><div class="modulo-desc">Nuevo pedido</div></div>
+                    </a>
+                    <a class="modulo solo-admin" href="/listado-pedidos.html">
+                        <div class="modulo-icon" style="background:#1a1208">
+                            <svg fill="none" stroke="#fbbf24" stroke-width="1.8" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        </div>
+                        <div><div class="modulo-name">Listado Pedidos</div><div class="modulo-desc">Ver y editar</div></div>
+                    </a>
+                    <a class="modulo solo-admin" href="/configuracion.html">
+                        <div class="modulo-icon" style="background:#12082a">
+                            <svg fill="none" stroke="#a78bfa" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </div>
+                        <div><div class="modulo-name">Configuración</div><div class="modulo-desc">Tasa · Bancos</div></div>
+                    </a>
                     <a class="modulo" href="/tracking.html">
                         <div class="modulo-icon" style="background:#0f2318">
                             <svg fill="none" stroke="#34d399" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -354,15 +316,12 @@
     </div>
 </main>
 
-<script>
+<script src="/assets/sidebar.js"></script>
+    <script>
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
 
-    const iniciales = (usuario.nombres[0] + usuario.apellidos[0]).toUpperCase();
-    document.getElementById('avatar').textContent = iniciales;
-    document.getElementById('user-name').textContent = usuario.nombres + ' ' + usuario.apellidos;
-    document.getElementById('user-rol').textContent = usuario.esAdmin ? 'Administrador' : 'Vendedor';
-
+    // sidebar.js maneja avatar, user-name, user-rol y solo-admin
     document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {
         weekday:'long', year:'numeric', month:'long', day:'numeric'
     });
@@ -371,21 +330,13 @@
         document.querySelectorAll('.solo-admin').forEach(el => {
             el.style.display = el.tagName === 'TD' || el.tagName === 'TH' ? 'table-cell' : 'flex';
         });
-        document.getElementById('filtros-admin').classList.add('visible');
+        if (document.getElementById('filtros-admin'))
+            document.getElementById('filtros-admin').classList.add('visible');
     }
 
-    function abrirMenu() {
-        document.getElementById('sidebar').classList.add('open');
-        document.getElementById('overlay').classList.add('active');
-    }
-    function cerrarMenu() {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('overlay').classList.remove('active');
-    }
-    function cerrarSesion() {
-        localStorage.removeItem('ms_usuario');
-        window.location.href = '/login.html';
-    }
+    
+    
+    
 
     async function cargarStats() {
         try {
@@ -1276,6 +1227,7 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
         } catch (e) { alert('❌ Error de conexión'); }
     }
 </script>
-
+<script src="/assets/sidebar.js"></script>
 </body>
 </html>
+
