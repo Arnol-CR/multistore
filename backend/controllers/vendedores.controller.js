@@ -17,9 +17,9 @@ const getVendedores = async (req, res) => {
 const asignarVendedor = async (req, res) => {
   try {
     const { idDetalle, idVendedor } = req.body;
-    if (!idDetalle || !idVendedor) {
-      return res.status(400).json({ ok: false, error: 'Faltan parámetros' });
-    }
+    // if (!idDetalle || !idVendedor) {
+    //   return res.status(400).json({ ok: false, error: 'Faltan parámetros' });
+    // }
     const pool = await poolPromise;
     await pool.request()
       .input('IdDetalleCliente', sql.Int, parseInt(idDetalle))
