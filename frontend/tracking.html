@@ -1,1119 +1,971 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MultiStore — Tracking</title>
-<style>
-  :root{
-    --color-background-primary:#0f1f1d;
-    --color-background-secondary:#142d2a;
-    --color-background-tertiary:#1c3a36;
-    --color-border-primary:#234a44;
-    --color-border-secondary:#2c5950;
-    --color-border-tertiary:#1c3a36;
-    --color-text-primary:#eaf6f3;
-    --color-text-secondary:#8fb7af;
-    --teal:#1A7A6E;
-    --teal-light:#23ab98;
-    --amber:#EF9F27;
-    --blue:#185FA5;
-    --red:#A32D2D;
-    --border-radius-md:8px;
-    --border-radius-lg:12px;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    font-family:'Segoe UI', system-ui, sans-serif;
-    background:var(--color-background-primary);
-    color:var(--color-text-primary);
-    display:flex;
-    min-height:100vh;
-    font-size:14px;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Tracking</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
 
-  /* ===== SIDEBAR ===== */
-  .sidebar{
-    width:230px;
-    background:var(--color-background-secondary);
-    border-right:1px solid var(--color-border-primary);
-    display:flex;
-    flex-direction:column;
-    padding:16px 0;
-    flex-shrink:0;
-  }
-  .brand{
-    display:flex; align-items:center; gap:10px;
-    padding:0 16px 16px 16px;
-    border-bottom:1px solid var(--color-border-primary);
-    margin-bottom:12px;
-  }
-  .brand-icon{
-    width:32px; height:32px; border-radius:8px;
-    background:linear-gradient(135deg,var(--teal-light),var(--teal));
-    display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:14px; color:#fff;
-  }
-  .brand-name{font-weight:700; font-size:15px;}
-  .brand-sub{font-size:11px; color:var(--color-text-secondary);}
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+        .overlay.active { display:block; }
 
-  .nav-section-title{
-    font-size:10px; text-transform:uppercase; letter-spacing:.06em;
-    color:var(--color-text-secondary); padding:10px 16px 6px;
-  }
-  .nav-item{
-    display:flex; align-items:center; gap:10px;
-    padding:9px 16px; cursor:pointer; color:var(--color-text-secondary);
-    border-left:3px solid transparent;
-    font-size:13px;
-  }
-  .nav-item:hover{ background:var(--color-background-tertiary); }
-  .nav-item.active{
-    background:var(--color-background-tertiary);
-    border-left-color:var(--teal-light);
-    color:var(--color-text-primary);
-    font-weight:600;
-  }
-  .nav-item svg{ flex-shrink:0; }
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
 
-  /* ===== MAIN ===== */
-  main{ flex:1; display:flex; flex-direction:column; min-width:0; }
-  .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:16px 24px;
-    border-bottom:1px solid var(--color-border-primary);
-  }
-  .topbar h1{ font-size:18px; font-weight:700; }
-  .topbar .date{ font-size:12px; color:var(--color-text-secondary); }
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
+        .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
+        .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
+        .btn-menu svg { width:22px; height:22px; stroke:#9ca3af; stroke-width:2; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
 
-  .content{ padding:20px 24px; flex:1; overflow-y:auto; }
+        .content { flex:1; overflow-y:auto; padding:16px; }
 
-  /* ===== TABS ===== */
-  .tabs{
-    display:flex; gap:4px; margin-bottom:18px;
-    border-bottom:1px solid var(--color-border-primary);
-  }
-  .tab-btn{
-    background:transparent; border:none; cursor:pointer;
-    color:var(--color-text-secondary);
-    padding:10px 18px; font-size:13px; font-weight:600;
-    border-bottom:2px solid transparent;
-    display:flex; align-items:center; gap:8px;
-  }
-  .tab-btn:hover{ color:var(--color-text-primary); }
-  .tab-btn.active{
-    color:var(--teal-light);
-    border-bottom-color:var(--teal-light);
-  }
-  .tab-pill{
-    background:var(--color-background-tertiary);
-    color:var(--color-text-secondary);
-    font-size:10px; padding:1px 7px; border-radius:99px;
-  }
-  .tab-btn.active .tab-pill{ background:rgba(35,171,152,.18); color:var(--teal-light); }
+        /* Pestañas */
+        .tabs { display:flex; gap:4px; margin-bottom:16px; background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:6px; }
+        .tab { flex:1; padding:9px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:#6b7280; border:none; background:none; transition:.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .tab:hover { color:#e2e8f0; background:#13181f; }
+        .tab.active { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+        .tab-badge { font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
+        .tab.active .tab-badge { background:#2563eb; color:#fff; }
 
-  .tab-panel{ display:none; }
-  .tab-panel.active{ display:block; }
+        /* Cards */
+        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:16px; margin-bottom:14px; }
+        .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+        .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
 
-  /* ===== CARDS / TOOLBAR ===== */
-  .card{
-    background:var(--color-background-secondary);
-    border:1px solid var(--color-border-primary);
-    border-radius:var(--border-radius-lg);
-    overflow:hidden;
-    margin-bottom:16px;
-  }
-  .card-header{
-    padding:12px 16px;
-    border-bottom:1px solid var(--color-border-primary);
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    flex-wrap:wrap;
-  }
-  .card-title{ font-size:14px; font-weight:700; }
-  .card-sub{ font-size:11px; color:var(--color-text-secondary); margin-top:2px; }
+        /* Tabla */
+        .tbl-wrap { overflow-x:auto; }
+        .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+        .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:8px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
+        .tbl td { padding:9px 8px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
+        .tbl tr:last-child td { border-bottom:none; }
+        .tbl tr:hover td { background:#0a0f18; }
+        .fila-vacia td { text-align:center; padding:28px 8px; color:#4b5563; font-style:italic; }
 
-  .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  input, select, textarea{
-    font-family:inherit; font-size:12px;
-    background:var(--color-background-tertiary);
-    border:1px solid var(--color-border-secondary);
-    color:var(--color-text-primary);
-    border-radius:var(--border-radius-md);
-    padding:7px 10px;
-  }
-  input::placeholder{ color:var(--color-text-secondary); }
-  input:focus, select:focus, textarea:focus{ outline:1px solid var(--teal-light); }
+        /* Botones */
+        .btn-primary { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; white-space:nowrap; }
+        .btn-primary:hover { background:#2563eb; }
+        .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+        .btn-ghost { background:none; border:1px solid #1e2530; border-radius:7px; padding:9px 14px; font-size:12px; color:#6b7280; cursor:pointer; transition:.15s; white-space:nowrap; }
+        .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
+        .btn-sm { padding:5px 12px; font-size:11px; border-radius:6px; }
 
-  .btn{
-    border:none; border-radius:var(--border-radius-md);
-    padding:8px 14px; font-size:12px; font-weight:600;
-    cursor:pointer; display:inline-flex; align-items:center; gap:6px;
-  }
-  .btn-primary{ background:var(--teal); color:#fff; }
-  .btn-primary:hover{ background:var(--teal-light); }
-  .btn-outline{
-    background:transparent; color:var(--color-text-primary);
-    border:1px solid var(--color-border-secondary);
-  }
-  .btn-outline:hover{ border-color:var(--teal-light); color:var(--teal-light); }
-  .btn-danger{ background:transparent; color:var(--red); border:1px solid #A32D2D80; }
-  .btn-sm{ padding:5px 10px; font-size:11px; }
-  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+        /* Inputs */
+        .filtro-resumen { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+        .filtro-resumen input, .filtro-resumen select { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; }
+        .filtro-resumen input { width:220px; }
+        .filtro-resumen input:focus, .filtro-resumen select:focus { border-color:#3b82f6; color:#e2e8f0; }
 
-  /* ===== TABLE ===== */
-  table{ width:100%; border-collapse:collapse; font-size:12px; }
-  thead th{
-    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.05em;
-    color:var(--color-text-secondary); font-weight:700;
-    padding:9px 12px; border-bottom:1px solid var(--color-border-primary);
-    background:var(--color-background-tertiary);
-    white-space:nowrap;
-  }
-  tbody td{
-    padding:8px 12px; border-bottom:1px solid var(--color-border-tertiary);
-    vertical-align:middle;
-  }
-  tbody tr:hover{ background:var(--color-background-tertiary); }
-  tbody tr:last-child td{ border-bottom:none; }
-  .empty-row td{
-    text-align:center; padding:28px 12px; color:var(--color-text-secondary);
-    font-style:italic;
-  }
+        /* Badges de estado */
+        .badge { font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap; }
+        .b-amber { background:#2d1f0a; color:#f59e0b; }
+        .b-teal { background:#0f2318; color:#34d399; }
+        .b-blue { background:#0c1f3d; color:#60a5fa; }
+        .b-gray { background:#13181f; color:#6b7280; border:1px solid #1e2530; }
 
-  /* ===== BADGES ===== */
-  .badge{ font-size:10px; padding:2px 9px; border-radius:99px; font-weight:600; white-space:nowrap; }
-  .b-amber{ background:#3a2a10; color:#FAC775; }
-  .b-teal{ background:#0f3a33; color:#5fe0c8; }
-  .b-blue{ background:#10243f; color:#7fb1e8; }
-  .b-gray{ background:var(--color-background-tertiary); color:var(--color-text-secondary); border:1px solid var(--color-border-secondary); }
-  .b-red{ background:#3a1414; color:#f0a0a0; }
+        /* Stats */
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+        .stat-card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; }
+        .stat-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .stat-val { font-size:22px; font-weight:800; color:#fff; }
+        .stat-sub { font-size:11px; color:#6b7280; margin-top:3px; }
 
-  .check{ width:16px; height:16px; accent-color:var(--teal-light); cursor:pointer; }
+        /* Artículos por seguimiento (panel desplegable) */
+        .fila-articulos td { background:#0a0f18; padding:0; }
+        .panel-articulos { padding:10px 14px; }
+        .panel-articulos .tbl th { background:#0a0c10; }
+        .panel-articulos-vacio { font-size:12px; color:#4b5563; font-style:italic; padding:8px 4px; }
 
-  /* ===== ARTÍCULOS POR SEGUIMIENTO (panel desplegable) ===== */
-  .seg-articulos{
-    background:var(--color-background-primary);
-    border-top:1px solid var(--color-border-tertiary);
-  }
-  .seg-articulos table thead th{ background:var(--color-background-primary); }
-  .seg-articulos-empty{ padding:14px 16px; font-size:12px; color:var(--color-text-secondary); font-style:italic; }
+        .check { width:16px; height:16px; accent-color:#3b82f6; cursor:pointer; }
 
-  .hint{
-    font-size:11px; color:var(--color-text-secondary);
-    background:var(--color-background-tertiary);
-    border:1px solid var(--color-border-tertiary);
-    border-radius:var(--border-radius-md);
-    padding:8px 12px; margin-bottom:14px;
-  }
+        /* Modal */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal { background:#0d1017; border:1px solid #1e2530; border-radius:10px; width:420px; max-width:92vw; max-height:88vh; overflow-y:auto; }
+        .modal-header { padding:14px 16px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; }
+        .modal-header h3 { font-size:14px; font-weight:700; color:#fff; }
+        .modal-close { cursor:pointer; color:#6b7280; font-size:20px; line-height:1; border:none; background:none; }
+        .modal-close:hover { color:#fff; }
+        .modal-body { padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+        .modal-footer { padding:12px 16px; border-top:1px solid #1e2530; display:flex; justify-content:flex-end; gap:8px; }
+        .field { display:flex; flex-direction:column; gap:4px; }
+        .field label { font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+        .field input, .field select { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:9px 12px; color:#e2e8f0; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; }
+        .field input:focus, .field select:focus { border-color:#3b82f6; }
+        .field input:disabled { color:#6b7280; }
+        .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-  /* ===== FORM GRID ===== */
-  .form-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:10px; padding:14px 16px; }
-  .field{ display:flex; flex-direction:column; gap:4px; }
-  .field label{ font-size:11px; color:var(--color-text-secondary); font-weight:600; }
+        /* Resumen orden */
+        .summary-bar { display:flex; gap:16px; flex-wrap:wrap; align-items:center; padding:12px 14px; background:#13181f; border:1px solid #1e2530; border-radius:8px; margin-bottom:14px; }
+        .summary-item .summary-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .summary-item .summary-val { font-size:18px; font-weight:800; color:#fff; }
 
-  /* ===== MODAL ===== */
-  .overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,.55);
-    display:none; align-items:center; justify-content:center; z-index:100;
-  }
-  .overlay.active{ display:flex; }
-  .modal{
-    background:var(--color-background-secondary);
-    border:1px solid var(--color-border-primary);
-    border-radius:var(--border-radius-lg);
-    width:420px; max-width:92vw;
-    max-height:88vh; overflow-y:auto;
-  }
-  .modal-header{
-    padding:14px 16px; border-bottom:1px solid var(--color-border-primary);
-    display:flex; align-items:center; justify-content:space-between;
-  }
-  .modal-header h3{ font-size:14px; font-weight:700; }
-  .modal-close{ cursor:pointer; color:var(--color-text-secondary); font-size:18px; line-height:1; border:none; background:none; }
-  .modal-footer{
-    padding:12px 16px; border-top:1px solid var(--color-border-primary);
-    display:flex; justify-content:flex-end; gap:8px;
-  }
+        /* Toast */
+        .toast { position:fixed; bottom:20px; right:20px; background:#0d1017; border:1px solid #1e2530; border-left:4px solid #3b82f6; border-radius:8px; padding:12px 16px; font-size:12px; max-width:320px; box-shadow:0 8px 24px rgba(0,0,0,0.5); z-index:300; display:none; color:#e2e8f0; }
+        .toast.error { border-left-color:#ef4444; }
+        .toast.active { display:block; }
 
-  /* ===== ORDEN SUMMARY ===== */
-  .summary-bar{
-    display:flex; gap:18px; flex-wrap:wrap;
-    padding:12px 16px; background:var(--color-background-tertiary);
-    border-bottom:1px solid var(--color-border-primary);
-    font-size:12px;
-  }
-  .summary-item .summary-label{ color:var(--color-text-secondary); font-size:10px; text-transform:uppercase; letter-spacing:.05em; }
-  .summary-item .summary-value{ font-weight:700; font-size:15px; }
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
-  .toast{
-    position:fixed; bottom:20px; right:20px;
-    background:var(--color-background-tertiary);
-    border:1px solid var(--color-border-secondary);
-    border-left:4px solid var(--teal-light);
-    border-radius:var(--border-radius-md);
-    padding:12px 16px; font-size:12px; max-width:320px;
-    box-shadow:0 6px 20px rgba(0,0,0,.4);
-    z-index:200; display:none;
-  }
-  .toast.error{ border-left-color:var(--red); }
-  .toast.active{ display:block; }
-
-  @media (max-width:860px){
-    .sidebar{ display:none; }
-    .content{ padding:14px; }
-    .form-grid{ grid-template-columns:1fr 1fr; }
-  }
-</style>
+        @media (max-width:480px) {
+            .stats-grid { grid-template-columns:1fr; }
+            .tabs { flex-direction:column; }
+            .tab { padding:8px; font-size:12px; }
+            .tbl { font-size:11px; }
+            .tbl th, .tbl td { padding:6px 4px; }
+            .filtro-resumen input { width:100%; }
+            .form-grid-2 { grid-template-columns:1fr; }
+        }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
+            .btn-menu { display:flex; }
+            .stats-grid { grid-template-columns:1fr 1fr; }
+        }
+    </style>
 </head>
 
 <body>
 
-  <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-icon">MS</div>
-      <div>
-        <div class="brand-name">MultiStore</div>
-        <div class="brand-sub">Panel administrativo</div>
-      </div>
-    </div>
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
 
-    <div class="nav-section-title">General</div>
-    <div class="nav-item" onclick="location.href='dashboard.html'">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-      Dashboard
-    </div>
-    <div class="nav-item" onclick="location.href='pedidos.html'">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg>
-      Pedidos
-    </div>
+<aside class="sidebar" id="sidebar"></aside>
 
-    <div class="nav-section-title">Logística</div>
-    <div class="nav-item active">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      Tracking
-    </div>
-    <div class="nav-item" onclick="location.href='pagos.html'">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      Pagos de envíos
-    </div>
-
-    <div class="nav-section-title">Catálogos</div>
-    <div class="nav-item" onclick="location.href='clientes.html'">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Clientes
-    </div>
-    <div class="nav-item" onclick="location.href='vendedores.html'">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21v-2a7 7 0 0 1 14 0v2"/></svg>
-      Vendedores
-    </div>
-  </aside>
-
-  <!-- ===== MAIN ===== -->
-  <main>
+<main class="main">
     <div class="topbar">
-      <h1>Tracking</h1>
-      <div class="date" id="fecha"></div>
+        <div class="topbar-left">
+            <button class="btn-menu" id="btn-menu" onclick="abrirMenu()">
+                <svg fill="none" viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/>
+                    <line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/>
+                    <line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/>
+                </svg>
+            </button>
+            <div>
+                <div class="topbar-title">Tracking</div>
+                <div class="topbar-fecha" id="topbar-fecha"></div>
+            </div>
+        </div>
     </div>
 
     <div class="content">
 
-      <!-- TABS -->
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">
-          1. Sin seguimiento <span class="tab-pill" id="count-sin-seg">0</span>
-        </button>
-        <button class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">
-          2. Entrada a casillero <span class="tab-pill" id="count-seguimientos">0</span>
-        </button>
-        <button class="tab-btn" data-tab="tab3" onclick="switchTab('tab3')">
-          3. Orden de pago de casillero <span class="tab-pill" id="count-orden">0</span>
-        </button>
-      </div>
-
-      <!-- ============ TAB 1: VER / ASIGNAR / EDITAR TRACKING ============ -->
-      <section class="tab-panel active" id="tab1">
-        <div class="hint">
-          Artículos pendientes de seguimiento. Asigna un seguimiento existente o crea uno nuevo y asígnalo en el momento.
+        <!-- Pestañas -->
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab('sin-seguimiento')">
+                📦 Sin seguimiento <span class="tab-badge" id="count-sin-seg">0</span>
+            </button>
+            <button class="tab" onclick="cambiarTab('casillero')">
+                🏠 Entrada a casillero <span class="tab-badge" id="count-seguimientos">0</span>
+            </button>
+            <button class="tab" onclick="cambiarTab('orden')">
+                💳 Orden de pago <span class="tab-badge" id="count-orden">0</span>
+            </button>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Artículos sin seguimiento</div>
-              <div class="card-sub">Sp_DetallePedidoSinSeguimiento</div>
-            </div>
-            <div class="toolbar">
-              <input type="text" id="filtro-articulos" placeholder="Buscar artículo o pedido..." oninput="filtrarArticulos()">
-              <button class="btn btn-primary" onclick="abrirModalNuevoSeguimiento()">+ Nuevo seguimiento</button>
-              <button class="btn btn-outline" onclick="cargarArticulosSinSeguimiento()">Actualizar</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Pedido</th>
-                  <th>Artículo</th>
-                  <th>Talla / Color</th>
-                  <th>Descripción</th>
-                  <th>Cant.</th>
-                  <th>Seguimiento</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-articulos-sin-seg">
-                <tr class="empty-row"><td colspan="7">Cargando artículos...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+        <!-- ===== TAB 1: SIN SEGUIMIENTO ===== -->
+        <div class="tab-content active" id="tab-sin-seguimiento">
 
-      <!-- ============ TAB 2: ENTRADA A CASILLERO ============ -->
-      <section class="tab-panel" id="tab2">
-        <div class="hint">
-          Selecciona un seguimiento y registra su fecha de entrada al casillero de Miami y la entrega estimada al cliente.
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot"></span>Artículos sin seguimiento</div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-primary" onclick="abrirModalNuevoSeguimiento()">+ Nuevo seguimiento</button>
+                        <button class="btn-ghost" onclick="cargarArticulosSinSeguimiento()">↻ Actualizar</button>
+                    </div>
+                </div>
+
+                <div class="filtro-resumen">
+                    <input type="text" id="f-articulos" placeholder="🔍 Buscar artículo o pedido..." oninput="filtrarArticulos(this.value)">
+                </div>
+
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Pedido</th>
+                                <th>Artículo</th>
+                                <th>Talla / Color</th>
+                                <th>Descripción</th>
+                                <th>Cant.</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-articulos">
+                            <tr class="fila-vacia"><td colspan="7">Cargando artículos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Seguimientos</div>
-              <div class="card-sub">Se_Seguimientos · In_EntradasCasillero</div>
-            </div>
-            <div class="toolbar">
-              <input type="text" id="filtro-seguimientos" placeholder="Buscar seguimiento..." oninput="filtrarSeguimientos()">
-              <select id="filtro-estado-seg" onchange="filtrarSeguimientos()">
-                <option value="">Todos los estados</option>
-                <option value="1">Pendiente</option>
-                <option value="2">Con artículos</option>
-                <option value="3">En casillero</option>
-                <option value="4">Con orden</option>
-              </select>
-              <button class="btn btn-outline" onclick="cargarSeguimientos()">Actualizar</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Seguimiento</th>
-                  <th>Salida</th>
-                  <th>Entrega estimada</th>
-                  <th>Estado</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-seguimientos">
-                <tr class="empty-row"><td colspan="6">Cargando seguimientos...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+        <!-- ===== TAB 2: ENTRADA A CASILLERO ===== -->
+        <div class="tab-content" id="tab-casillero">
 
-      <!-- ============ TAB 3: ORDEN DE PAGO DE CASILLERO ============ -->
-      <section class="tab-panel" id="tab3">
-        <div class="hint">
-          Selecciona uno o varios trackings con entrada a casillero para incluirlos en una nueva orden de pago. Despliega cada tracking para ver sus artículos antes de confirmar.
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot"></span>Seguimientos</div>
+                    <button class="btn-ghost" onclick="cargarSeguimientos()">↻ Actualizar</button>
+                </div>
+
+                <div class="filtro-resumen">
+                    <input type="text" id="f-seguimientos" placeholder="🔍 Buscar seguimiento..." oninput="filtrarSeguimientos()">
+                    <select id="f-estado-seg" onchange="filtrarSeguimientos()">
+                        <option value="">Todos los estados</option>
+                        <option value="1">Pendiente</option>
+                        <option value="2">Con artículos</option>
+                        <option value="3">En casillero</option>
+                        <option value="4">Con orden</option>
+                    </select>
+                </div>
+
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Seguimiento</th>
+                                <th>Salida</th>
+                                <th>Entrega estimada</th>
+                                <th>Estado</th>
+                                <th></th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-seguimientos">
+                            <tr class="fila-vacia"><td colspan="7">Cargando seguimientos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Entradas a casillero disponibles</div>
-              <div class="card-sub">Se_EntradaCasillero · Se_Pedidos_Seguimiento</div>
-            </div>
-            <div class="toolbar">
-              <input type="text" id="filtro-entradas" placeholder="Buscar tracking o casillero..." oninput="filtrarEntradas()">
-              <button class="btn btn-outline" onclick="cargarEntradasCasillero()">Actualizar</button>
-            </div>
-          </div>
+        <!-- ===== TAB 3: ORDEN DE PAGO DE CASILLERO ===== -->
+        <div class="tab-content" id="tab-orden">
 
-          <div class="summary-bar">
-            <div class="summary-item">
-              <div class="summary-label">Seleccionados</div>
-              <div class="summary-value" id="sum-count">0</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Peso total (lb)</div>
-              <div class="summary-value" id="sum-peso">0.00</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Total a pagar</div>
-              <div class="summary-value" id="sum-total">$0.00</div>
-            </div>
-            <div style="flex:1; display:flex; align-items:center; justify-content:flex-end;">
-              <button class="btn btn-primary" id="btn-crear-orden" disabled onclick="abrirModalOrden()">Crear orden de pago</button>
-            </div>
-          </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot"></span>Entradas a casillero sin orden</div>
+                    <button class="btn-ghost" onclick="cargarEntradasCasillero()">↻ Actualizar</button>
+                </div>
 
-          <div style="overflow-x:auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th></th>
-                  <th>Tracking</th>
-                  <th>Casillero</th>
-                  <th>Entrada Miami</th>
-                  <th>Entrega est.</th>
-                  <th>Peso (lb)</th>
-                  <th>Pago</th>
-                  <th>Orden</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-entradas">
-                <tr class="empty-row"><td colspan="9">Cargando entradas a casillero...</td></tr>
-              </tbody>
-            </table>
-          </div>
+                <div class="filtro-resumen">
+                    <input type="text" id="f-entradas" placeholder="🔍 Buscar tracking o casillero..." oninput="filtrarEntradas(this.value)">
+                </div>
+
+                <div class="summary-bar">
+                    <div class="summary-item">
+                        <div class="summary-label">Seleccionados</div>
+                        <div class="summary-val" id="sum-count">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Peso total (lb)</div>
+                        <div class="summary-val" id="sum-peso">0.00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Total a pagar</div>
+                        <div class="summary-val" id="sum-total">$0.00</div>
+                    </div>
+                    <div style="flex:1; display:flex; justify-content:flex-end;">
+                        <button class="btn-primary" id="btn-crear-orden" disabled onclick="abrirModalOrden()">Crear orden de pago</button>
+                    </div>
+                </div>
+
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th>Tracking</th>
+                                <th>Casillero</th>
+                                <th>Entrada Miami</th>
+                                <th>Entrega est.</th>
+                                <th>Peso (lb)</th>
+                                <th>Pago</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-entradas">
+                            <tr class="fila-vacia"><td colspan="8">Cargando entradas a casillero...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-      </section>
 
     </div>
-  </main>
+</main>
 
-  <!-- ===== MODAL: NUEVO SEGUIMIENTO ===== -->
-  <div class="overlay" id="modal-seguimiento">
+<!-- ===== MODAL: NUEVO SEGUIMIENTO ===== -->
+<div class="modal-overlay" id="modal-seguimiento">
     <div class="modal">
-      <div class="modal-header">
-        <h3>Nuevo seguimiento</h3>
-        <button class="modal-close" onclick="cerrarModal('modal-seguimiento')">&times;</button>
-      </div>
-      <div class="form-grid" style="grid-template-columns:1fr;">
-        <div class="field">
-          <label>N° de seguimiento</label>
-          <input type="text" id="ns-seguimiento" placeholder="Ej. 1Z999AA10123456784">
+        <div class="modal-header">
+            <h3>Nuevo seguimiento</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-seguimiento')">&times;</button>
         </div>
-        <div class="field">
-          <label>Fecha de salida</label>
-          <input type="date" id="ns-fecha-salida">
+        <div class="modal-body">
+            <div class="field">
+                <label>N° de seguimiento</label>
+                <input type="text" id="ns-seguimiento" placeholder="Ej. 1Z999AA10123456784">
+            </div>
+            <div class="field">
+                <label>Fecha de salida</label>
+                <input type="date" id="ns-fecha-salida">
+            </div>
+            <div class="field">
+                <label>Fecha estimada de entrega</label>
+                <input type="date" id="ns-fecha-entrega">
+            </div>
         </div>
-        <div class="field">
-          <label>Fecha estimada de entrega</label>
-          <input type="date" id="ns-fecha-entrega">
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-seguimiento')">Cancelar</button>
+            <button class="btn-primary" onclick="guardarNuevoSeguimiento()">Guardar</button>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modal-seguimiento')">Cancelar</button>
-        <button class="btn btn-primary" onclick="guardarNuevoSeguimiento()">Guardar seguimiento</button>
-      </div>
     </div>
-  </div>
+</div>
 
-  <!-- ===== MODAL: ASIGNAR SEGUIMIENTO A ARTÍCULO ===== -->
-  <div class="overlay" id="modal-asignar">
+<!-- ===== MODAL: ASIGNAR SEGUIMIENTO ===== -->
+<div class="modal-overlay" id="modal-asignar">
     <div class="modal">
-      <div class="modal-header">
-        <h3>Asignar seguimiento</h3>
-        <button class="modal-close" onclick="cerrarModal('modal-asignar')">&times;</button>
-      </div>
-      <div class="form-grid" style="grid-template-columns:1fr;">
-        <div class="field">
-          <label>Artículo</label>
-          <input type="text" id="as-articulo-nombre" disabled>
+        <div class="modal-header">
+            <h3>Asignar seguimiento</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-asignar')">&times;</button>
         </div>
-        <div class="field">
-          <label>Seguimiento</label>
-          <select id="as-seguimiento"></select>
+        <div class="modal-body">
+            <div class="field">
+                <label>Artículo</label>
+                <input type="text" id="as-articulo-nombre" disabled>
+            </div>
+            <div class="field">
+                <label>Seguimiento</label>
+                <select id="as-seguimiento"></select>
+            </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modal-asignar')">Cancelar</button>
-        <button class="btn btn-primary" onclick="guardarAsignacionSeguimiento()">Asignar</button>
-      </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-asignar')">Cancelar</button>
+            <button class="btn-primary" onclick="guardarAsignacionSeguimiento()">Asignar</button>
+        </div>
     </div>
-  </div>
+</div>
 
-  <!-- ===== MODAL: ENTRADA A CASILLERO ===== -->
-  <div class="overlay" id="modal-entrada">
+<!-- ===== MODAL: ENTRADA A CASILLERO ===== -->
+<div class="modal-overlay" id="modal-entrada">
     <div class="modal">
-      <div class="modal-header">
-        <h3>Registrar entrada a casillero</h3>
-        <button class="modal-close" onclick="cerrarModal('modal-entrada')">&times;</button>
-      </div>
-      <div class="form-grid" style="grid-template-columns:1fr;">
-        <div class="field">
-          <label>Seguimiento</label>
-          <input type="text" id="ec-seguimiento" disabled>
+        <div class="modal-header">
+            <h3>Registrar entrada a casillero</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-entrada')">&times;</button>
         </div>
-        <div class="field">
-          <label>Fecha de entrada a Miami</label>
-          <input type="date" id="ec-entrada-miami">
+        <div class="modal-body">
+            <div class="field">
+                <label>Seguimiento</label>
+                <input type="text" id="ec-seguimiento" disabled>
+            </div>
+            <div class="form-grid-2">
+                <div class="field">
+                    <label>Entrada a Miami</label>
+                    <input type="date" id="ec-entrada-miami">
+                </div>
+                <div class="field">
+                    <label>Entrega estimada</label>
+                    <input type="date" id="ec-entrega-estimada">
+                </div>
+            </div>
+            <div class="field">
+                <label>Cambio de seguimiento (opcional)</label>
+                <input type="text" id="ec-cambio-seguimiento" placeholder="Nuevo número, si aplica">
+            </div>
         </div>
-        <div class="field">
-          <label>Fecha de entrega estimada</label>
-          <input type="date" id="ec-entrega-estimada">
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-entrada')">Cancelar</button>
+            <button class="btn-primary" onclick="guardarEntradaCasillero()">Registrar</button>
         </div>
-        <div class="field">
-          <label>Cambio de seguimiento (opcional)</label>
-          <input type="text" id="ec-cambio-seguimiento" placeholder="Nuevo número, si aplica">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modal-entrada')">Cancelar</button>
-        <button class="btn btn-primary" onclick="guardarEntradaCasillero()">Registrar entrada</button>
-      </div>
     </div>
-  </div>
+</div>
 
-  <!-- ===== MODAL: ORDEN DE PAGO ===== -->
-  <div class="overlay" id="modal-orden">
+<!-- ===== MODAL: ORDEN DE PAGO ===== -->
+<div class="modal-overlay" id="modal-orden">
     <div class="modal">
-      <div class="modal-header">
-        <h3>Crear orden de pago de casillero</h3>
-        <button class="modal-close" onclick="cerrarModal('modal-orden')">&times;</button>
-      </div>
-      <div class="form-grid">
-        <div class="field" style="grid-column:1 / -1;">
-          <label>N° de orden</label>
-          <input type="text" id="op-numero-orden" placeholder="Ej. ORD-2026-0001">
+        <div class="modal-header">
+            <h3>Crear orden de pago de casillero</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-orden')">&times;</button>
         </div>
-        <div class="field">
-          <label>Fecha</label>
-          <input type="date" id="op-fecha">
+        <div class="modal-body">
+            <div class="field">
+                <label>N° de orden</label>
+                <input type="text" id="op-numero-orden" placeholder="Ej. ORD-2026-0001">
+            </div>
+            <div class="form-grid-2">
+                <div class="field">
+                    <label>Fecha</label>
+                    <input type="date" id="op-fecha">
+                </div>
+                <div class="field">
+                    <label>Peso total (lb)</label>
+                    <input type="text" id="op-peso" disabled>
+                </div>
+            </div>
+            <div class="form-grid-2">
+                <div class="field">
+                    <label>Cantidad pagada</label>
+                    <input type="text" id="op-cantidad-pagada" placeholder="0.00">
+                </div>
+                <div class="field">
+                    <label>Método de pago</label>
+                    <select id="op-metodo-pago">
+                        <option value="1">Efectivo</option>
+                        <option value="2">Transferencia</option>
+                        <option value="3">Tarjeta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Cuenta</label>
+                <select id="op-cuenta">
+                    <option value="1">Cuenta principal</option>
+                    <option value="2">Cuenta secundaria</option>
+                </select>
+            </div>
         </div>
-        <div class="field">
-          <label>Peso total (lb)</label>
-          <input type="text" id="op-peso" disabled>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-orden')">Cancelar</button>
+            <button class="btn-primary" onclick="confirmarOrdenPago()">Confirmar orden</button>
         </div>
-        <div class="field">
-          <label>Cantidad pagada</label>
-          <input type="text" id="op-cantidad-pagada" placeholder="0.00">
-        </div>
-        <div class="field">
-          <label>Método de pago</label>
-          <select id="op-metodo-pago">
-            <option value="1">Efectivo</option>
-            <option value="2">Transferencia</option>
-            <option value="3">Tarjeta</option>
-          </select>
-        </div>
-        <div class="field" style="grid-column:1 / -1;">
-          <label>Cuenta</label>
-          <select id="op-cuenta">
-            <option value="1">Cuenta principal</option>
-            <option value="2">Cuenta secundaria</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modal-orden')">Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarOrdenPago()">Confirmar orden</button>
-      </div>
     </div>
-  </div>
+</div>
 
-  <div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div>
 
-<script>
-const API = '/api/tracking';
+<script src="/assets/sidebar.js"></script>
+    <script>
+    // ===== AUTH =====
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
 
-let articulosSinSeguimiento = [];
-let listaSeguimientos = [];
-let entradasCasillero = [];
-let seleccionEntradas = new Set();
-let articuloAsignar = null;
-let entradaSeleccionada = null;
+    // ===== MENÚ =====
+    function abrirMenu() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('overlay').classList.add('active');
+    }
+    function cerrarMenu() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('active');
+    }
 
-/* ===== INIT ===== */
-document.getElementById('fecha').textContent = new Date().toLocaleDateString('es-HN',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    // ===== FECHA TOPBAR =====
+    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 
-window.addEventListener('DOMContentLoaded', () => {
-  cargarArticulosSinSeguimiento();
-  cargarSeguimientos();
-  cargarEntradasCasillero();
-});
+    const API = '/api/tracking';
 
-/* ===== TABS ===== */
-function switchTab(id){
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelector(`.tab-btn[data-tab="${id}"]`).classList.add('active');
-}
+    let articulosSinSeguimiento = [];
+    let listaSeguimientos = [];
+    let entradasCasillero = [];
+    let seleccionEntradas = new Set();
+    let articuloAsignar = null;
+    let entradaSeleccionada = null;
 
-/* ===== HELPERS ===== */
-function showToast(msg, isError=false){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast active' + (isError ? ' error' : '');
-  setTimeout(() => t.classList.remove('active'), 3500);
-}
-function cerrarModal(id){ document.getElementById(id).classList.remove('active'); }
-function abrirModal(id){ document.getElementById(id).classList.add('active'); }
-function fmtFecha(f){
-  if(!f) return '-';
-  const d = new Date(f);
-  if(isNaN(d)) return f;
-  return d.toLocaleDateString('es-HN', {year:'numeric', month:'2-digit', day:'2-digit'});
-}
+    // ===== PESTAÑAS =====
+    function cambiarTab(tab) {
+        const tabs = ['sin-seguimiento','casillero','orden'];
+        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
 
-/* =========================================================
-   TAB 1 — ARTÍCULOS SIN SEGUIMIENTO
-   ========================================================= */
-async function cargarArticulosSinSeguimiento(){
-  const tbody = document.getElementById('tbody-articulos-sin-seg');
-  tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Cargando artículos...</td></tr>`;
-  try{
-    const res = await fetch(`${API}/sin-seguimiento`);
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error || 'Error al cargar artículos');
-    articulosSinSeguimiento = data.data || [];
-    document.getElementById('count-sin-seg').textContent = articulosSinSeguimiento.length;
-    renderArticulosSinSeguimiento(articulosSinSeguimiento);
-  }catch(err){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">Error: ${err.message}</td></tr>`;
-  }
-}
+    // ===== HELPERS =====
+    function showToast(msg, isError=false){
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast active' + (isError ? ' error' : '');
+        setTimeout(() => t.classList.remove('active'), 3500);
+    }
+    function cerrarModal(id){ document.getElementById(id).classList.remove('active'); }
+    function abrirModal(id){ document.getElementById(id).classList.add('active'); }
+    function fmtFecha(f){
+        if(!f) return '-';
+        const p = (f.substring ? f.substring(0,10) : String(f).substring(0,10)).split('-');
+        if(p.length !== 3) return f;
+        return `${p[2]}/${p[1]}/${p[0]}`;
+    }
 
-function renderArticulosSinSeguimiento(lista){
-  const tbody = document.getElementById('tbody-articulos-sin-seg');
-  if(!lista.length){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">No hay artículos pendientes de seguimiento. ¡Todo asignado!</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = lista.map(a => `
-    <tr>
-      <td>${a.NoPedidoAplicacion ?? a.IdPedido ?? '-'}</td>
-      <td>${a.NombreArticulo ?? a.Articulo ?? '-'}</td>
-      <td>${a.TallaColor ?? '-'}</td>
-      <td>${a.DescripcionArticulo ?? '-'}</td>
-      <td>${a.CantidadArticulos ?? a.Cantidad ?? 1}</td>
-      <td><span class="badge b-amber">Sin seguimiento</span></td>
-      <td><button class="btn btn-primary btn-sm" onclick="abrirModalAsignar(${a.IdDetallePedido})">Asignar</button></td>
-    </tr>
-  `).join('');
-}
-
-function filtrarArticulos(){
-  const q = document.getElementById('filtro-articulos').value.toLowerCase();
-  const filtrados = articulosSinSeguimiento.filter(a =>
-    (a.NombreArticulo ?? '').toLowerCase().includes(q) ||
-    (a.DescripcionArticulo ?? '').toLowerCase().includes(q) ||
-    String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
-  );
-  renderArticulosSinSeguimiento(filtrados);
-}
-
-/* --- Modal: nuevo seguimiento --- */
-function abrirModalNuevoSeguimiento(){
-  document.getElementById('ns-seguimiento').value = '';
-  document.getElementById('ns-fecha-salida').value = '';
-  document.getElementById('ns-fecha-entrega').value = '';
-  abrirModal('modal-seguimiento');
-}
-
-async function guardarNuevoSeguimiento(){
-  const Seguimiento = document.getElementById('ns-seguimiento').value.trim();
-  const FechaSalidaInicio = document.getElementById('ns-fecha-salida').value;
-  const FechaEstimadaEntrega = document.getElementById('ns-fecha-entrega').value;
-
-  if(!Seguimiento || !FechaSalidaInicio || !FechaEstimadaEntrega){
-    showToast('Completa todos los campos del seguimiento.', true);
-    return;
-  }
-
-  try{
-    const res = await fetch(`${API}/seguimientos`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({Seguimiento, FechaSalidaInicio, FechaEstimadaEntrega})
-    });
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error || 'Error al crear seguimiento');
-
-    showToast(data.mensaje);
-    cerrarModal('modal-seguimiento');
-    await cargarSeguimientos();
-  }catch(err){
-    showToast(err.message, true);
-  }
-}
-
-/* --- Modal: asignar seguimiento a artículo --- */
-function abrirModalAsignar(idDetalle){
-  const articulo = articulosSinSeguimiento.find(a => a.IdDetallePedido === idDetalle);
-  if(!articulo) return;
-
-  articuloAsignar = articulo;
-  document.getElementById('as-articulo-nombre').value = `${articulo.NombreArticulo ?? articulo.Articulo ?? ''} — ${articulo.TallaColor ?? ''}`;
-
-  const select = document.getElementById('as-seguimiento');
-  select.innerHTML = listaSeguimientos.map(s =>
-    `<option value="${s.IdSeguimiento}">${s.Seguimiento}</option>`
-  ).join('') || '<option value="">No hay seguimientos disponibles</option>';
-
-  abrirModal('modal-asignar');
-}
-
-async function guardarAsignacionSeguimiento(){
-  if(!articuloAsignar) return;
-  const IdSeguimiento = document.getElementById('as-seguimiento').value;
-  if(!IdSeguimiento){
-    showToast('Selecciona un seguimiento.', true);
-    return;
-  }
-
-  try{
-    const res = await fetch(`${API}/asignar-seguimiento`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        IdDetalleCliente: articuloAsignar.IdDetallePedido,
-        IdSeguimiento: Number(IdSeguimiento)
-      })
-    });
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error || 'Error al asignar seguimiento');
-
-    showToast(data.mensaje);
-    cerrarModal('modal-asignar');
-    articuloAsignar = null;
-    await cargarArticulosSinSeguimiento();
-    await cargarSeguimientos();
-  }catch(err){
-    showToast(err.message, true);
-  }
-}
-
-/* =========================================================
-   TAB 2 — ENTRADA A CASILLERO
-   ========================================================= */
-const ESTADOS = {
-  1: {label:'Pendiente', cls:'b-amber'},
-  2: {label:'Con artículos', cls:'b-blue'},
-  3: {label:'En casillero', cls:'b-teal'},
-  4: {label:'Con orden', cls:'b-gray'}
-};
-
-async function cargarSeguimientos(){
-  const tbody = document.getElementById('tbody-seguimientos');
-  tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Cargando seguimientos...</td></tr>`;
-  try{
-    const res = await fetch(`${API}/seguimientos`);
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error || 'Error al cargar seguimientos');
-    listaSeguimientos = data.data || [];
-    document.getElementById('count-seguimientos').textContent = listaSeguimientos.length;
-    renderSeguimientos(listaSeguimientos);
-  }catch(err){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Error: ${err.message}</td></tr>`;
-  }
-}
-
-function renderSeguimientos(lista){
-  const tbody = document.getElementById('tbody-seguimientos');
-  if(!lista.length){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No hay seguimientos registrados.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = lista.map(s => {
-    const estado = ESTADOS[s.IdEstado] ?? {label:'Desconocido', cls:'b-gray'};
-    const puedeRegistrar = s.IdEstado === 1 || s.IdEstado === 2;
-    return `
-      <tr>
-        <td>${s.N}</td>
-        <td>${s.Seguimiento}</td>
-        <td>${fmtFecha(s.FechaSalidaInicio)}</td>
-        <td>${fmtFecha(s.FechaEstimadaEntrega)}</td>
-        <td><span class="badge ${estado.cls}">${estado.label}</span></td>
-        <td>
-          ${puedeRegistrar
-            ? `<button class="btn btn-primary btn-sm" onclick="abrirModalEntrada(${s.IdSeguimiento})">Registrar entrada</button>`
-            : `<span class="badge b-gray">Ya registrado</span>`}
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filtrarSeguimientos(){
-  const q = document.getElementById('filtro-seguimientos').value.toLowerCase();
-  const estadoFiltro = document.getElementById('filtro-estado-seg').value;
-  const filtrados = listaSeguimientos.filter(s => {
-    const coincideTexto = s.Seguimiento.toLowerCase().includes(q);
-    const coincideEstado = !estadoFiltro || String(s.IdEstado) === estadoFiltro;
-    return coincideTexto && coincideEstado;
-  });
-  renderSeguimientos(filtrados);
-}
-
-/* --- Modal: entrada a casillero --- */
-function abrirModalEntrada(idSeguimiento){
-  const seg = listaSeguimientos.find(s => s.IdSeguimiento === idSeguimiento);
-  if(!seg) return;
-
-  entradaSeleccionada = seg;
-  document.getElementById('ec-seguimiento').value = seg.Seguimiento;
-  document.getElementById('ec-entrada-miami').value = '';
-  document.getElementById('ec-entrega-estimada').value = seg.FechaEstimadaEntrega ? String(seg.FechaEstimadaEntrega).substring(0,10) : '';
-  document.getElementById('ec-cambio-seguimiento').value = '';
-  abrirModal('modal-entrada');
-}
-
-async function guardarEntradaCasillero(){
-  if(!entradaSeleccionada) return;
-
-  const EntradaMiami = document.getElementById('ec-entrada-miami').value;
-  const EntregaEstimada = document.getElementById('ec-entrega-estimada').value;
-  const CambioSeguimiento = document.getElementById('ec-cambio-seguimiento').value.trim();
-
-  if(!EntradaMiami || !EntregaEstimada){
-    showToast('Completa las fechas de entrada y entrega.', true);
-    return;
-  }
-
-  try{
-    const res = await fetch(`${API}/entrada-casillero`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        EntradaMiami,
-        EntregaEstimada,
-        IdSeguimiento: entradaSeleccionada.IdSeguimiento,
-        CambioSeguimiento: CambioSeguimiento || null
-      })
-    });
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error || 'Error al registrar entrada');
-
-    showToast(data.mensaje);
-    cerrarModal('modal-entrada');
-    entradaSeleccionada = null;
-    await cargarSeguimientos();
-    await cargarEntradasCasillero();
-  }catch(err){
-    showToast(err.message, true);
-  }
-}
-
-/* =========================================================
-   TAB 3 — ORDEN DE PAGO DE CASILLERO
-   ========================================================= */
-async function cargarEntradasCasillero(){
-  const tbody = document.getElementById('tbody-entradas');
-  tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Cargando entradas a casillero...</td></tr>`;
-  try{
-    const res = await fetch(`${API}/entradas-casillero`);
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error || 'Error al cargar entradas');
-    entradasCasillero = data.data || [];
-    document.getElementById('count-orden').textContent =
-      entradasCasillero.filter(e => !e.IdOrden || e.IdOrden === 0).length;
-    renderEntradasCasillero(entradasCasillero);
-  }catch(err){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Error: ${err.message}</td></tr>`;
-  }
-}
-
-function renderEntradasCasillero(lista){
-  const tbody = document.getElementById('tbody-entradas');
-  if(!lista.length){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">No hay entradas a casillero registradas.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = lista.map(e => {
-    const tieneOrden = e.IdOrden && e.IdOrden !== 0;
-    const checked = seleccionEntradas.has(e.IdSeguimiento) ? 'checked' : '';
-    return `
-      <tr>
-        <td>
-          <input type="checkbox" class="check" ${tieneOrden ? 'disabled' : checked}
-                 onchange="toggleSeleccionEntrada(${e.IdSeguimiento}, this.checked)">
-        </td>
-        <td>
-          <button class="btn btn-outline btn-sm" onclick="toggleArticulosSeguimiento(${e.IdSeguimiento}, this)">Ver</button>
-        </td>
-        <td>${e.Seguimiento}</td>
-        <td>${e.NombreCasillero}</td>
-        <td>${fmtFecha(e.EntradaMiami)}</td>
-        <td>${fmtFecha(e.EntregaEstimada)}</td>
-        <td>${e.TotalPesoLibras}</td>
-        <td>$${e.TotalPago}</td>
-        <td>${tieneOrden
-            ? `<span class="badge b-gray">${e.NumeroOrden}</span>`
-            : `<span class="badge b-amber">Sin orden</span>`}
-        </td>
-      </tr>
-      <tr class="seg-articulos-row-${e.IdSeguimiento}" style="display:none;">
-        <td colspan="9" style="padding:0;">
-          <div class="seg-articulos" id="seg-articulos-${e.IdSeguimiento}"></div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  actualizarResumenSeleccion();
-}
-
-function filtrarEntradas(){
-  const q = document.getElementById('filtro-entradas').value.toLowerCase();
-  const filtrados = entradasCasillero.filter(e =>
-    e.Seguimiento.toLowerCase().includes(q) ||
-    e.NombreCasillero.toLowerCase().includes(q)
-  );
-  renderEntradasCasillero(filtrados);
-}
-
-/* --- Ver artículos de un seguimiento (desplegable) --- */
-async function toggleArticulosSeguimiento(idSeguimiento, btn){
-  const row = document.querySelector(`.seg-articulos-row-${idSeguimiento}`);
-  const container = document.getElementById(`seg-articulos-${idSeguimiento}`);
-
-  if(row.style.display === 'none'){
-    row.style.display = '';
-    btn.textContent = 'Ocultar';
-
-    if(!container.dataset.loaded){
-      container.innerHTML = `<div class="seg-articulos-empty">Cargando artículos...</div>`;
-      try{
-        const res = await fetch(`${API}/articulos/${idSeguimiento}`);
-        const data = await res.json();
-        if(!data.ok) throw new Error(data.error || 'Error al cargar artículos');
-
-        const articulos = data.data || [];
-        if(!articulos.length){
-          container.innerHTML = `<div class="seg-articulos-empty">Este seguimiento no tiene artículos registrados.</div>`;
-        }else{
-          container.innerHTML = `
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Artículo</th>
-                  <th>Talla / Color</th>
-                  <th>Descripción</th>
-                  <th>Vendedor</th>
-                  <th>Cant.</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${articulos.map(a => `
-                  <tr>
-                    <td>${a.NombreCliente ?? '-'}</td>
-                    <td>${a.NombreArticulo ?? '-'}</td>
-                    <td>${a.TallaColor ?? '-'}</td>
-                    <td>${a.DescripcionArticulo ?? '-'}</td>
-                    <td>${a.CodigoVendedor ?? '-'}</td>
-                    <td>${a.CantidadArticulos ?? 1}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          `;
+    /* =========================================================
+       TAB 1 — ARTÍCULOS SIN SEGUIMIENTO
+       ========================================================= */
+    async function cargarArticulosSinSeguimiento(){
+        const tbody = document.getElementById('tbody-articulos');
+        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Cargando artículos...</td></tr>`;
+        try{
+            const res = await fetch(`${API}/sin-seguimiento`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al cargar artículos');
+            articulosSinSeguimiento = data.data || [];
+            document.getElementById('count-sin-seg').textContent = articulosSinSeguimiento.length;
+            renderArticulosSinSeguimiento(articulosSinSeguimiento);
+        }catch(err){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Error: ${err.message}</td></tr>`;
         }
-        container.dataset.loaded = '1';
-      }catch(err){
-        container.innerHTML = `<div class="seg-articulos-empty">Error: ${err.message}</div>`;
-      }
     }
-  }else{
-    row.style.display = 'none';
-    btn.textContent = 'Ver';
-  }
-}
 
-/* --- Selección múltiple para orden de pago --- */
-function toggleSeleccionEntrada(idSeguimiento, checked){
-  if(checked){
-    seleccionEntradas.add(idSeguimiento);
-  }else{
-    seleccionEntradas.delete(idSeguimiento);
-  }
-  actualizarResumenSeleccion();
-}
-
-function actualizarResumenSeleccion(){
-  let totalPeso = 0;
-  let totalPago = 0;
-
-  seleccionEntradas.forEach(idSeguimiento => {
-    const entrada = entradasCasillero.find(e => e.IdSeguimiento === idSeguimiento);
-    if(entrada){
-      totalPeso += parseFloat(entrada.TotalPesoLibras) || 0;
-      totalPago += parseFloat(entrada.TotalPago) || 0;
+    function renderArticulosSinSeguimiento(lista){
+        const tbody = document.getElementById('tbody-articulos');
+        if(!lista.length){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">No hay artículos pendientes de seguimiento. ¡Todo asignado! 🎉</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = lista.map(a => `
+            <tr>
+                <td>${a.NoPedidoAplicacion ?? a.IdPedido ?? '-'}</td>
+                <td>${a.NombreArticulo ?? a.Articulo ?? '-'}</td>
+                <td>${a.TallaColor ?? '-'}</td>
+                <td>${a.DescripcionArticulo ?? '-'}</td>
+                <td>${a.CantidadArticulos ?? a.Cantidad ?? 1}</td>
+                <td><span class="badge b-amber">Sin seguimiento</span></td>
+                <td><button class="btn-primary btn-sm" onclick="abrirModalAsignar(${a.IdDetallePedido})">Asignar</button></td>
+            </tr>
+        `).join('');
     }
-  });
 
-  document.getElementById('sum-count').textContent = seleccionEntradas.size;
-  document.getElementById('sum-peso').textContent = totalPeso.toFixed(2);
-  document.getElementById('sum-total').textContent = `$${totalPago.toFixed(2)}`;
-  document.getElementById('btn-crear-orden').disabled = seleccionEntradas.size === 0;
-}
-
-/* --- Modal: crear orden de pago --- */
-function abrirModalOrden(){
-  let totalPeso = 0;
-  let totalPago = 0;
-
-  seleccionEntradas.forEach(idSeguimiento => {
-    const entrada = entradasCasillero.find(e => e.IdSeguimiento === idSeguimiento);
-    if(entrada){
-      totalPeso += parseFloat(entrada.TotalPesoLibras) || 0;
-      totalPago += parseFloat(entrada.TotalPago) || 0;
+    function filtrarArticulos(q){
+        q = q.toLowerCase();
+        const filtrados = articulosSinSeguimiento.filter(a =>
+            (a.NombreArticulo ?? '').toLowerCase().includes(q) ||
+            (a.DescripcionArticulo ?? '').toLowerCase().includes(q) ||
+            String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
+        );
+        renderArticulosSinSeguimiento(filtrados);
     }
-  });
 
-  document.getElementById('op-numero-orden').value = '';
-  document.getElementById('op-fecha').value = new Date().toISOString().substring(0,10);
-  document.getElementById('op-peso').value = totalPeso.toFixed(2);
-  document.getElementById('op-cantidad-pagada').value = totalPago.toFixed(2);
+    /* --- Modal: nuevo seguimiento --- */
+    function abrirModalNuevoSeguimiento(){
+        document.getElementById('ns-seguimiento').value = '';
+        document.getElementById('ns-fecha-salida').value = '';
+        document.getElementById('ns-fecha-entrega').value = '';
+        abrirModal('modal-seguimiento');
+    }
 
-  abrirModal('modal-orden');
-}
+    async function guardarNuevoSeguimiento(){
+        const Seguimiento = document.getElementById('ns-seguimiento').value.trim();
+        const FechaSalidaInicio = document.getElementById('ns-fecha-salida').value;
+        const FechaEstimadaEntrega = document.getElementById('ns-fecha-entrega').value;
 
-async function confirmarOrdenPago(){
-  const NumeroOrden = document.getElementById('op-numero-orden').value.trim();
-  const Fecha = document.getElementById('op-fecha').value;
-  const Peso = parseFloat(document.getElementById('op-peso').value) || 0;
-  const CantidadPagada = parseFloat(document.getElementById('op-cantidad-pagada').value) || 0;
-  const IdMetodoPago = Number(document.getElementById('op-metodo-pago').value);
-  const IdCuenta = Number(document.getElementById('op-cuenta').value);
+        if(!Seguimiento || !FechaSalidaInicio || !FechaEstimadaEntrega){
+            showToast('Completa todos los campos del seguimiento.', true);
+            return;
+        }
 
-  if(!NumeroOrden || !Fecha){
-    showToast('Completa el número de orden y la fecha.', true);
-    return;
-  }
-  if(seleccionEntradas.size === 0){
-    showToast('Selecciona al menos un tracking.', true);
-    return;
-  }
+        try{
+            const res = await fetch(`${API}/seguimientos`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({Seguimiento, FechaSalidaInicio, FechaEstimadaEntrega})
+            });
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al crear seguimiento');
 
-  try{
-    const resOrden = await fetch(`${API}/ordenes-entrega`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ NumeroOrden, Fecha, CantidadPagada, IdMetodoPago, Peso, IdCuenta })
-    });
-    const dataOrden = await resOrden.json();
-    if(!dataOrden.ok) throw new Error(dataOrden.error || 'Error al crear la orden');
+            showToast(data.mensaje);
+            cerrarModal('modal-seguimiento');
+            await cargarSeguimientos();
+        }catch(err){
+            showToast(err.message, true);
+        }
+    }
 
-    const idOrden = dataOrden.idOrden;
+    /* --- Modal: asignar seguimiento a artículo --- */
+    function abrirModalAsignar(idDetalle){
+        const articulo = articulosSinSeguimiento.find(a => a.IdDetallePedido === idDetalle);
+        if(!articulo) return;
 
-    const resAsignar = await fetch(`${API}/ordenes-entrega/asignar`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        idsSeguimiento: Array.from(seleccionEntradas),
-        IdOrden: idOrden
-      })
-    });
-    const dataAsignar = await resAsignar.json();
-    if(!dataAsignar.ok) throw new Error(dataAsignar.error || 'Error al asignar la orden');
+        articuloAsignar = articulo;
+        document.getElementById('as-articulo-nombre').value = `${articulo.NombreArticulo ?? articulo.Articulo ?? ''} — ${articulo.TallaColor ?? ''}`;
 
-    showToast(`Orden ${NumeroOrden} creada y asignada correctamente.`);
-    cerrarModal('modal-orden');
-    seleccionEntradas.clear();
-    await cargarEntradasCasillero();
-  }catch(err){
-    showToast(err.message, true);
-  }
-}
+        const select = document.getElementById('as-seguimiento');
+        select.innerHTML = listaSeguimientos.map(s =>
+            `<option value="${s.IdSeguimiento}">${s.Seguimiento}</option>`
+        ).join('') || '<option value="">No hay seguimientos disponibles</option>';
+
+        abrirModal('modal-asignar');
+    }
+
+    async function guardarAsignacionSeguimiento(){
+        if(!articuloAsignar) return;
+        const IdSeguimiento = document.getElementById('as-seguimiento').value;
+        if(!IdSeguimiento){
+            showToast('Selecciona un seguimiento.', true);
+            return;
+        }
+
+        try{
+            const res = await fetch(`${API}/asignar-seguimiento`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    IdDetalleCliente: articuloAsignar.IdDetallePedido,
+                    IdSeguimiento: Number(IdSeguimiento)
+                })
+            });
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al asignar seguimiento');
+
+            showToast(data.mensaje);
+            cerrarModal('modal-asignar');
+            articuloAsignar = null;
+            await cargarArticulosSinSeguimiento();
+            await cargarSeguimientos();
+        }catch(err){
+            showToast(err.message, true);
+        }
+    }
+
+    /* =========================================================
+       TAB 2 — ENTRADA A CASILLERO
+       ========================================================= */
+    const ESTADOS = {
+        1: {label:'Pendiente', cls:'b-amber'},
+        2: {label:'Con artículos', cls:'b-blue'},
+        3: {label:'En casillero', cls:'b-teal'},
+        4: {label:'Con orden', cls:'b-gray'}
+    };
+
+    async function cargarSeguimientos(){
+        const tbody = document.getElementById('tbody-seguimientos');
+        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Cargando seguimientos...</td></tr>`;
+        try{
+            const res = await fetch(`${API}/seguimientos`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al cargar seguimientos');
+            listaSeguimientos = data.data || [];
+            document.getElementById('count-seguimientos').textContent = listaSeguimientos.length;
+            renderSeguimientos(listaSeguimientos);
+        }catch(err){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Error: ${err.message}</td></tr>`;
+        }
+    }
+
+    function renderSeguimientos(lista){
+        const tbody = document.getElementById('tbody-seguimientos');
+        if(!lista.length){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">No hay seguimientos registrados.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = lista.map(s => {
+            const estado = ESTADOS[s.IdEstado] ?? {label:'Desconocido', cls:'b-gray'};
+            const puedeRegistrar = s.IdEstado === 1 || s.IdEstado === 2;
+            return `
+                <tr>
+                    <td>${s.N}</td>
+                    <td>${s.Seguimiento}</td>
+                    <td>${fmtFecha(s.FechaSalidaInicio)}</td>
+                    <td>${fmtFecha(s.FechaEstimadaEntrega)}</td>
+                    <td><span class="badge ${estado.cls}">${estado.label}</span></td>
+                    <td><button class="btn-ghost btn-sm" onclick="toggleArticulosSeguimiento(${s.IdSeguimiento}, this, 'seg')">Ver artículos</button></td>
+                    <td>
+                        ${puedeRegistrar
+                            ? `<button class="btn-primary btn-sm" onclick="abrirModalEntrada(${s.IdSeguimiento})">Registrar entrada</button>`
+                            : `<span class="badge b-gray">Ya registrado</span>`}
+                    </td>
+                </tr>
+                <tr class="fila-articulos fila-articulos-seg-${s.IdSeguimiento}" style="display:none;">
+                    <td colspan="7">
+                        <div class="panel-articulos" id="panel-articulos-seg-${s.IdSeguimiento}"></div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function filtrarSeguimientos(){
+        const q = document.getElementById('f-seguimientos').value.toLowerCase();
+        const estadoFiltro = document.getElementById('f-estado-seg').value;
+        const filtrados = listaSeguimientos.filter(s => {
+            const coincideTexto = s.Seguimiento.toLowerCase().includes(q);
+            const coincideEstado = !estadoFiltro || String(s.IdEstado) === estadoFiltro;
+            return coincideTexto && coincideEstado;
+        });
+        renderSeguimientos(filtrados);
+    }
+
+    /* --- Modal: entrada a casillero --- */
+    function abrirModalEntrada(idSeguimiento){
+        const seg = listaSeguimientos.find(s => s.IdSeguimiento === idSeguimiento);
+        if(!seg) return;
+
+        entradaSeleccionada = seg;
+        document.getElementById('ec-seguimiento').value = seg.Seguimiento;
+        document.getElementById('ec-entrada-miami').value = '';
+        document.getElementById('ec-entrega-estimada').value = seg.FechaEstimadaEntrega ? String(seg.FechaEstimadaEntrega).substring(0,10) : '';
+        document.getElementById('ec-cambio-seguimiento').value = '';
+        abrirModal('modal-entrada');
+    }
+
+    async function guardarEntradaCasillero(){
+        if(!entradaSeleccionada) return;
+
+        const EntradaMiami = document.getElementById('ec-entrada-miami').value;
+        const EntregaEstimada = document.getElementById('ec-entrega-estimada').value;
+        const CambioSeguimiento = document.getElementById('ec-cambio-seguimiento').value.trim();
+
+        if(!EntradaMiami || !EntregaEstimada){
+            showToast('Completa las fechas de entrada y entrega.', true);
+            return;
+        }
+
+        try{
+            const res = await fetch(`${API}/entrada-casillero`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    EntradaMiami,
+                    EntregaEstimada,
+                    IdSeguimiento: entradaSeleccionada.IdSeguimiento,
+                    CambioSeguimiento: CambioSeguimiento || null
+                })
+            });
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al registrar entrada');
+
+            showToast(data.mensaje);
+            cerrarModal('modal-entrada');
+            entradaSeleccionada = null;
+            await cargarSeguimientos();
+            await cargarEntradasCasillero();
+        }catch(err){
+            showToast(err.message, true);
+        }
+    }
+
+    /* =========================================================
+       TAB 3 — ORDEN DE PAGO DE CASILLERO
+       ========================================================= */
+    async function cargarEntradasCasillero(){
+        const tbody = document.getElementById('tbody-entradas');
+        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Cargando entradas a casillero...</td></tr>`;
+        try{
+            const res = await fetch(`${API}/entradas-casillero`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al cargar entradas');
+
+            // Solo entradas SIN orden (IdOrden null o 0)
+            entradasCasillero = (data.data || []).filter(e => !e.IdOrden || e.IdOrden === 0);
+
+            document.getElementById('count-orden').textContent = entradasCasillero.length;
+            renderEntradasCasillero(entradasCasillero);
+        }catch(err){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Error: ${err.message}</td></tr>`;
+        }
+    }
+
+    function renderEntradasCasillero(lista){
+        const tbody = document.getElementById('tbody-entradas');
+        if(!lista.length){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">No hay entradas a casillero pendientes de orden.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = lista.map(e => {
+            const checked = seleccionEntradas.has(e.IdSeguimiento) ? 'checked' : '';
+            return `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="check" ${checked}
+                               onchange="toggleSeleccionEntrada(${e.IdSeguimiento}, this.checked)">
+                    </td>
+                    <td>
+                        <button class="btn-ghost btn-sm" onclick="toggleArticulosSeguimiento(${e.IdSeguimiento}, this, 'entrada')">Ver artículos</button>
+                    </td>
+                    <td>${e.Seguimiento}</td>
+                    <td>${e.NombreCasillero}</td>
+                    <td>${fmtFecha(e.EntradaMiami)}</td>
+                    <td>${fmtFecha(e.EntregaEstimada)}</td>
+                    <td>${e.TotalPesoLibras}</td>
+                    <td>$${e.TotalPago}</td>
+                </tr>
+                <tr class="fila-articulos fila-articulos-entrada-${e.IdSeguimiento}" style="display:none;">
+                    <td colspan="8">
+                        <div class="panel-articulos" id="panel-articulos-entrada-${e.IdSeguimiento}"></div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        actualizarResumenSeleccion();
+    }
+
+    function filtrarEntradas(q){
+        q = q.toLowerCase();
+        const filtrados = entradasCasillero.filter(e =>
+            e.Seguimiento.toLowerCase().includes(q) ||
+            e.NombreCasillero.toLowerCase().includes(q)
+        );
+        renderEntradasCasillero(filtrados);
+    }
+
+    /* --- Ver artículos de un seguimiento (botón "Ver artículos") --- */
+    async function toggleArticulosSeguimiento(idSeguimiento, btn, contexto){
+        const row = document.querySelector(`.fila-articulos-${contexto}-${idSeguimiento}`);
+        const container = document.getElementById(`panel-articulos-${contexto}-${idSeguimiento}`);
+
+        if(row.style.display === 'none'){
+            row.style.display = '';
+            btn.textContent = 'Ocultar';
+
+            if(!container.dataset.loaded){
+                container.innerHTML = `<div class="panel-articulos-vacio">Cargando artículos...</div>`;
+                try{
+                    const res = await fetch(`${API}/articulos/${idSeguimiento}`);
+                    const data = await res.json();
+                    if(!data.ok) throw new Error(data.error || 'Error al cargar artículos');
+
+                    const articulos = data.data || [];
+                    if(!articulos.length){
+                        container.innerHTML = `<div class="panel-articulos-vacio">Este seguimiento no tiene artículos registrados.</div>`;
+                    }else{
+                        container.innerHTML = `
+                            <table class="tbl">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Artículo</th>
+                                        <th>Talla / Color</th>
+                                        <th>Descripción</th>
+                                        <th>Vendedor</th>
+                                        <th>Cant.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${articulos.map(a => `
+                                        <tr>
+                                            <td>${a.NombreCliente ?? '-'}</td>
+                                            <td>${a.NombreArticulo ?? '-'}</td>
+                                            <td>${a.TallaColor ?? '-'}</td>
+                                            <td>${a.DescripcionArticulo ?? '-'}</td>
+                                            <td>${a.CodigoVendedor ?? '-'}</td>
+                                            <td>${a.CantidadArticulos ?? 1}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+                    container.dataset.loaded = '1';
+                }catch(err){
+                    container.innerHTML = `<div class="panel-articulos-vacio">Error: ${err.message}</div>`;
+                }
+            }
+        }else{
+            row.style.display = 'none';
+            btn.textContent = 'Ver artículos';
+        }
+    }
+
+    /* --- Selección múltiple para orden de pago --- */
+    function toggleSeleccionEntrada(idSeguimiento, checked){
+        if(checked){
+            seleccionEntradas.add(idSeguimiento);
+        }else{
+            seleccionEntradas.delete(idSeguimiento);
+        }
+        actualizarResumenSeleccion();
+    }
+
+    function actualizarResumenSeleccion(){
+        let totalPeso = 0;
+        let totalPago = 0;
+
+        seleccionEntradas.forEach(idSeguimiento => {
+            const entrada = entradasCasillero.find(e => e.IdSeguimiento === idSeguimiento);
+            if(entrada){
+                totalPeso += parseFloat(entrada.TotalPesoLibras) || 0;
+                totalPago += parseFloat(entrada.TotalPago) || 0;
+            }
+        });
+
+        document.getElementById('sum-count').textContent = seleccionEntradas.size;
+        document.getElementById('sum-peso').textContent = totalPeso.toFixed(2);
+        document.getElementById('sum-total').textContent = `$${totalPago.toFixed(2)}`;
+        document.getElementById('btn-crear-orden').disabled = seleccionEntradas.size === 0;
+    }
+
+    /* --- Modal: crear orden de pago --- */
+    function abrirModalOrden(){
+        let totalPeso = 0;
+        let totalPago = 0;
+
+        seleccionEntradas.forEach(idSeguimiento => {
+            const entrada = entradasCasillero.find(e => e.IdSeguimiento === idSeguimiento);
+            if(entrada){
+                totalPeso += parseFloat(entrada.TotalPesoLibras) || 0;
+                totalPago += parseFloat(entrada.TotalPago) || 0;
+            }
+        });
+
+        document.getElementById('op-numero-orden').value = '';
+        document.getElementById('op-fecha').value = new Date().toISOString().substring(0,10);
+        document.getElementById('op-peso').value = totalPeso.toFixed(2);
+        document.getElementById('op-cantidad-pagada').value = totalPago.toFixed(2);
+
+        abrirModal('modal-orden');
+    }
+
+    async function confirmarOrdenPago(){
+        const NumeroOrden = document.getElementById('op-numero-orden').value.trim();
+        const Fecha = document.getElementById('op-fecha').value;
+        const Peso = parseFloat(document.getElementById('op-peso').value) || 0;
+        const CantidadPagada = parseFloat(document.getElementById('op-cantidad-pagada').value) || 0;
+        const IdMetodoPago = Number(document.getElementById('op-metodo-pago').value);
+        const IdCuenta = Number(document.getElementById('op-cuenta').value);
+
+        if(!NumeroOrden || !Fecha){
+            showToast('Completa el número de orden y la fecha.', true);
+            return;
+        }
+        if(seleccionEntradas.size === 0){
+            showToast('Selecciona al menos un tracking.', true);
+            return;
+        }
+
+        try{
+            const resOrden = await fetch(`${API}/ordenes-entrega`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ NumeroOrden, Fecha, CantidadPagada, IdMetodoPago, Peso, IdCuenta })
+            });
+            const dataOrden = await resOrden.json();
+            if(!dataOrden.ok) throw new Error(dataOrden.error || 'Error al crear la orden');
+
+            const idOrden = dataOrden.idOrden;
+
+            const resAsignar = await fetch(`${API}/ordenes-entrega/asignar`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    idsSeguimiento: Array.from(seleccionEntradas),
+                    IdOrden: idOrden
+                })
+            });
+            const dataAsignar = await resAsignar.json();
+            if(!dataAsignar.ok) throw new Error(dataAsignar.error || 'Error al asignar la orden');
+
+            showToast(`Orden ${NumeroOrden} creada y asignada correctamente.`);
+            cerrarModal('modal-orden');
+            seleccionEntradas.clear();
+            await cargarEntradasCasillero();
+        }catch(err){
+            showToast(err.message, true);
+        }
+    }
+
+    // ===== INIT =====
+    cargarArticulosSinSeguimiento();
+    cargarSeguimientos();
+    cargarEntradasCasillero();
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>
