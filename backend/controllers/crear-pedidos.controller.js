@@ -170,23 +170,26 @@ const agregarArticulo = async (req, res) => {
     // Guardar URL de foto si existe
     if (urlFoto) {
       const pool2 = await poolPromise;
-      await pool2.request().query(`
-        UPDATE C_DetallePedido SET Fotografia = '${urlFoto}'
-        WHERE IdDetallePedido = (SELECT MAX(IdDetallePedido) FROM C_DetallePedido WHERE IdPedido = ${idPedido})
-      `);
+      await pool2.request()
+        .input('UrlFoto', sql.NVarChar(sql.MAX), urlFoto)
+        .input('IdPedido', sql.Int, parseInt(idPedido))
+        .query(`
+          UPDATE C_DetallePedido SET Fotografia = @UrlFoto
+          WHERE IdDetallePedido = (SELECT MAX(IdDetallePedido) FROM C_DetallePedido WHERE IdPedido = @IdPedido)
+        `);
     }
 
     res.json({ ok: true, mensaje: 'Artículo agregado', urlFoto });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
-module.exports = { getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo };
-
-async function editarArticulo(req, res) {
+// Editar artículo existente
+const editarArticulo = async (req, res) => {
   try {
     const {
       idDetallePedido, codigoArticulo, descripcionArticulo, peso,
-      idArticulo, tallaColor, valorCompra, cantidadArticulos, link, noPedidoAplicacion
+      idArticulo, tallaColor, valorCompra, cantidadArticulos, link, noPedidoAplicacion,
+      fotoBase64, fotoMime
     } = req.body;
 
     const pool = await poolPromise;
@@ -213,6 +216,42 @@ async function editarArticulo(req, res) {
       .input('NoPedidoAplicacion', sql.NVarChar,      noPedidoAplicacion || null)
       .execute('Se_DetallePedido');
 
-    res.json({ ok: true });
+    // Subir y actualizar foto si viene una nueva
+    let urlFoto = null;
+    if (fotoBase64 && process.env.AZURE_STORAGE_CONNECTION_STRING) {
+      try {
+        const blobService = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+        const container = blobService.getContainerClient('fotos-articulos');
+        const ext = fotoMime === 'image/jpeg' ? 'jpg' : fotoMime === 'image/webp' ? 'webp' : 'png';
+        const blobName = uuidv4() + '.' + ext;
+        const blob = container.getBlockBlobClient(blobName);
+        const buffer = Buffer.from(fotoBase64, 'base64');
+        await blob.uploadData(buffer, { blobHTTPHeaders: { blobContentType: fotoMime || 'image/png' } });
+        urlFoto = blob.url;
+
+        await pool.request()
+          .input('UrlFoto', sql.NVarChar(sql.MAX), urlFoto)
+          .input('IdDetallePedido', sql.Int, parseInt(idDetallePedido))
+          .query('UPDATE C_DetallePedido SET Fotografia = @UrlFoto WHERE IdDetallePedido = @IdDetallePedido');
+      } catch (blobErr) {
+        console.error('Azure Blob error:', blobErr.message);
+        // Continuar sin actualizar foto si falla
+      }
+    }
+
+    res.json({ ok: true, urlFoto });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
-}
+};
+
+module.exports = {
+  getTiendas,
+  getCasilleros,
+  getMonedas,
+  getArticulos,
+  getNumeroPedido,
+  crearPedido,
+  getPedidosAbiertos,
+  getDetallesPedido,
+  agregarArticulo,
+  editarArticulo
+};

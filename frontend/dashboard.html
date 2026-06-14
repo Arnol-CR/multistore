@@ -475,6 +475,9 @@
                 }
             </td>
             <td style="white-space:nowrap">
+                <button onclick="verArticulo(${p.IdDetallePedido})"
+                    style="background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
+                    title="Ver artículo">👁️</button>
                 <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
                     style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
                     title="Asignar cliente">👤</button>
@@ -539,6 +542,7 @@
                 </span>
             </div>
             <div class="tarjeta-btns">
+                <button onclick="verArticulo(${p.IdDetallePedido})" style="background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;" title="Ver artículo">👁️</button>
                 <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')">👤 Asignar cliente</button>
                 <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', ${p.PrecioSugerido || 0})">💲 Asignar precio</button>
                 ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;">👥 Vendedor</button>` : ''}
@@ -575,6 +579,38 @@ function cambiarPagina(nuevaPagina) {
     cargarStats();
     cargarPedidosRecientes();
     setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
+
+    // ===== MODAL VER ARTÍCULO =====
+    function verArticulo(idDetallePedido) {
+        const a = articulosDisponibles.find(x => x.IdDetallePedido === idDetallePedido);
+        if (!a) return;
+
+        document.getElementById('ver-articulo-id').textContent = a.IdDetallePedido;
+        document.getElementById('ver-articulo-nombre').textContent = a.NombreArticulo || 'Sin nombre';
+        document.getElementById('ver-articulo-desc').textContent = a.DescripcionArticulo || '';
+        document.getElementById('ver-articulo-talla').textContent = a.TallaColor ? '📐 ' + a.TallaColor : '';
+        document.getElementById('ver-articulo-talla').style.display = a.TallaColor ? 'inline-block' : 'none';
+        document.getElementById('ver-articulo-codigo').textContent = a.CodigoArticulo ? '🔖 ' + a.CodigoArticulo : '';
+        document.getElementById('ver-articulo-codigo').style.display = a.CodigoArticulo ? 'inline-block' : 'none';
+
+        const img = document.getElementById('ver-articulo-foto');
+        const sinFoto = document.getElementById('ver-articulo-sin-foto');
+        if (a.Fotografia) {
+            img.src = a.Fotografia;
+            img.style.display = 'block';
+            sinFoto.style.display = 'none';
+            img.onerror = () => { img.style.display = 'none'; sinFoto.style.display = 'block'; };
+        } else {
+            img.style.display = 'none';
+            sinFoto.style.display = 'block';
+        }
+
+        document.getElementById('modal-articulo-ver').style.display = 'flex';
+    }
+
+    function cerrarModalVerArticulo() {
+        document.getElementById('modal-articulo-ver').style.display = 'none';
+    }
 
     // ===== MODAL CLIENTE =====
     let idDetallePedidoActual = null;
@@ -931,6 +967,42 @@ function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) 
 </script>
 
 <!-- MODAL ASIGNAR CLIENTE -->
+<!-- MODAL VER ARTÍCULO -->
+<div id="modal-articulo-ver" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <h3 style="color:#fff;font-size:15px;">👁️ Ver artículo</h3>
+            <button onclick="cerrarModalVerArticulo()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+
+        <div id="ver-articulo-foto-wrap" style="width:100%;aspect-ratio:1/1;max-height:280px;background:#13181f;border:1px solid #1e2530;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;">
+            <img id="ver-articulo-foto" style="width:100%;height:100%;object-fit:contain;display:none;">
+            <div id="ver-articulo-sin-foto" style="color:#374151;font-size:12px;text-align:center;">
+                <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+                Sin fotografía
+            </div>
+        </div>
+
+        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#4b5563;">
+                <span>ID Detalle Pedido</span>
+                <span id="ver-articulo-id" style="color:#9ca3af;font-family:monospace;"></span>
+            </div>
+            <div id="ver-articulo-nombre" style="color:#e2e8f0;font-size:14px;font-weight:600;margin-top:4px;"></div>
+            <div id="ver-articulo-desc" style="color:#9ca3af;font-size:12px;line-height:1.4;"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+                <span id="ver-articulo-talla" style="font-size:11px;color:#6b7280;background:#0d1117;border:1px solid #1e2530;border-radius:6px;padding:3px 8px;"></span>
+                <span id="ver-articulo-codigo" style="font-size:11px;color:#6b7280;background:#0d1117;border:1px solid #1e2530;border-radius:6px;padding:3px 8px;font-family:monospace;"></span>
+            </div>
+        </div>
+
+        <button onclick="cerrarModalVerArticulo()"
+            style="width:100%;margin-top:14px;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
+            Cerrar
+        </button>
+    </div>
+</div>
+
 <div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center;padding:16px;">
     <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;width:100%;max-width:960px;max-height:92vh;display:flex;overflow:hidden;">
 
