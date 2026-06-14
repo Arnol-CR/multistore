@@ -371,7 +371,8 @@
         renderizarPagina();
     }
 
-    function filtrarPedidos(texto) {
+    // Lógica pura de filtrado (texto + checkboxes), sin tocar la paginación
+    function aplicarFiltros(texto) {
         const q            = (texto || '').trim().toLowerCase();
         const soloMios     = document.getElementById('chk-solo-mis')?.checked || false;
         const sinVendedor  = document.getElementById('chk-sin-vendedor')?.checked || false;
@@ -389,6 +390,10 @@
                 (p.NombreEmpresa       || '').toLowerCase().includes(q)
             );
         });
+    }
+
+    function filtrarPedidos(texto) {
+        aplicarFiltros(texto);
         paginaActual = 1;
         renderizarPagina();
     }
@@ -406,18 +411,11 @@
             const tbody = document.getElementById('tabla-pedidos');
             if (json.ok && json.data.length > 0) {
                 articulosDisponibles = json.data;
-                // Mantener filtro activo si hay texto
-                const q = (document.getElementById('search-pedidos')?.value || '').trim().toLowerCase();
-                articulosFiltrados = q
-                    ? articulosDisponibles.filter(p =>
-                        (p.NombreArticulo   || '').toLowerCase().includes(q) ||
-                        (p.NombreCliente    || '').toLowerCase().includes(q) ||
-                        (p.DescripcionArticulo || '').toLowerCase().includes(q) ||
-                        (p.NombreEmpresa    || '').toLowerCase().includes(q)
-                      )
-                    : articulosDisponibles;
-                // Solo reiniciar página si es la carga inicial
-                if (paginaActual === 1 || articulosFiltrados.length === 0) paginaActual = 1;
+                // Reaplicar TODOS los filtros activos (texto + checkboxes) sin resetear la página
+                const paginaPrevia = paginaActual;
+                aplicarFiltros(document.getElementById('search-pedidos')?.value || '');
+                const totalPaginasNueva = Math.max(1, Math.ceil(articulosFiltrados.length / registrosPorPagina));
+                paginaActual = Math.min(paginaPrevia, totalPaginasNueva);
                 renderizarPagina();
             } else {
                 tbody.innerHTML = '<tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
