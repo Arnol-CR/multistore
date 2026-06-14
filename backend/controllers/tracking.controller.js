@@ -61,6 +61,30 @@ const asignarSeguimientoArticulo = async (req, res) => {
     }
 };
 
+// Asignar el mismo seguimiento a varios artículos a la vez (asignación masiva)
+const asignarSeguimientoMasivo = async (req, res) => {
+    try {
+        const { idsDetalle, IdSeguimiento } = req.body;
+
+        if (!Array.isArray(idsDetalle) || idsDetalle.length === 0 || !IdSeguimiento) {
+            return res.status(400).json({ ok: false, mensaje: 'Faltan idsDetalle o IdSeguimiento.' });
+        }
+
+        const pool = await poolPromise;
+
+        for (const idDetalle of idsDetalle) {
+            await pool.request()
+                .input('IdDetalleCliente', sql.Int, idDetalle)
+                .input('IdSeguimiento', sql.Int, IdSeguimiento)
+                .execute('Up_DetallesPedidosIdSeguimiento');
+        }
+
+        res.json({ ok: true, mensaje: `${idsDetalle.length} artículo(s) asignado(s) correctamente.` });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 /* =========================================================
    PESTAÑA 2 — ENTRADA A CASILLERO
    ========================================================= */
@@ -134,6 +158,19 @@ const getArticulosPorSeguimiento = async (req, res) => {
     }
 };
 
+// Listar cuentas bancarias (Se_CuentaBanco)
+const getCuentasBanco = async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .execute('Se_CuentaBanco');
+
+        res.json({ ok: true, data: result.recordset });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 // Crear orden de pago de casillero (In_OrdenesEntrega)
 const crearOrdenEntrega = async (req, res) => {
     try {
@@ -189,12 +226,14 @@ module.exports = {
     getArticulosSinSeguimiento,
     crearSeguimiento,
     asignarSeguimientoArticulo,
+    asignarSeguimientoMasivo,
     // Pestaña 2
     getSeguimientos,
     registrarEntradaCasillero,
     // Pestaña 3
     getEntradasCasillero,
     getArticulosPorSeguimiento,
+    getCuentasBanco,
     crearOrdenEntrega,
     asignarOrdenAEntradas
 };

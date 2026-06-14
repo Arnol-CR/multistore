@@ -13,6 +13,26 @@
         .overlay.active { display:block; }
 
         .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; user-select:none; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-item.active svg { opacity:1; }
+        .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; transition:.15s; background:none; border:none; width:100%; }
+        .btn-salir:hover { color:#fca5a5; }
+        .btn-salir svg { width:16px; height:16px; }
 
         .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
         .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
@@ -187,10 +207,26 @@
                     <input type="text" id="f-articulos" placeholder="🔍 Buscar artículo o pedido..." oninput="filtrarArticulos(this.value)">
                 </div>
 
+                <div class="summary-bar" id="bar-asignacion-masiva" style="display:none;">
+                    <div class="summary-item">
+                        <div class="summary-label">Seleccionados</div>
+                        <div class="summary-val" id="masivo-count">0</div>
+                    </div>
+                    <div class="field" style="flex:1; min-width:220px;">
+                        <label>Asignar al seguimiento</label>
+                        <select id="masivo-seguimiento"></select>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-ghost" onclick="limpiarSeleccionMasiva()">Cancelar</button>
+                        <button class="btn-primary" id="btn-asignar-masivo" disabled onclick="guardarAsignacionMasiva()">Asignar seleccionados</button>
+                    </div>
+                </div>
+
                 <div class="tbl-wrap">
                     <table class="tbl">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" class="check" id="chk-todos" onchange="toggleSeleccionarTodos(this.checked)"></th>
                                 <th>Pedido</th>
                                 <th>Artículo</th>
                                 <th>Talla / Color</th>
@@ -201,7 +237,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-articulos">
-                            <tr class="fila-vacia"><td colspan="7">Cargando artículos...</td></tr>
+                            <tr class="fila-vacia"><td colspan="8">Cargando artículos...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -270,10 +306,6 @@
                     <div class="summary-item">
                         <div class="summary-label">Peso total (lb)</div>
                         <div class="summary-val" id="sum-peso">0.00</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Total a pagar</div>
-                        <div class="summary-val" id="sum-total">$0.00</div>
                     </div>
                     <div style="flex:1; display:flex; justify-content:flex-end;">
                         <button class="btn-primary" id="btn-crear-orden" disabled onclick="abrirModalOrden()">Crear orden de pago</button>
@@ -410,7 +442,7 @@
                 </div>
                 <div class="field">
                     <label>Peso total (lb)</label>
-                    <input type="text" id="op-peso" disabled>
+                    <input type="text" id="op-peso" placeholder="0.00">
                 </div>
             </div>
             <div class="form-grid-2">
@@ -429,10 +461,7 @@
             </div>
             <div class="field">
                 <label>Cuenta</label>
-                <select id="op-cuenta">
-                    <option value="1">Cuenta principal</option>
-                    <option value="2">Cuenta secundaria</option>
-                </select>
+                <select id="op-cuenta"></select>
             </div>
         </div>
         <div class="modal-footer">
@@ -444,8 +473,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="/assets/sidebar.js"></script>
-    <script>
+<script>
     // ===== AUTH =====
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
@@ -499,29 +527,42 @@
     /* =========================================================
        TAB 1 — ARTÍCULOS SIN SEGUIMIENTO
        ========================================================= */
+    let seleccionArticulos = new Set();
+
     async function cargarArticulosSinSeguimiento(){
         const tbody = document.getElementById('tbody-articulos');
-        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Cargando artículos...</td></tr>`;
+        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Cargando artículos...</td></tr>`;
         try{
             const res = await fetch(`${API}/sin-seguimiento`);
             const data = await res.json();
             if(!data.ok) throw new Error(data.error || 'Error al cargar artículos');
             articulosSinSeguimiento = data.data || [];
             document.getElementById('count-sin-seg').textContent = articulosSinSeguimiento.length;
+            seleccionArticulos.clear();
+            actualizarBarraAsignacionMasiva();
             renderArticulosSinSeguimiento(articulosSinSeguimiento);
         }catch(err){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Error: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Error: ${err.message}</td></tr>`;
         }
+    }
+
+    // Seguimientos con IdEstado = 2 (con artículos, listos para más asignaciones)
+    function seguimientosDisponibles(){
+        return listaSeguimientos.filter(s => s.IdEstado === 2);
     }
 
     function renderArticulosSinSeguimiento(lista){
         const tbody = document.getElementById('tbody-articulos');
         if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">No hay artículos pendientes de seguimiento. ¡Todo asignado! 🎉</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">No hay artículos pendientes de seguimiento. ¡Todo asignado! 🎉</td></tr>`;
+            document.getElementById('chk-todos').checked = false;
             return;
         }
-        tbody.innerHTML = lista.map(a => `
+        tbody.innerHTML = lista.map(a => {
+            const checked = seleccionArticulos.has(a.IdDetallePedido) ? 'checked' : '';
+            return `
             <tr>
+                <td><input type="checkbox" class="check chk-articulo" data-id="${a.IdDetallePedido}" ${checked} onchange="toggleSeleccionArticulo(${a.IdDetallePedido}, this.checked)"></td>
                 <td>${a.NoPedidoAplicacion ?? a.IdPedido ?? '-'}</td>
                 <td>${a.NombreArticulo ?? a.Articulo ?? '-'}</td>
                 <td>${a.TallaColor ?? '-'}</td>
@@ -530,7 +571,11 @@
                 <td><span class="badge b-amber">Sin seguimiento</span></td>
                 <td><button class="btn-primary btn-sm" onclick="abrirModalAsignar(${a.IdDetallePedido})">Asignar</button></td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
+
+        document.getElementById('chk-todos').checked =
+            lista.length > 0 && lista.every(a => seleccionArticulos.has(a.IdDetallePedido));
     }
 
     function filtrarArticulos(q){
@@ -541,6 +586,99 @@
             String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
         );
         renderArticulosSinSeguimiento(filtrados);
+    }
+
+    /* --- Selección masiva --- */
+    function toggleSeleccionArticulo(idDetalle, checked){
+        if(checked){
+            seleccionArticulos.add(idDetalle);
+        }else{
+            seleccionArticulos.delete(idDetalle);
+        }
+        actualizarBarraAsignacionMasiva();
+
+        // Sincronizar checkbox "seleccionar todos" según las filas visibles
+        const visibles = Array.from(document.querySelectorAll('.chk-articulo')).map(c => Number(c.dataset.id));
+        document.getElementById('chk-todos').checked =
+            visibles.length > 0 && visibles.every(id => seleccionArticulos.has(id));
+    }
+
+    function toggleSeleccionarTodos(checked){
+        const checkboxes = document.querySelectorAll('.chk-articulo');
+        checkboxes.forEach(c => {
+            const id = Number(c.dataset.id);
+            c.checked = checked;
+            if(checked) seleccionArticulos.add(id);
+            else seleccionArticulos.delete(id);
+        });
+        actualizarBarraAsignacionMasiva();
+    }
+
+    function limpiarSeleccionMasiva(){
+        seleccionArticulos.clear();
+        document.getElementById('chk-todos').checked = false;
+        renderArticulosSinSeguimiento(articulosSinSeguimiento.length ? obtenerListaVisible() : []);
+        actualizarBarraAsignacionMasiva();
+    }
+
+    function obtenerListaVisible(){
+        const q = document.getElementById('f-articulos').value.toLowerCase();
+        if(!q) return articulosSinSeguimiento;
+        return articulosSinSeguimiento.filter(a =>
+            (a.NombreArticulo ?? '').toLowerCase().includes(q) ||
+            (a.DescripcionArticulo ?? '').toLowerCase().includes(q) ||
+            String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
+        );
+    }
+
+    function actualizarBarraAsignacionMasiva(){
+        const bar = document.getElementById('bar-asignacion-masiva');
+        const count = seleccionArticulos.size;
+        document.getElementById('masivo-count').textContent = count;
+
+        if(count > 0){
+            bar.style.display = 'flex';
+            const select = document.getElementById('masivo-seguimiento');
+            const disponibles = seguimientosDisponibles();
+            select.innerHTML = disponibles.map(s =>
+                `<option value="${s.IdSeguimiento}">${s.Seguimiento}</option>`
+            ).join('') || '<option value="">No hay seguimientos disponibles (IdEstado=2)</option>';
+            document.getElementById('btn-asignar-masivo').disabled = disponibles.length === 0;
+        }else{
+            bar.style.display = 'none';
+        }
+    }
+
+    async function guardarAsignacionMasiva(){
+        const IdSeguimiento = document.getElementById('masivo-seguimiento').value;
+        if(!IdSeguimiento){
+            showToast('Selecciona un seguimiento.', true);
+            return;
+        }
+        if(seleccionArticulos.size === 0){
+            showToast('Selecciona al menos un artículo.', true);
+            return;
+        }
+
+        try{
+            const res = await fetch(`${API}/asignar-seguimiento-masivo`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    idsDetalle: Array.from(seleccionArticulos),
+                    IdSeguimiento: Number(IdSeguimiento)
+                })
+            });
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al asignar seguimiento');
+
+            showToast(data.mensaje);
+            seleccionArticulos.clear();
+            await cargarArticulosSinSeguimiento();
+            await cargarSeguimientos();
+        }catch(err){
+            showToast(err.message, true);
+        }
     }
 
     /* --- Modal: nuevo seguimiento --- */
@@ -587,9 +725,10 @@
         document.getElementById('as-articulo-nombre').value = `${articulo.NombreArticulo ?? articulo.Articulo ?? ''} — ${articulo.TallaColor ?? ''}`;
 
         const select = document.getElementById('as-seguimiento');
-        select.innerHTML = listaSeguimientos.map(s =>
+        const disponibles = seguimientosDisponibles();
+        select.innerHTML = disponibles.map(s =>
             `<option value="${s.IdSeguimiento}">${s.Seguimiento}</option>`
-        ).join('') || '<option value="">No hay seguimientos disponibles</option>';
+        ).join('') || '<option value="">No hay seguimientos disponibles (IdEstado=2)</option>';
 
         abrirModal('modal-asignar');
     }
@@ -877,39 +1016,55 @@
 
     function actualizarResumenSeleccion(){
         let totalPeso = 0;
-        let totalPago = 0;
 
         seleccionEntradas.forEach(idSeguimiento => {
             const entrada = entradasCasillero.find(e => e.IdSeguimiento === idSeguimiento);
             if(entrada){
                 totalPeso += parseFloat(entrada.TotalPesoLibras) || 0;
-                totalPago += parseFloat(entrada.TotalPago) || 0;
             }
         });
 
         document.getElementById('sum-count').textContent = seleccionEntradas.size;
         document.getElementById('sum-peso').textContent = totalPeso.toFixed(2);
-        document.getElementById('sum-total').textContent = `$${totalPago.toFixed(2)}`;
         document.getElementById('btn-crear-orden').disabled = seleccionEntradas.size === 0;
     }
 
+    /* --- Cuentas bancarias (Se_CuentaBanco) --- */
+    let listaCuentas = [];
+
+    async function cargarCuentasBanco(){
+        try{
+            const res = await fetch(`${API}/cuentas`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error al cargar cuentas');
+            listaCuentas = data.data || [];
+        }catch(err){
+            listaCuentas = [];
+            showToast('No se pudieron cargar las cuentas: ' + err.message, true);
+        }
+    }
+
     /* --- Modal: crear orden de pago --- */
-    function abrirModalOrden(){
+    async function abrirModalOrden(){
         let totalPeso = 0;
-        let totalPago = 0;
 
         seleccionEntradas.forEach(idSeguimiento => {
             const entrada = entradasCasillero.find(e => e.IdSeguimiento === idSeguimiento);
             if(entrada){
                 totalPeso += parseFloat(entrada.TotalPesoLibras) || 0;
-                totalPago += parseFloat(entrada.TotalPago) || 0;
             }
         });
 
         document.getElementById('op-numero-orden').value = '';
         document.getElementById('op-fecha').value = new Date().toISOString().substring(0,10);
         document.getElementById('op-peso').value = totalPeso.toFixed(2);
-        document.getElementById('op-cantidad-pagada').value = totalPago.toFixed(2);
+        document.getElementById('op-cantidad-pagada').value = '';
+
+        if(!listaCuentas.length) await cargarCuentasBanco();
+        const select = document.getElementById('op-cuenta');
+        select.innerHTML = listaCuentas.map(c =>
+            `<option value="${c.IdCuentaBanco}">${c.Banco} · ${c.NombreCuenta} · ${c.NumeroCuenta}</option>`
+        ).join('') || '<option value="">No hay cuentas disponibles</option>';
 
         abrirModal('modal-orden');
     }
@@ -924,6 +1079,10 @@
 
         if(!NumeroOrden || !Fecha){
             showToast('Completa el número de orden y la fecha.', true);
+            return;
+        }
+        if(!IdCuenta){
+            showToast('Selecciona una cuenta.', true);
             return;
         }
         if(seleccionEntradas.size === 0){
@@ -963,9 +1122,12 @@
     }
 
     // ===== INIT =====
-    cargarArticulosSinSeguimiento();
-    cargarSeguimientos();
-    cargarEntradasCasillero();
+    (async () => {
+        await cargarSeguimientos();
+        await cargarArticulosSinSeguimiento();
+        await cargarEntradasCasillero();
+        await cargarCuentasBanco();
+    })();
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>
