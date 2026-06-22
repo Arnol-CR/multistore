@@ -221,6 +221,47 @@ const asignarOrdenAEntradas = async (req, res) => {
     }
 };
 
+/* =========================================================
+   PESTAÑA 4 — CONSULTA DE ÓRDENES
+   ========================================================= */
+
+// Listar órdenes por rango de fechas (Se_OrdenesEntrega)
+const getOrdenes = async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+
+        if (!fechaInicio || !fechaFin) {
+            return res.status(400).json({ ok: false, mensaje: 'Faltan fechaInicio o fechaFin.' });
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('FechaInicio', sql.Date, fechaInicio)
+            .input('FechaFin', sql.Date, fechaFin)
+            .execute('Se_OrdenesEntrega');
+
+        res.json({ ok: true, data: result.recordset });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
+// Obtener detalle de artículos de una orden (Se_DetalleOrdenEntrega)
+const getDetalleOrden = async (req, res) => {
+    try {
+        const { idOrden } = req.params;
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('IdOrden', sql.Int, idOrden)
+            .execute('Se_DetalleOrdenEntrega');
+
+        res.json({ ok: true, data: result.recordset });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 module.exports = {
     // Pestaña 1
     getArticulosSinSeguimiento,
@@ -235,5 +276,8 @@ module.exports = {
     getArticulosPorSeguimiento,
     getCuentasBanco,
     crearOrdenEntrega,
-    asignarOrdenAEntradas
+    asignarOrdenAEntradas,
+    // Pestaña 4
+    getOrdenes,
+    getDetalleOrden
 };
