@@ -17,7 +17,8 @@ const {
     asignarOrdenAEntradas,
     // Pestaña 4
     getOrdenes,
-    getDetalleOrden
+    getDetalleOrden,
+    marcarEntregado
 } = require('../controllers/tracking.controller');
 
 /* PESTAÑA 1 — Ver / asignar / editar tracking a artículos sin seguimiento */
@@ -40,5 +41,6 @@ router.put('/ordenes-entrega/asignar', asignarOrdenAEntradas);
 /* PESTAÑA 4 — Consulta de órdenes */
 router.get('/ordenes', getOrdenes);
 router.get('/ordenes/:idOrden/detalle', getDetalleOrden);
+router.put('/entregado', marcarEntregado);
 
 module.exports = router;

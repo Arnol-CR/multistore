@@ -207,7 +207,13 @@
                 </div>
 
                 <div class="filtro-resumen">
-                    <input type="text" id="f-articulos" placeholder="🔍 Buscar artículo o pedido..." oninput="filtrarArticulos(this.value)">
+                    <input type="text" id="f-articulos" placeholder="🔍 Buscar artículo, pedido, cliente..." oninput="filtrarArticulosTab1()">
+                    <select id="f-tienda" onchange="filtrarArticulosTab1()">
+                        <option value="">Todas las tiendas</option>
+                    </select>
+                    <input type="date" id="f-fecha-inicio" onchange="filtrarArticulosTab1()" title="Fecha inicio">
+                    <input type="date" id="f-fecha-fin" onchange="filtrarArticulosTab1()" title="Fecha fin">
+                    <button class="btn-ghost" onclick="limpiarFiltrosTab1()">✕ Limpiar</button>
                 </div>
 
                 <div class="summary-bar" id="bar-asignacion-masiva" style="display:none;">
@@ -230,6 +236,8 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" class="check" id="chk-todos" onchange="toggleSeleccionarTodos(this.checked)"></th>
+                                <th>Fecha</th>
+                                <th>Tienda</th>
                                 <th>Pedido</th>
                                 <th>Artículo</th>
                                 <th>Talla / Color</th>
@@ -240,7 +248,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-articulos">
-                            <tr class="fila-vacia"><td colspan="8">Cargando artículos...</td></tr>
+                            <tr class="fila-vacia"><td colspan="10">Cargando artículos...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -394,11 +402,20 @@
                         </div>
                         <button class="btn-ghost" onclick="cerrarDetalleOrden()">✕ Cerrar detalle</button>
                     </div>
+
+                    <!-- Filtro rápido -->
+                    <div style="padding:10px 16px; border-bottom:1px solid var(--color-border-primary);">
+                        <input type="text" id="filtro-detalle-orden" placeholder="🔍 Buscar por cliente, artículo, SKU, talla, descripción..."
+                            oninput="filtrarDetalleOrden(this.value)"
+                            style="width:100%; max-width:420px;">
+                    </div>
+
                     <div class="tbl-wrap">
                         <table class="tbl">
                             <thead>
                                 <tr>
                                     <th>Cliente</th>
+                                    <th>SKU</th>
                                     <th>Artículo</th>
                                     <th>Talla / Color</th>
                                     <th>Descripción</th>
@@ -406,10 +423,11 @@
                                     <th>Vendedor</th>
                                     <th>Seguimiento</th>
                                     <th>Tienda</th>
+                                    <th>Entregado</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-detalle-orden">
-                                <tr class="fila-vacia"><td colspan="8">Cargando artículos...</td></tr>
+                                <tr class="fila-vacia"><td colspan="10">Cargando artículos...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -662,7 +680,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
 
     async function cargarArticulosSinSeguimiento(){
         const tbody = document.getElementById('tbody-articulos');
-        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Cargando artículos...</td></tr>`;
+        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">Cargando artículos...</td></tr>`;
         try{
             const res = await fetch(`${API}/sin-seguimiento`);
             const data = await res.json();
@@ -671,21 +689,28 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             document.getElementById('count-sin-seg').textContent = articulosSinSeguimiento.length;
             seleccionArticulos.clear();
             actualizarBarraAsignacionMasiva();
+
+            // Poblar select de tiendas
+            const tiendas = [...new Set(articulosSinSeguimiento.map(a => a.NombreEmpresa).filter(Boolean))].sort();
+            const selTienda = document.getElementById('f-tienda');
+            selTienda.innerHTML = '<option value="">Todas las tiendas</option>' +
+                tiendas.map(t => `<option value="${t}">${t}</option>`).join('');
+
             renderArticulosSinSeguimiento(articulosSinSeguimiento);
         }catch(err){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Error: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">Error: ${err.message}</td></tr>`;
         }
     }
 
-    // Seguimientos con IdEstado = 2 (con artículos, listos para más asignaciones)
+    // Seguimientos con IdEstado = 1 o 2
     function seguimientosDisponibles(){
-return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
+        return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
     }
 
     function renderArticulosSinSeguimiento(lista){
         const tbody = document.getElementById('tbody-articulos');
         if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">No hay artículos pendientes de seguimiento. ¡Todo asignado! 🎉</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">No hay artículos pendientes de seguimiento. ¡Todo asignado! 🎉</td></tr>`;
             document.getElementById('chk-todos').checked = false;
             return;
         }
@@ -694,11 +719,13 @@ return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
             return `
             <tr>
                 <td><input type="checkbox" class="check chk-articulo" data-id="${a.IdDetallePedido}" ${checked} onchange="toggleSeleccionArticulo(${a.IdDetallePedido}, this.checked)"></td>
-                <td>${a.NoPedidoAplicacion ?? a.IdPedido ?? '-'}</td>
+                <td style="white-space:nowrap;font-size:11px;color:#6b7280;">${fmtFecha(a.FechaPedido)}</td>
+                <td style="font-size:11px;">${a.NombreEmpresa ?? '-'}</td>
+                <td style="font-size:11px;">${a.NoPedidoAplicacion ?? a.IdPedido ?? '-'}</td>
                 <td>${a.NombreArticulo ?? a.Articulo ?? '-'}</td>
                 <td>${a.TallaColor ?? '-'}</td>
-                <td>${a.DescripcionArticulo ?? '-'}</td>
-                <td>${a.CantidadArticulos ?? a.Cantidad ?? 1}</td>
+                <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${(a.DescripcionArticulo ?? '').replace(/"/g,'&quot;')}">${a.DescripcionArticulo ?? '-'}</td>
+                <td style="text-align:center;">${a.CantidadArticulos ?? 1}</td>
                 <td><span class="badge b-amber">Sin seguimiento</span></td>
                 <td><button class="btn-primary btn-sm" onclick="abrirModalAsignar(${a.IdDetallePedido})">Asignar</button></td>
             </tr>
@@ -709,14 +736,36 @@ return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
             lista.length > 0 && lista.every(a => seleccionArticulos.has(a.IdDetallePedido));
     }
 
-    function filtrarArticulos(q){
-        q = q.toLowerCase();
-        const filtrados = articulosSinSeguimiento.filter(a =>
-            (a.NombreArticulo ?? '').toLowerCase().includes(q) ||
-            (a.DescripcionArticulo ?? '').toLowerCase().includes(q) ||
-            String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
-        );
+    function filtrarArticulosTab1(){
+        const q         = (document.getElementById('f-articulos').value || '').toLowerCase();
+        const tienda    = document.getElementById('f-tienda').value;
+        const fechaIni  = document.getElementById('f-fecha-inicio').value;
+        const fechaFin  = document.getElementById('f-fecha-fin').value;
+
+        const filtrados = articulosSinSeguimiento.filter(a => {
+            if(tienda && a.NombreEmpresa !== tienda) return false;
+            if(fechaIni && a.FechaPedido && a.FechaPedido.substring(0,10) < fechaIni) return false;
+            if(fechaFin && a.FechaPedido && a.FechaPedido.substring(0,10) > fechaFin) return false;
+            if(!q) return true;
+            return (
+                (a.NombreArticulo     ?? '').toLowerCase().includes(q) ||
+                (a.DescripcionArticulo?? '').toLowerCase().includes(q) ||
+                (a.NombreEmpresa      ?? '').toLowerCase().includes(q) ||
+                String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
+            );
+        });
         renderArticulosSinSeguimiento(filtrados);
+    }
+
+    // Mantener compatibilidad con llamadas antiguas a filtrarArticulos
+    function filtrarArticulos(q){ filtrarArticulosTab1(); }
+
+    function limpiarFiltrosTab1(){
+        document.getElementById('f-articulos').value = '';
+        document.getElementById('f-tienda').value = '';
+        document.getElementById('f-fecha-inicio').value = '';
+        document.getElementById('f-fecha-fin').value = '';
+        renderArticulosSinSeguimiento(articulosSinSeguimiento);
     }
 
     /* --- Selección masiva --- */
@@ -1331,34 +1380,62 @@ return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
             const data = await res.json();
             if(!data.ok) throw new Error(data.error || 'Error al cargar detalle');
             detalleOrdenActual = data.data || [];
+            document.getElementById('filtro-detalle-orden').value = '';
             renderDetalleOrden(detalleOrdenActual);
         }catch(err){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Error: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">Error: ${err.message}</td></tr>`;
         }
     }
 
-    function renderDetalleOrden(lista){
-        const tbody = document.getElementById('tbody-detalle-orden');
+    function filtrarDetalleOrden(q){
+        q = q.toLowerCase();
+        if(!q){ renderDetalleOrden(detalleOrdenActual); return; }
+        const filtrados = detalleOrdenActual.filter(a =>
+            (a.NombreCliente    ?? '').toLowerCase().includes(q) ||
+            (a.NombreArticulo   ?? '').toLowerCase().includes(q) ||
+            (a.CodigoArticulo   ?? '').toLowerCase().includes(q) ||
+            (a.TallaColor       ?? '').toLowerCase().includes(q) ||
+            (a.DescripcionCorta ?? '').toLowerCase().includes(q)
+        );
+        renderDetalleOrden(filtrados, false);
+    }
 
-        if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="8">Esta orden no tiene artículos registrados.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = lista.map(a => `
-            <tr>
+    function renderFilaDetalle(a){
+        const entregado = a.EstaEntregado == 1;
+        return `
+            <tr id="fila-detalle-${a.IdDetallePedido}" style="${entregado ? 'opacity:0.5;' : ''}">
                 <td>${a.NombreCliente ?? '-'}</td>
+                <td style="font-family:monospace;font-size:11px;color:#6b7280;">${a.CodigoArticulo ?? '-'}</td>
                 <td>${a.NombreArticulo ?? '-'}</td>
                 <td>${a.TallaColor ?? '-'}</td>
-                <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${(a.DescripcionCorta ?? '').replace(/"/g,'&quot;')}">
+                <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${(a.DescripcionCorta ?? '').replace(/"/g,'&quot;')}">
                     ${a.DescripcionCorta ?? '-'}
                 </td>
                 <td style="text-align:center;">${a.CantidadArticulos ?? 1}</td>
                 <td>${a.CodigoVendedor ?? '-'}</td>
-                <td style="font-size:11px; color:var(--color-text-secondary);">${a.Seguimiento ?? '-'}</td>
+                <td style="font-size:11px;color:var(--color-text-secondary);">${a.Seguimiento ?? '-'}</td>
                 <td>${a.Tienda ?? '-'}</td>
+                <td style="text-align:center;">
+                    ${entregado
+                        ? `<span style="color:#4ade80;font-size:13px;font-weight:700;">✓ Entregado</span>`
+                        : `<button class="btn-primary btn-sm" onclick="marcarEntregado(${a.IdDetallePedido}, this)" style="background:#1d4ed8;">Entregar</button>`
+                    }
+                </td>
             </tr>
-        `).join('');
+        `;
+    }
+
+    function renderDetalleOrden(lista, actualizarResumenes = true){
+        const tbody = document.getElementById('tbody-detalle-orden');
+
+        if(!lista.length){
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">Esta orden no tiene artículos registrados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = lista.map(a => renderFilaDetalle(a)).join('');
+
+        if(!actualizarResumenes) return;
 
         // Resumen por vendedor
         const porVendedor = {};
@@ -1401,6 +1478,38 @@ return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
                 <td style="font-weight:700;">Total</td>
                 <td style="text-align:right; font-weight:800; color:#fff;">${totalS}</td>
             </tr>`;
+    }
+
+    async function marcarEntregado(idDetallePedido, btn){
+        // Cambio visual inmediato
+        btn.textContent = '...';
+        btn.disabled = true;
+
+        try{
+            const res = await fetch(`${API}/entregado`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ IdDetallePedido: idDetallePedido, EstaEntregado: 1 })
+            });
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error || 'Error');
+
+            // Actualizar estado en el array local
+            const articulo = detalleOrdenActual.find(a => a.IdDetallePedido === idDetallePedido);
+            if(articulo) articulo.EstaEntregado = 1;
+
+            // Actualizar solo esa fila visualmente
+            const fila = document.getElementById(`fila-detalle-${idDetallePedido}`);
+            if(fila){
+                fila.style.opacity = '0.5';
+                const tdBtn = btn.closest('td');
+                if(tdBtn) tdBtn.innerHTML = `<span style="color:#4ade80;font-size:13px;font-weight:700;">✓ Entregado</span>`;
+            }
+        }catch(err){
+            btn.textContent = 'Entregar';
+            btn.disabled = false;
+            showToast('Error al marcar entregado: ' + err.message, true);
+        }
     }
 
     function cerrarDetalleOrden(){

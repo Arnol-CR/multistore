@@ -262,6 +262,24 @@ const getDetalleOrden = async (req, res) => {
     }
 };
 
+// Marcar artículo como entregado o no entregado (Up_EstaEntregado)
+const marcarEntregado = async (req, res) => {
+    try {
+        const { IdDetallePedido, EstaEntregado } = req.body;
+        if (!IdDetallePedido) return res.status(400).json({ ok: false, error: 'Falta IdDetallePedido.' });
+
+        const pool = await poolPromise;
+        await pool.request()
+            .input('IdDetallePedido', sql.Int, parseInt(IdDetallePedido))
+            .input('EstaEntregado', sql.Bit, EstaEntregado ? 1 : 0)
+            .execute('Up_EstaEntregado');
+
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 module.exports = {
     // Pestaña 1
     getArticulosSinSeguimiento,
@@ -279,5 +297,6 @@ module.exports = {
     asignarOrdenAEntradas,
     // Pestaña 4
     getOrdenes,
-    getDetalleOrden
+    getDetalleOrden,
+    marcarEntregado
 };
