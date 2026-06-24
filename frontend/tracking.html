@@ -553,7 +553,7 @@
                 </div>
                 <div class="field">
                     <label>Entrega estimada</label>
-                    <input type="date" id="ec-entrega-estimada">
+                    <input type="date" id="ec-entrada-miami" onchange="calcularEntregaEstimada()">
                 </div>
             </div>
             <div class="field">
@@ -1516,6 +1516,14 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         document.getElementById('card-detalle-orden').style.display = 'none';
         detalleOrdenActual = [];
     }
+
+    function calcularEntregaEstimada(){
+    const entrada = document.getElementById('ec-entrada-miami').value;
+    if(!entrada) return;
+    const fecha = new Date(entrada);
+    fecha.setDate(fecha.getDate() + 15);
+    document.getElementById('ec-entrega-estimada').value = fecha.toISOString().substring(0,10);
+}
 
     // ===== INIT =====
     (async () => {
