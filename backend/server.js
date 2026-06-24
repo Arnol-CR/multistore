@@ -18,7 +18,9 @@ const vendedoresRoutes   = require('./routes/vendedores.routes');
 const clientesRoutes     = require('./routes/clientes.routes');
 const pagosRoutes        = require('./routes/pagos.routes');
 const crearPedidosRoutes = require('./routes/crear-pedidos.routes');
+const cuentasRoutes = require('./routes/cuentas.routes');
 
+app.use('/api/cuentas', cuentasRoutes);
 app.use('/api/auth',          authRoutes);
 app.use('/api/pedidos',       pedidosRoutes);
 app.use('/api/tracking',      trackingRoutes);

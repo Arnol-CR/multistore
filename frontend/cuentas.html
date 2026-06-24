@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MultiStore — Estado de Cuentas</title>
+<link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+    .overlay.active { display:block; }
+
+    .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+    .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+    .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+    .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; }
+    .sidebar-logo-text span { color:#3b82f6; }
+    .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+    .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+    .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+    .nav { flex:1; padding:12px 0; overflow-y:auto; }
+    .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; text-decoration:none; }
+    .nav-item:hover { color:#e2e8f0; background:#13181f; }
+    .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+    .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+    .nav-item.active svg { opacity:1; }
+    .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+    .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
+    .btn-salir:hover { color:#fca5a5; }
+
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+    .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
+    .topbar-left { display:flex; align-items:center; gap:12px; }
+    .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; }
+    .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+    .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+
+    .content { flex:1; overflow-y:auto; padding:16px; }
+
+    /* Filtros */
+    .filtros-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:18px; background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; }
+    .filtro-field { display:flex; flex-direction:column; gap:4px; }
+    .filtro-field label { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; }
+    .filtro-field input, .filtro-field select { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#e2e8f0; font-size:12px; font-family:'Segoe UI',sans-serif; outline:none; }
+    .filtro-field input:focus, .filtro-field select:focus { border-color:#3b82f6; }
+
+    /* Cards resumen */
+    .resumen-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:20px; }
+    .cuenta-card { background:#0d1017; border:1px solid #1e2530; border-radius:12px; padding:18px; cursor:pointer; transition:.2s; position:relative; overflow:hidden; }
+    .cuenta-card:hover { border-color:#3b82f6; background:#0a0f18; }
+    .cuenta-card.activa { border-color:#3b82f6; background:#0a1525; }
+    .cuenta-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#3b82f6,#7c3aed); }
+    .cuenta-card.egreso-mayor::before { background:linear-gradient(90deg,#ef4444,#f97316); }
+    .cuenta-nombre { font-size:13px; font-weight:700; color:#fff; margin-bottom:2px; }
+    .cuenta-banco { font-size:11px; color:#6b7280; margin-bottom:12px; }
+    .cuenta-numero { font-size:10px; color:#4b5563; font-family:monospace; }
+    .cuenta-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:12px; }
+    .stat-item .stat-label { font-size:9px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+    .stat-item .stat-val { font-size:16px; font-weight:800; margin-top:2px; }
+    .stat-item .stat-val.ingreso { color:#4ade80; }
+    .stat-item .stat-val.egreso { color:#f87171; }
+    .stat-item .stat-val.saldo-pos { color:#60a5fa; }
+    .stat-item .stat-val.saldo-neg { color:#f87171; }
+
+    /* Resumen total */
+    .resumen-total { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; gap:24px; flex-wrap:wrap; align-items:center; }
+    .total-item .total-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+    .total-item .total-val { font-size:20px; font-weight:800; margin-top:2px; }
+
+    /* Tabla de transacciones */
+    .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; overflow:hidden; margin-bottom:14px; }
+    .card-header { padding:12px 16px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+    .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
+
+    .tbl-wrap { overflow-x:auto; }
+    .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+    .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:9px 12px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
+    .tbl td { padding:9px 12px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
+    .tbl tr:last-child td { border-bottom:none; }
+    .tbl tr:hover td { background:#0a0f18; }
+    .fila-vacia td { text-align:center; padding:28px 12px; color:#4b5563; font-style:italic; }
+
+    .badge-ingreso { background:#0f2318; color:#4ade80; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+    .badge-egreso  { background:#2d1212; color:#f87171; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+
+    .filtro-texto { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; width:240px; }
+    .filtro-texto:focus { border-color:#3b82f6; color:#e2e8f0; }
+
+    .btn-primary { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; }
+    .btn-primary:hover { background:#2563eb; }
+    .btn-ghost { background:none; border:1px solid #1e2530; border-radius:7px; padding:9px 14px; font-size:12px; color:#6b7280; cursor:pointer; }
+    .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
+
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+
+    @media (max-width:768px) {
+        .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+        .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
+        .btn-menu { display:flex; }
+        .resumen-grid { grid-template-columns:1fr; }
+    }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="btn-menu" onclick="abrirMenu()">
+                <svg width="22" height="22" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+            <div>
+                <div class="topbar-title">Estado de Cuentas Bancarias</div>
+                <div class="topbar-fecha" id="topbar-fecha"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Filtros de fecha -->
+        <div class="filtros-bar">
+            <div class="filtro-field">
+                <label>Fecha inicio</label>
+                <input type="date" id="fi-inicio">
+            </div>
+            <div class="filtro-field">
+                <label>Fecha fin</label>
+                <input type="date" id="fi-fin">
+            </div>
+            <div style="display:flex; gap:8px; align-self:flex-end;">
+                <button class="btn-primary" onclick="buscar()">🔍 Buscar</button>
+                <button class="btn-ghost" onclick="limpiarFiltros()">✕ Limpiar</button>
+            </div>
+            <div style="margin-left:auto; align-self:flex-end; font-size:11px; color:#4b5563;" id="txt-periodo"></div>
+        </div>
+
+        <!-- Resumen total -->
+        <div class="resumen-total" id="resumen-total" style="display:none;">
+            <div class="total-item">
+                <div class="total-label">Total Ingresos</div>
+                <div class="total-val" style="color:#4ade80;" id="tot-ingresos">L 0.00</div>
+            </div>
+            <div class="total-item">
+                <div class="total-label">Total Egresos</div>
+                <div class="total-val" style="color:#f87171;" id="tot-egresos">L 0.00</div>
+            </div>
+            <div class="total-item">
+                <div class="total-label">Saldo Neto</div>
+                <div class="total-val" id="tot-saldo">L 0.00</div>
+            </div>
+        </div>
+
+        <!-- Cards por cuenta -->
+        <div class="resumen-grid" id="resumen-grid">
+            <div style="color:#4b5563; font-style:italic; padding:20px; text-align:center; grid-column:1/-1;">
+                Selecciona un rango de fechas y haz clic en "Buscar"
+            </div>
+        </div>
+
+        <!-- Tabla de transacciones -->
+        <div class="card" id="card-detalle" style="display:none;">
+            <div class="card-header">
+                <div class="card-title"><span class="dot"></span><span id="titulo-detalle">Transacciones</span></div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" class="filtro-texto" id="f-transacciones" placeholder="🔍 Buscar transacción..." oninput="filtrarTransacciones(this.value)">
+                    <select id="f-tipo" onchange="filtrarTransacciones(document.getElementById('f-transacciones').value)" style="background:#13181f;border:1px solid #1e2530;border-radius:7px;padding:8px 12px;color:#9ca3af;font-size:12px;outline:none;">
+                        <option value="">Todos</option>
+                        <option value="Ingreso">Solo ingresos</option>
+                        <option value="Egreso">Solo egresos</option>
+                    </select>
+                    <button class="btn-ghost" onclick="cerrarDetalle()">✕ Cerrar</button>
+                </div>
+            </div>
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Banco</th>
+                            <th>Cuenta</th>
+                            <th>Descripción</th>
+                            <th>Referencia</th>
+                            <th>Tipo</th>
+                            <th style="text-align:right;">Valor (L)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-transacciones">
+                        <tr class="fila-vacia"><td colspan="7">Cargando transacciones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="pie-detalle" style="padding:10px 16px; border-top:1px solid #1e2530; display:flex; gap:20px; font-size:12px; flex-wrap:wrap;"></div>
+        </div>
+
+    </div>
+</main>
+
+<script src="/assets/sidebar.js"></script>
+<script>
+    // ===== AUTH =====
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    const API = '/api/cuentas';
+
+    let resumenData = [];
+    let detalleData = [];
+    let cuentaActivaId = null;
+
+    // ===== INIT =====
+    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    // Fechas por defecto: inicio del año → hoy
+    const hoy = new Date();
+    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+    document.getElementById('fi-inicio').value = inicioAnio.toISOString().substring(0,10);
+    document.getElementById('fi-fin').value = hoy.toISOString().substring(0,10);
+
+    // Cargar al inicio
+    buscar();
+
+    // ===== HELPERS =====
+    function fmtL(val){
+        return 'L ' + Number(val || 0).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+    function fmtFecha(f){
+        if(!f) return '-';
+        const p = String(f).substring(0,10).split('-');
+        return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    // ===== BUSCAR =====
+    async function buscar(){
+        const fi = document.getElementById('fi-inicio').value;
+        const ff = document.getElementById('fi-fin').value;
+
+        if(!fi || !ff){ alert('Selecciona un rango de fechas.'); return; }
+
+        document.getElementById('txt-periodo').textContent = `Periodo: ${fmtFecha(fi)} — ${fmtFecha(ff)}`;
+        document.getElementById('resumen-grid').innerHTML = '<div style="color:#4b5563;font-style:italic;padding:20px;text-align:center;grid-column:1/-1;">Cargando...</div>';
+        document.getElementById('card-detalle').style.display = 'none';
+        document.getElementById('resumen-total').style.display = 'none';
+
+        try{
+            const res = await fetch(`${API}/resumen?fechaInicio=${fi}&fechaFin=${ff}`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error);
+            resumenData = data.data || [];
+            renderResumen();
+
+            // Cargar detalle de todas las cuentas
+            const res2 = await fetch(`${API}/detalle?fechaInicio=${fi}&fechaFin=${ff}`);
+            const data2 = await res2.json();
+            if(!data2.ok) throw new Error(data2.error);
+            detalleData = data2.data || [];
+
+            // Mostrar detalle global por defecto
+            mostrarDetalle(null);
+        }catch(err){
+            document.getElementById('resumen-grid').innerHTML = `<div style="color:#f87171;padding:20px;text-align:center;grid-column:1/-1;">Error: ${err.message}</div>`;
+        }
+    }
+
+    function limpiarFiltros(){
+        document.getElementById('fi-inicio').value = inicioAnio.toISOString().substring(0,10);
+        document.getElementById('fi-fin').value = hoy.toISOString().substring(0,10);
+        buscar();
+    }
+
+    // ===== RESUMEN POR CUENTA =====
+    function renderResumen(){
+        const grid = document.getElementById('resumen-grid');
+
+        if(!resumenData.length){
+            grid.innerHTML = '<div style="color:#4b5563;font-style:italic;padding:20px;text-align:center;grid-column:1/-1;">No hay movimientos en el periodo seleccionado.</div>';
+            return;
+        }
+
+        // Totales globales
+        const totIngresos = resumenData.reduce((s,c) => s + (c.TotalIngresos || 0), 0);
+        const totEgresos  = resumenData.reduce((s,c) => s + (c.TotalEgresos  || 0), 0);
+        const totSaldo    = totIngresos - totEgresos;
+
+        document.getElementById('tot-ingresos').textContent = fmtL(totIngresos);
+        document.getElementById('tot-egresos').textContent  = fmtL(totEgresos);
+        const elSaldo = document.getElementById('tot-saldo');
+        elSaldo.textContent = fmtL(Math.abs(totSaldo));
+        elSaldo.style.color = totSaldo >= 0 ? '#60a5fa' : '#f87171';
+        if(totSaldo < 0) elSaldo.textContent = '-' + elSaldo.textContent;
+        document.getElementById('resumen-total').style.display = 'flex';
+
+        grid.innerHTML = resumenData.map(c => {
+            const saldo = (c.Saldo || 0);
+            const esNeg = saldo < 0;
+            return `
+                <div class="cuenta-card${esNeg ? ' egreso-mayor' : ''}" onclick="filtrarPorCuenta(${c.IdCuentaBanco}, '${(c.NombreCuenta||'').replace(/'/g,"\\'")} - ${c.Banco||''}')" id="card-cuenta-${c.IdCuentaBanco}">
+                    <div class="cuenta-nombre">${c.NombreCuenta ?? '-'}</div>
+                    <div class="cuenta-banco">${c.Banco ?? '-'}</div>
+                    <div class="cuenta-numero">${c.NumeroCuenta ?? ''}</div>
+                    <div class="cuenta-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Ingresos</div>
+                            <div class="stat-val ingreso">${fmtL(c.TotalIngresos)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Egresos</div>
+                            <div class="stat-val egreso">${fmtL(c.TotalEgresos)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Saldo</div>
+                            <div class="stat-val ${esNeg ? 'saldo-neg' : 'saldo-pos'}">${esNeg ? '-' : ''}${fmtL(Math.abs(saldo))}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ===== DETALLE DE TRANSACCIONES =====
+    function filtrarPorCuenta(idCuenta, nombre){
+        // Toggle — si se hace clic en la misma, mostrar todas
+        if(cuentaActivaId === idCuenta){
+            cuentaActivaId = null;
+            document.querySelectorAll('.cuenta-card').forEach(c => c.classList.remove('activa'));
+            mostrarDetalle(null);
+        } else {
+            cuentaActivaId = idCuenta;
+            document.querySelectorAll('.cuenta-card').forEach(c => c.classList.remove('activa'));
+            document.getElementById(`card-cuenta-${idCuenta}`)?.classList.add('activa');
+            mostrarDetalle(idCuenta, nombre);
+        }
+    }
+
+    function mostrarDetalle(idCuenta, nombre){
+        const lista = idCuenta
+            ? detalleData.filter(t => t.IdCuentaBanco === idCuenta)
+            : detalleData;
+
+        document.getElementById('titulo-detalle').textContent = idCuenta
+            ? `Transacciones — ${nombre}`
+            : 'Todas las transacciones';
+
+        document.getElementById('f-transacciones').value = '';
+        document.getElementById('f-tipo').value = '';
+        renderTransacciones(lista);
+        document.getElementById('card-detalle').style.display = 'block';
+        document.getElementById('card-detalle').scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    function renderTransacciones(lista){
+        const tbody = document.getElementById('tbody-transacciones');
+        if(!lista.length){
+            tbody.innerHTML = '<tr class="fila-vacia"><td colspan="7">No hay transacciones en este periodo.</td></tr>';
+            document.getElementById('pie-detalle').innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = lista.map(t => {
+            const val = t.Valor || 0;
+            const esIngreso = val >= 0;
+            return `
+                <tr>
+                    <td style="white-space:nowrap;">${fmtFecha(t.Fecha)}</td>
+                    <td style="font-size:11px;color:#6b7280;">${t.Banco ?? '-'}</td>
+                    <td style="font-size:11px;color:#6b7280;">${t.NombreCuenta ?? '-'}</td>
+                    <td style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${(t.Descripcion||'').replace(/"/g,'&quot;')}">${t.Descripcion ?? '-'}</td>
+                    <td style="font-size:11px;font-family:monospace;color:#4b5563;">${t.Referencia ?? '-'}</td>
+                    <td><span class="${esIngreso ? 'badge-ingreso' : 'badge-egreso'}">${esIngreso ? 'Ingreso' : 'Egreso'}</span></td>
+                    <td style="text-align:right;font-weight:700;color:${esIngreso ? '#4ade80' : '#f87171'};">
+                        ${esIngreso ? '' : '-'}${fmtL(Math.abs(val))}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Pie resumen
+        const totI = lista.filter(t => (t.Valor||0) >= 0).reduce((s,t) => s + (t.Valor||0), 0);
+        const totE = lista.filter(t => (t.Valor||0) <  0).reduce((s,t) => s + Math.abs(t.Valor||0), 0);
+        const saldo = totI - totE;
+        document.getElementById('pie-detalle').innerHTML = `
+            <span style="color:#4ade80;">Ingresos: ${fmtL(totI)}</span>
+            <span style="color:#f87171;">Egresos: ${fmtL(totE)}</span>
+            <span style="color:${saldo>=0?'#60a5fa':'#f87171'};">Saldo: ${saldo<0?'-':''}${fmtL(Math.abs(saldo))}</span>
+            <span style="color:#4b5563;">${lista.length} transacciones</span>
+        `;
+    }
+
+    function filtrarTransacciones(q){
+        q = q.toLowerCase();
+        const tipo = document.getElementById('f-tipo').value;
+        const base = cuentaActivaId ? detalleData.filter(t => t.IdCuentaBanco === cuentaActivaId) : detalleData;
+        const filtrados = base.filter(t => {
+            if(tipo === 'Ingreso' && (t.Valor||0) < 0) return false;
+            if(tipo === 'Egreso'  && (t.Valor||0) >= 0) return false;
+            if(!q) return true;
+            return (
+                (t.Descripcion  || '').toLowerCase().includes(q) ||
+                (t.Referencia   || '').toLowerCase().includes(q) ||
+                (t.NombreCuenta || '').toLowerCase().includes(q) ||
+                (t.Banco        || '').toLowerCase().includes(q)
+            );
+        });
+        renderTransacciones(filtrados);
+    }
+
+    function cerrarDetalle(){
+        document.getElementById('card-detalle').style.display = 'none';
+        cuentaActivaId = null;
+        document.querySelectorAll('.cuenta-card').forEach(c => c.classList.remove('activa'));
+    }
+</script>
+</body>
+</html>
