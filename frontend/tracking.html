@@ -679,7 +679,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
 
     // Seguimientos con IdEstado = 2 (con artículos, listos para más asignaciones)
     function seguimientosDisponibles(){
-        return listaSeguimientos.filter(s => s.IdEstado === 2);
+return listaSeguimientos.filter(s => s.IdEstado === 1 || s.IdEstado === 2);
     }
 
     function renderArticulosSinSeguimiento(lista){

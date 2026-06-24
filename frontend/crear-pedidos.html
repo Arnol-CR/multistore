@@ -273,8 +273,10 @@
                                 <th>Casillero</th>
                                 <th>Moneda</th>
                                 <th style="text-align:right">Artículos</th>
+                                <th style="text-align:right">Entregado</th>
                                 <th style="text-align:right">Total</th>
                                 <th style="text-align:right">Tasa L/$</th>
+                                <th>Banco / Cuenta</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -538,11 +540,12 @@
 
     function renderTablaPedidos(data) {
         const tbody = document.getElementById('tbody-pedidos');
-        if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" class="tbl-empty">Sin pedidos abiertos</td></tr>'; return; }
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" class="tbl-empty">Sin pedidos abiertos</td></tr>'; return; }
         tbody.innerHTML = data.map(p => {
             const f = p.FechaPedido ? p.FechaPedido.substring(0,10).split('-').reverse().join('/') : '—';
             const tot = parseFloat(p.TotalCompra || 0).toFixed(2);
             const tasa = p.TasaCambio ? `<span style="color:#4ade80;font-family:monospace;font-size:11px">L ${parseFloat(p.TasaCambio).toFixed(2)}</span>` : '<span style="color:#374151;font-size:11px">—</span>';
+            const cuenta = p.Banco ? `<span style="font-size:11px;color:#9ca3af">${p.Banco}<br><span style="color:#6b7280">${p.NombreCuenta || ''}</span></span>` : '<span style="color:#374151;font-size:11px">—</span>';
             return `<tr onclick="irAgregar(${p.IdPedido})">
                 <td style="color:#374151;font-size:11px">${p.IdPedido}</td>
                 <td style="font-family:monospace;font-weight:700;color:#60a5fa">${p.NumeroPedido || '—'}</td>
@@ -551,11 +554,25 @@
                 <td style="color:#4b5563">${p.Casillero || '—'}</td>
                 <td><span class="badge badge-blue">${p.Simbolo || '$'}</span></td>
                 <td style="text-align:right;color:#9ca3af">${p.CantArticulos || 0}</td>
+                <td style="text-align:center; min-width:80px;">
+    ${p.CantArticulos > 0
+        ? (() => {
+            const pct = Math.round((p.CantEntregados / p.CantArticulos) * 100);
+            const color = pct === 100 ? '#4ade80' : pct >= 50 ? '#facc15' : '#f87171';
+            return `
+                <div style="font-size:11px;font-weight:700;color:${color};margin-bottom:3px">${pct}%</div>
+                <div style="background:#1e2530;border-radius:99px;height:4px;width:60px;margin:0 auto;">
+                    <div style="background:${color};height:4px;border-radius:99px;width:${pct}%"></div>
+                </div>`;
+          })()
+        : '<span style="color:#374151">—</span>'}
+</td>
                 <td style="text-align:right;color:#4ade80;font-weight:700">${p.Simbolo || '$'} ${tot}</td>
                 <td style="text-align:right">${tasa}</td>
+                <td>${cuenta}</td>
                 <td onclick="event.stopPropagation()" style="display:flex;gap:5px;padding:7px 12px;white-space:nowrap">
-                    <button onclick="irAgregar(${p.IdPedido})" class="btn btn-blue btn-sm">+ Artículos</button>
-                    <button onclick="abrirModalTasa(${p.IdPedido},'${p.NumeroPedido}',${p.TasaCambio||0})" class="btn btn-purple btn-sm">💱 Tasa</button>
+                    <button onclick="verFaltantes('${p.NumeroPedido}')" class="btn btn-blue btn-sm">📋 Ver faltantes</button>
+                    <button onclick="abrirModalTasa(${p.IdPedido},'${p.NumeroPedido}',${p.TasaCambio||0},${p.IdCuenta||0})" class="btn btn-purple btn-sm">💱 Tasa</button>
                     <button onclick="confirmarCerrarPedido(${p.IdPedido},'${p.NumeroPedido}')" class="btn btn-red btn-sm">🔒 Cerrar</button>
                 </td>
             </tr>`;
@@ -566,6 +583,10 @@
         document.getElementById('a-pedido').value = idPedido;
         seleccionarPedido();
         cambiarTab('agregar');
+    }
+
+    function verFaltantes(numeroPedido) {
+        window.location.href = `/dashboard.html?pedido=${encodeURIComponent(numeroPedido)}`;
     }
 
     // ── SELECTOR PEDIDO ──
@@ -820,10 +841,28 @@
     }
 
     // ── TASA DE CAMBIO PEDIDO ──
-    function abrirModalTasa(idPedido, numeroPedido, tasaActual) {
+    let listaCuentasCP = [];
+
+    async function cargarCuentasCP(){
+        if(listaCuentasCP.length) return;
+        try{
+            const d = await fetch('/api/tracking/cuentas').then(r => r.json());
+            if(d.ok) listaCuentasCP = d.data || [];
+        }catch(e){ listaCuentasCP = []; }
+    }
+
+    async function abrirModalTasa(idPedido, numeroPedido, tasaActual, idCuenta) {
         document.getElementById('cp-tasa-id').value = idPedido;
         document.getElementById('cp-tasa-numero').textContent = numeroPedido;
         document.getElementById('cp-tasa-valor').value = tasaActual > 0 ? parseFloat(tasaActual).toFixed(2) : '';
+
+        await cargarCuentasCP();
+        const sel = document.getElementById('cp-tasa-cuenta');
+        sel.innerHTML = '<option value="">— Sin cuenta asignada —</option>' +
+            listaCuentasCP.map(c =>
+                `<option value="${c.IdCuentaBanco}" ${c.IdCuentaBanco == idCuenta ? 'selected' : ''}>${c.Banco} · ${c.NombreCuenta} · ${c.NumeroCuenta}</option>`
+            ).join('');
+
         document.getElementById('modal-tasa-cp').classList.add('open');
     }
 
@@ -831,11 +870,21 @@
         const msg  = document.getElementById('msg-tasa-cp');
         const tasa = parseFloat(document.getElementById('cp-tasa-valor').value);
         if (!tasa || tasa < 1) { mostrarMsgCP(msg,'err','Ingresa una tasa válida (ej: 24.90)'); return; }
+        const idPedido = +document.getElementById('cp-tasa-id').value;
+        const idCuenta = document.getElementById('cp-tasa-cuenta').value || null;
         try {
             const d = await fetch('/api/listado-pedidos/tasa', {
                 method:'PUT', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ idPedido: +document.getElementById('cp-tasa-id').value, tasaCambio: tasa })
+                body: JSON.stringify({ idPedido, tasaCambio: tasa })
             }).then(r=>r.json());
+
+            if(idCuenta !== null){
+                await fetch('/api/crear-pedidos/cuenta-pedido', {
+                    method:'PUT', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ idPedido, idCuentaBanco: Number(idCuenta) })
+                });
+            }
+
             if (d.ok) {
                 document.getElementById('modal-tasa-cp').classList.remove('open');
                 cargarPedidosAbiertos();
@@ -892,6 +941,12 @@
                 <label class="mfl">Tasa (Lempiras por $1)</label>
                 <input class="form-input" id="cp-tasa-valor" type="number" step="0.01" min="1" placeholder="Ej: 24.90" style="font-size:20px;font-family:monospace;color:#4ade80;font-weight:700">
             </div>
+            <div class="mfg">
+                <label class="mfl">Cuenta bancaria</label>
+                <select class="form-input" id="cp-tasa-cuenta">
+                    <option value="">— Sin cuenta asignada —</option>
+                </select>
+            </div>
             <div style="font-size:11px;color:#4b5563">Se aplica a este pedido para el cálculo de cobros en lempiras.</div>
             <div class="msg" id="msg-tasa-cp"></div>
         </div>
@@ -899,7 +954,7 @@
             <button class="btn btn-ghost" onclick="document.getElementById('modal-tasa-cp').classList.remove('open')">Cancelar</button>
             <button class="btn btn-green" onclick="guardarTasaPedidoCP()">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                Guardar tasa
+                Guardar
             </button>
         </div>
     </div>

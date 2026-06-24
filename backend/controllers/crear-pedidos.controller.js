@@ -79,16 +79,22 @@ const getPedidosAbiertos = async (req, res) => {
         C.NombreEmpresa AS Casillero,
         M.Simbolo,
         COUNT(D.IdDetallePedido) AS CantArticulos,
+        SUM(CASE WHEN D.EstaEntregado = 1 THEN 1 ELSE 0 END) AS CantEntregados,
         ISNULL(SUM(D.ValorCompra), 0) AS TotalCompra,
-        P.TasaCambio
+        P.TasaCambio,
+        P.IdCuentaBanco,
+        CB.Banco,
+        CB.NombreCuenta
       FROM C_Pedidos P
       LEFT JOIN A_Empresas E ON E.IdEmpresa = P.IdEmpresa
       LEFT JOIN A_Empresas C ON C.IdEmpresa = P.IdCasillero
       LEFT JOIN A_Monedas M ON M.IdMoneda = P.IdMoneda
       LEFT JOIN C_DetallePedido D ON D.IdPedido = P.IdPedido
+      LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = P.idCuentaBanco
       WHERE P.Activo = 1 OR P.Activo IS NULL
-      GROUP BY P.IdPedido, P.NumeroPedido, P.FechaPedido, E.NombreEmpresa, C.NombreEmpresa, M.Simbolo, P.TasaCambio
-      ORDER BY P.IdPedido DESC
+      GROUP BY P.IdPedido, P.NumeroPedido, P.FechaPedido, E.NombreEmpresa, C.NombreEmpresa,
+               M.Simbolo, P.TasaCambio, P.IdCuentaBanco, CB.Banco, CB.NombreCuenta
+      ORDER BY P.FechaPedido DESC, P.IdPedido DESC
     `);
     res.json({ ok: true, data: r.recordset });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
@@ -243,15 +249,22 @@ const editarArticulo = async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
-module.exports = {
-  getTiendas,
-  getCasilleros,
-  getMonedas,
-  getArticulos,
-  getNumeroPedido,
-  crearPedido,
-  getPedidosAbiertos,
-  getDetallesPedido,
-  agregarArticulo,
-  editarArticulo
+// Actualizar cuenta bancaria de un pedido
+const actualizarCuentaPedido = async (req, res) => {
+  try {
+    const { idPedido, idCuentaBanco } = req.body;
+    if (!idPedido) return res.status(400).json({ ok: false, error: 'Falta idPedido.' });
+    const pool = await poolPromise;
+    await pool.request()
+      .input('IdPedido', sql.Int, parseInt(idPedido))
+      .input('IdCuentaBanco', sql.Int, idCuentaBanco ? parseInt(idCuentaBanco) : null)
+      .query('UPDATE C_Pedidos SET IdCuentaBanco = @IdCuentaBanco WHERE IdPedido = @IdPedido');
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
+
+function verFaltantes(numeroPedido) {
+    window.location.href = `/dashboard.html?pedido=${encodeURIComponent(numeroPedido)}`;
+}
+
+module.exports = { getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido };

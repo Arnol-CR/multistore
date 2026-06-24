@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const listadoPedidosRoutes = require('./routes/listado-pedidos.routes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/vendedores',    vendedoresRoutes);
 app.use('/api/clientes',      clientesRoutes);
 app.use('/api/pagos',         pagosRoutes);
 app.use('/api/crear-pedidos', crearPedidosRoutes);
+app.use('/api/listado-pedidos', listadoPedidosRoutes);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/login.html'));

@@ -387,7 +387,9 @@
                 (p.NombreArticulo      || '').toLowerCase().includes(q) ||
                 (p.NombreCliente       || '').toLowerCase().includes(q) ||
                 (p.DescripcionArticulo || '').toLowerCase().includes(q) ||
-                (p.NombreEmpresa       || '').toLowerCase().includes(q)
+                (p.NombreEmpresa       || '').toLowerCase().includes(q) ||
+                (p.NoPedidoAplicacion  || '').toLowerCase().includes(q) ||
+                (p.NumeroPedido        || '').toLowerCase().includes(q)
             );
         });
     }
@@ -575,7 +577,20 @@ function cambiarPagina(nuevaPagina) {
     }
 
     cargarStats();
-    cargarPedidosRecientes();
+    cargarPedidosRecientes().then(() => {
+        // Leer parámetro ?pedido= de la URL y aplicar filtro automático
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoParam = urlParams.get('pedido');
+        if (pedidoParam) {
+            const searchInput = document.getElementById('search-pedidos');
+            if (searchInput) {
+                searchInput.value = pedidoParam;
+                filtrarPedidos(pedidoParam);
+                // Limpiar el parámetro de la URL sin recargar
+                window.history.replaceState({}, '', '/dashboard.html');
+            }
+        }
+    });
     setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
 
     // ===== MODAL VER ARTÍCULO =====

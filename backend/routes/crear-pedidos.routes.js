@@ -3,7 +3,8 @@ const router  = express.Router();
 const {
   getTiendas, getCasilleros, getMonedas, getArticulos,
   getNumeroPedido, crearPedido, getPedidosAbiertos,
-  getDetallesPedido, agregarArticulo, editarArticulo
+  getDetallesPedido, agregarArticulo, editarArticulo,
+  actualizarCuentaPedido
 } = require('../controllers/crear-pedidos.controller');
 
 router.get('/tiendas',          getTiendas);
@@ -16,5 +17,6 @@ router.get('/pedidos-abiertos', getPedidosAbiertos);
 router.get('/detalles',         getDetallesPedido);
 router.post('/agregar',         agregarArticulo);
 router.put('/editar-articulo',  editarArticulo);
+router.put('/cuenta-pedido',    actualizarCuentaPedido);
 
 module.exports = router;

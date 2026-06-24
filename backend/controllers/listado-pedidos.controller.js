@@ -18,8 +18,8 @@ const getTodosPedidos = async (req, res) => {
         C.NombreEmpresa  AS Casillero,
         M.Simbolo,
         COUNT(D.IdDetallePedido)     AS CantArticulos,
-        ISNULL(SUM(D.ValorCompra),0) AS TotalCompra
-        D.Fotografia
+        ISNULL(SUM(D.ValorCompra),0) AS TotalCompra,
+        MAX(D.Fotografia) AS Fotografia
       FROM C_Pedidos P
       LEFT JOIN A_Empresas E ON E.IdEmpresa = P.IdEmpresa
       LEFT JOIN A_Empresas C ON C.IdEmpresa = P.IdCasillero
