@@ -274,8 +274,9 @@
                                 <th>Moneda</th>
                                 <th style="text-align:right">Artículos</th>
                                 <th style="text-align:right">Entregado</th>
-                                <th style="text-align:right">Total</th>
+                                <th style="text-align:right">Total $</th>
                                 <th style="text-align:right">Tasa L/$</th>
+                                <th style="text-align:right">Total L</th>
                                 <th>Banco / Cuenta</th>
                                 <th>Acciones</th>
                             </tr>
@@ -427,6 +428,7 @@
                 <div class="totales-row">
                     <div class="tot-item"><span class="lbl">Peso total:</span><span class="val" id="tot-peso">0 g</span></div>
                     <div class="tot-item"><span class="lbl">Artículos:</span><span class="val" id="tot-arts">0</span></div>
+                    
                     <div class="tot-item"><span class="lbl">Total:</span><span class="val green" id="tot-precio">$0.00</span></div>
                 </div>
             </div>
@@ -569,6 +571,9 @@
 </td>
                 <td style="text-align:right;color:#4ade80;font-weight:700">${p.Simbolo || '$'} ${tot}</td>
                 <td style="text-align:right">${tasa}</td>
+                <td style="text-align:right;color:#a78bfa;font-weight:700;">
+    ${p.TasaCambio ? 'L ' + Number((p.TotalCompra || 0) * p.TasaCambio).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'}
+</td>
                 <td>${cuenta}</td>
                 <td onclick="event.stopPropagation()" style="display:flex;gap:5px;padding:7px 12px;white-space:nowrap">
                     <button onclick="verFaltantes('${p.NumeroPedido}')" class="btn btn-blue btn-sm">📋 Ver faltantes</button>

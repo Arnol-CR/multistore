@@ -72,7 +72,7 @@
         {
             href: '/cuentas.html',
             texto: 'Estado Cuentas',
-            solo: true,
+            solo: false,
             badge: null,
             svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>'
         }

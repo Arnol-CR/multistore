@@ -80,8 +80,9 @@ const getPedidosAbiertos = async (req, res) => {
         M.Simbolo,
         COUNT(D.IdDetallePedido) AS CantArticulos,
         SUM(CASE WHEN D.EstaEntregado = 1 THEN 1 ELSE 0 END) AS CantEntregados,
-        ISNULL(SUM(D.ValorCompra), 0) AS TotalCompra,
+        ISNULL(SUM(D.ValorCompra * D.CantidadArticulos), 0)  AS TotalCompra,
         P.TasaCambio,
+        ISNULL(SUM(D.ValorCompra), 0) * P.TasaCambio AS TotalLempiras,
         P.IdCuentaBanco,
         CB.Banco,
         CB.NombreCuenta
