@@ -244,7 +244,7 @@
 
     // Fechas por defecto: inicio del año → hoy
     const hoy = new Date();
-    const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+    const inicioAnio = new Date(2025, 0, 1);
     document.getElementById('fi-inicio').value = inicioAnio.toISOString().substring(0,10);
     document.getElementById('fi-fin').value = hoy.toISOString().substring(0,10);
 
