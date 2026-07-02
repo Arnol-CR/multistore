@@ -19,6 +19,7 @@ const clientesRoutes     = require('./routes/clientes.routes');
 const pagosRoutes        = require('./routes/pagos.routes');
 const crearPedidosRoutes = require('./routes/crear-pedidos.routes');
 const cuentasRoutes = require('./routes/cuentas.routes');
+const catalogoRoutes = require('./routes/catalogo.routes');
 
 app.use('/api/cuentas', cuentasRoutes);
 app.use('/api/auth',          authRoutes);
@@ -29,6 +30,7 @@ app.use('/api/clientes',      clientesRoutes);
 app.use('/api/pagos',         pagosRoutes);
 app.use('/api/crear-pedidos', crearPedidosRoutes);
 app.use('/api/listado-pedidos', listadoPedidosRoutes);
+app.use('/api/catalogo', catalogoRoutes);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/login.html'));

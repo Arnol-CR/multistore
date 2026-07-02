@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MultiStore — Catálogo</title>
+<link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+    .overlay.active { display:block; }
+
+    .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+    .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+    .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+    .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; }
+    .sidebar-logo-text span { color:#3b82f6; }
+    .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+    .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+    .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+    .nav { flex:1; padding:12px 0; overflow-y:auto; }
+    .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; text-decoration:none; }
+    .nav-item:hover { color:#e2e8f0; background:#13181f; }
+    .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+    .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+    .nav-item.active svg { opacity:1; }
+    .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+    .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
+    .btn-salir:hover { color:#fca5a5; }
+
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+    .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; }
+    .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+    .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+
+    .content { flex:1; overflow-y:auto; padding:16px; }
+
+    /* Tabs */
+    .tabs { display:flex; gap:4px; margin-bottom:16px; background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:6px; }
+    .tab { flex:1; padding:9px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:#6b7280; border:none; background:none; transition:.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .tab:hover { color:#e2e8f0; background:#13181f; }
+    .tab.active { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f; }
+    .tab-badge { font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
+    .tab.active .tab-badge { background:#2563eb; color:#fff; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* Card */
+    .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; overflow:hidden; margin-bottom:14px; }
+    .card-header { padding:12px 16px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+    .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; }
+
+    /* Tabla */
+    .tbl-wrap { overflow-x:auto; }
+    .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+    .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:9px 12px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
+    .tbl td { padding:9px 12px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
+    .tbl tr:last-child td { border-bottom:none; }
+    .tbl tr:hover td { background:#0a0f18; }
+    .fila-vacia td { text-align:center; padding:28px 12px; color:#4b5563; font-style:italic; }
+
+    /* Botones */
+    .btn-primary { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .btn-primary:hover { background:#2563eb; }
+    .btn-ghost { background:none; border:1px solid #1e2530; border-radius:7px; padding:9px 14px; font-size:12px; color:#6b7280; cursor:pointer; }
+    .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
+    .btn-sm { padding:5px 12px; font-size:11px; border-radius:6px; }
+    .btn-edit { background:#1e3a5f; color:#60a5fa; border:none; border-radius:6px; padding:5px 12px; font-size:11px; cursor:pointer; }
+    .btn-edit:hover { background:#2563eb; color:#fff; }
+
+    /* Filtro */
+    .filtro-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px 16px; border-bottom:1px solid #1e2530; }
+    .filtro-input { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; width:220px; }
+    .filtro-input:focus { border-color:#3b82f6; color:#e2e8f0; }
+    select.filtro-input { width:auto; }
+
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; align-items:center; justify-content:center; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:#0d1017; border:1px solid #1e2530; border-radius:10px; width:400px; max-width:92vw; }
+    .modal-header { padding:14px 16px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; }
+    .modal-header h3 { font-size:14px; font-weight:700; color:#fff; }
+    .modal-close { cursor:pointer; color:#6b7280; font-size:20px; border:none; background:none; }
+    .modal-close:hover { color:#fff; }
+    .modal-body { padding:16px; display:flex; flex-direction:column; gap:12px; }
+    .modal-footer { padding:12px 16px; border-top:1px solid #1e2530; display:flex; justify-content:flex-end; gap:8px; }
+    .field { display:flex; flex-direction:column; gap:4px; }
+    .field label { font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .field input, .field select { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:9px 12px; color:#e2e8f0; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; }
+    .field input:focus, .field select:focus { border-color:#3b82f6; }
+
+    /* Toast */
+    .toast { position:fixed; bottom:20px; right:20px; background:#0d1017; border:1px solid #1e2530; border-left:4px solid #3b82f6; border-radius:8px; padding:12px 16px; font-size:12px; max-width:300px; box-shadow:0 8px 24px rgba(0,0,0,.5); z-index:300; display:none; color:#e2e8f0; }
+    .toast.error { border-left-color:#ef4444; }
+    .toast.active { display:block; }
+
+    .badge-cat { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:#1e3a5f; color:#60a5fa; white-space:nowrap; }
+
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+
+    @media (max-width:768px) {
+        .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+        .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
+        .btn-menu { display:flex; }
+    }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+    <div class="topbar">
+        <button class="btn-menu" onclick="abrirMenu()">
+            <svg width="22" height="22" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+        <div>
+            <div class="topbar-title">Catálogo</div>
+            <div class="topbar-fecha" id="topbar-fecha"></div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab('articulos')">
+                📦 Artículos <span class="tab-badge" id="count-articulos">0</span>
+            </button>
+            <button class="tab" onclick="cambiarTab('categorias')">
+                🏷️ Categorías <span class="tab-badge" id="count-categorias">0</span>
+            </button>
+        </div>
+
+        <!-- TAB ARTÍCULOS -->
+        <div class="tab-content active" id="tab-articulos">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot"></span>Artículos</div>
+                    <button class="btn-primary" onclick="abrirModalArticulo()">+ Nuevo artículo</button>
+                </div>
+                <div class="filtro-bar">
+                    <input type="text" class="filtro-input" id="f-articulos" placeholder="🔍 Buscar artículo o código..." oninput="filtrarArticulos(this.value)">
+                    <select class="filtro-input" id="f-cat-articulos" onchange="filtrarArticulos(document.getElementById('f-articulos').value)">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Código</th>
+                                <th>Artículo</th>
+                                <th>Categoría</th>
+                                <th>Peso (g)</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-articulos">
+                            <tr class="fila-vacia"><td colspan="6">Cargando artículos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CATEGORÍAS -->
+        <div class="tab-content" id="tab-categorias">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="dot"></span>Categorías</div>
+                    <button class="btn-primary" onclick="abrirModalCategoria()">+ Nueva categoría</button>
+                </div>
+                <div class="filtro-bar">
+                    <input type="text" class="filtro-input" id="f-categorias" placeholder="🔍 Buscar categoría..." oninput="filtrarCategorias(this.value)">
+                </div>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Categoría</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-categorias">
+                            <tr class="fila-vacia"><td colspan="3">Cargando categorías...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- MODAL ARTÍCULO -->
+<div class="modal-overlay" id="modal-articulo">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modal-art-titulo">Nuevo artículo</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-articulo')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="art-id">
+            <div class="field">
+                <label>Nombre del artículo</label>
+                <input type="text" id="art-nombre" placeholder="Ej. Camiseta manga corta">
+            </div>
+            <div class="field">
+                <label>Categoría</label>
+                <select id="art-categoria"></select>
+            </div>
+            <div class="field">
+                <label>Peso (gramos)</label>
+                <input type="number" id="art-peso" placeholder="Ej. 200" min="0" step="1">
+            </div>
+            <div id="art-codigo-wrap" style="display:none;">
+                <div class="field">
+                    <label>Código (auto-generado)</label>
+                    <input type="text" id="art-codigo" disabled style="color:#6b7280;">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-articulo')">Cancelar</button>
+            <button class="btn-primary" onclick="guardarArticulo()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CATEGORÍA -->
+<div class="modal-overlay" id="modal-categoria">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modal-cat-titulo">Nueva categoría</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-categoria')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="cat-id">
+            <div class="field">
+                <label>Nombre de la categoría</label>
+                <input type="text" id="cat-nombre" placeholder="Ej. Moda Mujer">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-categoria')">Cancelar</button>
+            <button class="btn-primary" onclick="guardarCategoria()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/assets/sidebar.js"></script>
+<script>
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    const API = '/api/catalogo';
+
+    let listaArticulos  = [];
+    let listaCategorias = [];
+
+    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    // ===== TABS =====
+    function cambiarTab(tab) {
+        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['articulos','categorias'][i] === tab));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    // ===== HELPERS =====
+    function showToast(msg, err=false){
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast active' + (err ? ' error' : '');
+        setTimeout(() => t.classList.remove('active'), 3500);
+    }
+    function cerrarModal(id){ document.getElementById(id).classList.remove('active'); }
+    function abrirModal(id){ document.getElementById(id).classList.add('active'); }
+
+    // ===== CATEGORÍAS =====
+    async function cargarCategorias(){
+        try{
+            const res = await fetch(`${API}/categorias`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error);
+            listaCategorias = data.data || [];
+            document.getElementById('count-categorias').textContent = listaCategorias.length;
+            renderCategorias(listaCategorias);
+            poblarSelectCategorias();
+        }catch(e){ showToast('Error al cargar categorías: ' + e.message, true); }
+    }
+
+    function renderCategorias(lista){
+        const tbody = document.getElementById('tbody-categorias');
+        if(!lista.length){ tbody.innerHTML = '<tr class="fila-vacia"><td colspan="3">No hay categorías registradas.</td></tr>'; return; }
+        tbody.innerHTML = lista.map(c => `
+            <tr>
+                <td style="color:#4b5563;">${c.Numero}</td>
+                <td><span class="badge-cat">${c.CategoriaProducto}</span></td>
+                <td><button class="btn-edit btn-sm" onclick="abrirModalEditarCategoria(${c.IdCategoria}, '${c.CategoriaProducto.replace(/'/g,"\\'")}')">✏️ Editar</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function filtrarCategorias(q){
+        q = q.toLowerCase();
+        const filtradas = listaCategorias.filter(c => c.CategoriaProducto.toLowerCase().includes(q));
+        renderCategorias(filtradas);
+    }
+
+    function poblarSelectCategorias(){
+        const opts = listaCategorias.map(c => `<option value="${c.IdCategoria}">${c.CategoriaProducto}</option>`).join('');
+        document.getElementById('art-categoria').innerHTML = opts;
+        document.getElementById('f-cat-articulos').innerHTML = '<option value="">Todas las categorías</option>' + opts;
+    }
+
+    function abrirModalCategoria(){
+        document.getElementById('cat-id').value = '';
+        document.getElementById('cat-nombre').value = '';
+        document.getElementById('modal-cat-titulo').textContent = 'Nueva categoría';
+        abrirModal('modal-categoria');
+    }
+
+    function abrirModalEditarCategoria(id, nombre){
+        document.getElementById('cat-id').value = id;
+        document.getElementById('cat-nombre').value = nombre;
+        document.getElementById('modal-cat-titulo').textContent = 'Editar categoría';
+        abrirModal('modal-categoria');
+    }
+
+    async function guardarCategoria(){
+        const id     = document.getElementById('cat-id').value;
+        const nombre = document.getElementById('cat-nombre').value.trim();
+        if(!nombre){ showToast('El nombre es requerido.', true); return; }
+
+        try{
+            const method = id ? 'PUT' : 'POST';
+            const body   = id ? { IdCategoria: parseInt(id), Nombre: nombre } : { Categoria: nombre };
+            const res = await fetch(`${API}/categorias`, {
+                method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error);
+            showToast(data.mensaje);
+            cerrarModal('modal-categoria');
+            await cargarCategorias();
+        }catch(e){ showToast(e.message, true); }
+    }
+
+    // ===== ARTÍCULOS =====
+    async function cargarArticulos(){
+        try{
+            const res = await fetch(`${API}/articulos`);
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error);
+            listaArticulos = data.data || [];
+            document.getElementById('count-articulos').textContent = listaArticulos.length;
+            renderArticulos(listaArticulos);
+        }catch(e){ showToast('Error al cargar artículos: ' + e.message, true); }
+    }
+
+    function renderArticulos(lista){
+        const tbody = document.getElementById('tbody-articulos');
+        if(!lista.length){ tbody.innerHTML = '<tr class="fila-vacia"><td colspan="6">No hay artículos registrados.</td></tr>'; return; }
+        tbody.innerHTML = lista.map((a, i) => `
+            <tr>
+                <td style="color:#4b5563;">${i+1}</td>
+                <td style="font-family:monospace;font-size:11px;color:#60a5fa;">${a.CodigoArticulo ?? '-'}</td>
+                <td style="font-weight:600;">${a.NombreArticulo ?? '-'}</td>
+                <td><span class="badge-cat">${a.CategoriaProducto ?? a.Categoria ?? '-'}</span></td>
+                <td style="color:#9ca3af;">${a.PesoArticulo ?? a.Peso ?? '-'} g</td>
+                <td><button class="btn-edit btn-sm" onclick="abrirModalEditarArticulo(${a.IdArticulo}, '${(a.NombreArticulo||'').replace(/'/g,"\\'")}', ${a.IdCategoria}, ${a.PesoArticulo||0}, '${a.CodigoArticulo||''}')">✏️ Editar</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function filtrarArticulos(q){
+        q = q.toLowerCase();
+        const cat = document.getElementById('f-cat-articulos').value;
+        const filtrados = listaArticulos.filter(a => {
+            if(cat && String(a.IdCategoria) !== cat) return false;
+            if(!q) return true;
+            return (
+                (a.NombreArticulo  || '').toLowerCase().includes(q) ||
+                (a.CodigoArticulo  || '').toLowerCase().includes(q) ||
+                (a.CategoriaProducto || a.Categoria || '').toLowerCase().includes(q)
+            );
+        });
+        renderArticulos(filtrados);
+    }
+
+    function abrirModalArticulo(){
+        document.getElementById('art-id').value = '';
+        document.getElementById('art-nombre').value = '';
+        document.getElementById('art-peso').value = '';
+        document.getElementById('art-codigo-wrap').style.display = 'none';
+        document.getElementById('modal-art-titulo').textContent = 'Nuevo artículo';
+        if(listaCategorias.length) document.getElementById('art-categoria').selectedIndex = 0;
+        abrirModal('modal-articulo');
+    }
+
+    function abrirModalEditarArticulo(id, nombre, idCat, peso, codigo){
+        document.getElementById('art-id').value = id;
+        document.getElementById('art-nombre').value = nombre;
+        document.getElementById('art-peso').value = peso;
+        document.getElementById('art-codigo').value = codigo;
+        document.getElementById('art-codigo-wrap').style.display = 'block';
+        document.getElementById('modal-art-titulo').textContent = 'Editar artículo';
+        const sel = document.getElementById('art-categoria');
+        sel.value = idCat;
+        abrirModal('modal-articulo');
+    }
+
+    async function guardarArticulo(){
+        const id      = document.getElementById('art-id').value;
+        const nombre  = document.getElementById('art-nombre').value.trim();
+        const idCat   = document.getElementById('art-categoria').value;
+        const peso    = document.getElementById('art-peso').value;
+
+        if(!nombre){ showToast('El nombre es requerido.', true); return; }
+        if(!idCat){  showToast('Selecciona una categoría.', true); return; }
+
+        try{
+            let res;
+            if(id){
+                res = await fetch(`${API}/articulos`, {
+                    method:'PUT', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ IdArticulo: parseInt(id), NombreArticulo: nombre, IdCategoria: parseInt(idCat), Peso: parseFloat(peso)||0 })
+                });
+            } else {
+                res = await fetch(`${API}/articulos`, {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ Nombre: nombre, IdCategoria: parseInt(idCat), Peso: parseFloat(peso)||0 })
+                });
+            }
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error);
+            showToast(data.mensaje);
+            cerrarModal('modal-articulo');
+            await cargarArticulos();
+        }catch(e){ showToast(e.message, true); }
+    }
+
+    // ===== INIT =====
+    (async () => {
+        await cargarCategorias();
+        await cargarArticulos();
+    })();
+</script>
+</body>
+</html>

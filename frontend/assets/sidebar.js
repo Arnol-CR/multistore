@@ -75,6 +75,13 @@
             solo: false,
             badge: null,
             svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>'
+        },
+        {
+            href: '/catalogo.html',
+            texto: 'Catálogo',
+            solo: false,
+            badge: null,
+            svg: '<path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>'
         }
       ]
     }
