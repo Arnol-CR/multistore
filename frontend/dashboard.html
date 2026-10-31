@@ -118,6 +118,7 @@
                     background:#0d1017; border:1px solid #1e3a5f; border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.7);
                     padding:12px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:min(1100px, calc(100vw - 32px)); }
         .bulk-bar.visible { transform:translate(-50%, 0); }
+        body.con-seleccion .content { padding-bottom:110px !important; }
         .bulk-count { background:#1d4ed8; color:#fff; font-weight:800; border-radius:8px; padding:7px 12px; font-size:13px; white-space:nowrap; }
         .bulk-link { font-size:11px; color:#60a5fa; cursor:pointer; text-decoration:underline; white-space:nowrap; }
         .bulk-in { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:13px; outline:none; flex:1; min-width:180px; font-family:inherit; }
@@ -230,7 +231,7 @@
             </div>
         </div>
 
-        <div class="grid2">
+        <div class="grid2" style="grid-template-columns:1fr">
             <div class="card">
                 <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
                 <div class="search-pedidos-wrap">
@@ -282,66 +283,6 @@
                     <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
                 </div>
                 <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
-            </div>
-
-            <div class="card">
-                <div class="card-title"><span class="dot" style="background:#7c3aed"></span>Acceso rápido</div>
-                <div class="modulos">
-                    <a class="modulo" href="/pedidos.html">
-                        <div class="modulo-icon" style="background:#1a2540">
-                            <svg fill="none" stroke="#60a5fa" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Pedidos</div><div class="modulo-desc">Ver activos</div></div>
-                    </a>
-                    <a class="modulo solo-admin" href="/crear-pedidos.html">
-                        <div class="modulo-icon" style="background:#0c2240">
-                            <svg fill="none" stroke="#38bdf8" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Crear Pedido</div><div class="modulo-desc">Nuevo pedido</div></div>
-                    </a>
-                    <a class="modulo solo-admin" href="/listado-pedidos.html">
-                        <div class="modulo-icon" style="background:#1a1208">
-                            <svg fill="none" stroke="#fbbf24" stroke-width="1.8" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Listado Pedidos</div><div class="modulo-desc">Ver y editar</div></div>
-                    </a>
-                    <a class="modulo solo-admin" href="/configuracion.html">
-                        <div class="modulo-icon" style="background:#12082a">
-                            <svg fill="none" stroke="#a78bfa" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Configuración</div><div class="modulo-desc">Tasa · Bancos</div></div>
-                    </a>
-                    <a class="modulo" href="/tracking.html">
-                        <div class="modulo-icon" style="background:#0f2318">
-                            <svg fill="none" stroke="#34d399" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Tracking</div><div class="modulo-desc">Buscar pedido</div></div>
-                    </a>
-                    <a class="modulo solo-admin" href="/asignar-vendedor.html">
-                        <div class="modulo-icon" style="background:#1f1025">
-                            <svg fill="none" stroke="#c084fc" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Asignar</div><div class="modulo-desc">A vendedor</div></div>
-                    </a>
-                    <a class="modulo" href="/asignar-precios.html">
-                        <div class="modulo-icon" style="background:#2d1f0a">
-                            <svg fill="none" stroke="#f59e0b" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Precios</div><div class="modulo-desc">Asignar a clientes</div></div>
-                    </a>
-                    <a class="modulo solo-admin" href="/pagos.html">
-                        <div class="modulo-icon" style="background:#0c1f3d">
-                            <svg fill="none" stroke="#818cf8" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Pagos</div><div class="modulo-desc">Envíos por tracking</div></div>
-                    </a>
-                    <a class="modulo solo-admin" href="#">
-                        <div class="modulo-icon" style="background:#0f2318">
-                            <svg fill="none" stroke="#34d399" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        </div>
-                        <div><div class="modulo-name">Reportes</div><div class="modulo-desc">Gráficas y KPIs</div></div>
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -1422,6 +1363,7 @@ lista.innerHTML = itemSinVendedor + vendedoresCargados.map(v => {
         const bar = document.getElementById('bulk-bar');
         const n = seleccion.size;
         bar.classList.toggle('visible', n > 0);
+        document.body.classList.toggle('con-seleccion', n > 0);
         document.getElementById('bulk-count').textContent = `${n} seleccionado${n === 1 ? '' : 's'}`;
         const faltan = articulosFiltrados.filter(p => !seleccion.has(p.IdDetallePedido)).length;
         const link = document.getElementById('bulk-todos');
