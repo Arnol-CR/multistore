@@ -56,6 +56,13 @@
           svg: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'
         },
         {
+          href: '/asignar-vendedor.html',
+          texto: 'Asignar Vendedor',
+          solo: true,
+          badge: null,
+          svg: '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>'
+        },
+        {
           href: '/clientes.html',
           texto: 'Clientes',
           solo: false,
