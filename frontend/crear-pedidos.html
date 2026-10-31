@@ -150,6 +150,34 @@
         .modal-foot { padding:14px 20px; border-top:1px solid #1e2530; display:flex; gap:8px; justify-content:flex-end; }
         .modal-x { background:none; border:none; color:#4b5563; cursor:pointer; font-size:22px; line-height:1; }
         .modal-x:hover { color:#e2e8f0; }
+        /* ── Importar artículos (pegar varios) ── */
+        .imp-modal { max-width:1120px !important; max-height:92vh; display:flex; flex-direction:column; }
+        .imp-modal .modal-body { overflow-y:auto; flex:1; padding:18px 22px; }
+        .imp-head { display:flex; align-items:center; gap:12px; }
+        .imp-ico { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:17px; }
+        .imp-sub { font-size:11px; color:#6b7280; margin-top:2px; }
+        .imp-src { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+        .imp-card { background:#0a0f18; border:1px solid #1e2530; border-radius:10px; padding:14px; font-size:12px; color:#9ca3af; line-height:1.6; }
+        .imp-card h4 { font-size:12px; color:#e2e8f0; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+        .imp-cols { font-family:monospace; font-size:11px; color:#60a5fa; }
+        .imp-bm { display:inline-flex; align-items:center; gap:6px; background:#1d4ed8; color:#fff; padding:5px 12px; border-radius:6px; font-weight:700; text-decoration:none; font-size:12px; cursor:grab; }
+        .imp-loaded { display:none; align-items:center; gap:10px; background:#052e16; border:1px solid #14532d; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#86efac; }
+        .imp-loaded b { color:#4ade80; }
+        .imp-opts { display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; margin-bottom:12px; }
+        .imp-tbl td { white-space:normal; padding:8px 10px; }
+        .imp-tbl th { padding:9px 10px; }
+        .imp-prod { font-weight:600; color:#d1d5db; font-size:12px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; max-width:330px; }
+        .imp-meta { font-size:10.5px; color:#6b7280; margin-top:2px; font-family:monospace; }
+        .imp-meta span { color:#9ca3af; font-family:'Segoe UI',sans-serif; }
+        .imp-img { width:42px; height:42px; object-fit:cover; border-radius:6px; background:#13181f; display:block; }
+        .imp-del { background:none; border:1px solid transparent; color:#4b5563; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:14px; }
+        .imp-del:hover { color:#f87171; border-color:#7f1d1d; background:#1f0707; }
+        .imp-foot { justify-content:space-between !important; align-items:center; }
+        .imp-stats { display:flex; gap:18px; font-size:12px; color:#6b7280; flex-wrap:wrap; }
+        .imp-stats b { color:#e2e8f0; }
+        .imp-stats .tot { color:#4ade80; }
+        .imp-empty { text-align:center; padding:34px; color:#374151; font-size:13px; }
+        @media (max-width:760px) { .imp-src, .imp-opts { grid-template-columns:1fr; } }
         .mfg { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
         .mfl { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
         /* ── Scrollbar ── */
@@ -858,7 +886,7 @@
         el.className = 'msg ' + tipo;
         el.textContent = txt;
         el.style.display = 'block';
-        setTimeout(() => { el.style.display = 'none'; }, 4000);
+        if (tipo !== 'err' || el.id !== 'msg-pegar') setTimeout(() => { el.style.display = 'none'; }, 4000);
     }
 
     // ── TASA DE CAMBIO PEDIDO ──
@@ -1018,8 +1046,10 @@
             if (/^data:/.test(foto)) foto = '';
             foto = foto.replace(/_thumbnail_\d+x\d*/, '');
             var a = row.querySelector('a[href*="-p-"], a[href*="goods"]');
+            var gid = a ? (a.href.match(/-p-(\d+)/) || [])[1] : '';
+            var link = gid ? location.origin + '/p-' + gid + '.html' : '';
             items.push({ sku: ms[1], titulo: titulo.replace(/^\d+\s+piezas?\s+/i, ''), talla: talla,
-                precio: parseFloat(precio.replace(/,/g, '')) || 0, cant: cant, foto: foto, link: a ? a.href : location.href });
+                precio: parseFloat(precio.replace(/,/g, '')) || 0, cant: cant, foto: foto, link: link });
         }
         if (!items.length) { alert('MultiStore: no encontré artículos. Abre el DETALLE de un pedido de SHEIN y espera a que cargue.'); return; }
         var data = 'MULTISTORE_SHEIN' + JSON.stringify({ pedido: pedido, items: items });
@@ -1039,9 +1069,14 @@
         if (!document.getElementById('a-pedido').value) { mostrarMsg(document.getElementById('msg-agregar'),'err','Selecciona un pedido primero'); return; }
         document.getElementById('pv-texto').value = '';
         document.getElementById('pv-nopedido').value = document.getElementById('a-nopedido').value;
-        document.getElementById('pv-articulo').textContent = document.getElementById('a-articulo-txt').value || '(ninguno — elige uno en el formulario si quieres)';
+        document.getElementById('dl-articulos').innerHTML = todosArticulos.map(a => `<option value="${(a.NombreArticulo||'').replace(/"/g,'&quot;')}">`).join('');
+        document.getElementById('pv-art-todos').value = nombreDe(document.getElementById('a-articulo-id').value);
         document.getElementById('bm-shein').href = 'javascript:' + encodeURIComponent('(' + sheinScraper.toString() + ')()');
         filasPegadas = []; renderPegados();
+        document.getElementById('na-panel').style.display = 'none';
+        const selP = document.getElementById('a-pedido'), optP = selP.options[selP.selectedIndex];
+        document.getElementById('pv-subtitulo').textContent = 'Pedido ' + (optP.dataset.numero || '') + (optP.dataset.tienda ? ' · ' + optP.dataset.tienda : '');
+        cambiarOrigen();
         document.getElementById('modal-pegar').classList.add('open');
         setTimeout(() => document.getElementById('pv-texto').focus(), 50);
     }
@@ -1052,52 +1087,200 @@
             try {
                 const d = JSON.parse(crudo.substring('MULTISTORE_SHEIN'.length));
                 if (d.pedido) document.getElementById('pv-nopedido').value = d.pedido;
-                filasPegadas = d.items.map(x => ({ sku:x.sku, talla:x.talla||'', precio:+x.precio||0, cant:+x.cant||1, peso:0, desc:x.titulo||'', link:x.link||'', foto:x.foto||'' }));
+                filasPegadas = d.items.map(x => ({ sku:x.sku, talla:x.talla||'', precio:+x.precio||0, cant:+x.cant||1, peso:0, desc:(x.titulo||'').substring(0,200), link:acortarLink(x.link), foto:(x.foto||'').substring(0,500) }));
+                asignarArticulos();
             } catch(e) { filasPegadas = []; }
-            renderPegados(); return;
+            renderPegados();
+            mostrarCargado(`Pedido de SHEIN <b>${esc(document.getElementById('pv-nopedido').value)}</b> · ${filasPegadas.length} artículos cargados`);
+            return;
         }
         const lineas = document.getElementById('pv-texto').value.split(/\r?\n/).filter(l => l.trim());
         filasPegadas = lineas.map(l => l.split(l.includes('\t') ? '\t' : ';').map(x => x.trim()))
             .filter(c => c[0] && !/^(sku|c[oó]digo)$/i.test(c[0]))
             .map(c => ({ sku:c[0], talla:c[1]||'', precio:numero(c[2]), cant:parseInt(c[3])||1, peso:numero(c[4]), desc:c[5]||'', link:c[6]||'' }));
+        asignarArticulos();
         renderPegados();
+        if (filasPegadas.length) mostrarCargado(`Desde Excel · <b>${filasPegadas.length}</b> filas cargadas`);
     }
+    function acortarLink(l) {
+        l = l || ''; const m = l.match(/-p-(\d+)/);
+        if (m) { try { return new URL(l).origin + '/p-' + m[1] + '.html'; } catch(e) {} }
+        return l.split('?')[0].substring(0, 250);
+    }
+    function opcionesArticulos() {
+        return todosArticulos.map(a => `<option value="${a.IdArticulo}">${(a.NombreArticulo||'').replace(/</g,'&lt;')}</option>`).join('');
+    }
+    function normaliza(t) { return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+    // Adivina el artículo del catálogo: todas las palabras de su nombre aparecen en el título (singular/plural da igual)
+    function raiz(w) { return w.length > 4 && /[^aeiou]es$/.test(w) ? w.slice(0,-2) : (w.length > 3 && /s$/.test(w) ? w.slice(0,-1) : w); }
+    function palabras(t) { return normaliza(t).split(/[^a-z0-9ñ]+/).filter(w => w.length > 2 && !['de','del','para','con','los','las','por'].includes(w)).map(raiz); }
+    function adivinarArticulo(titulo) {
+        const t = new Set(palabras(titulo));
+        let mejor = null, puntos = 0;
+        todosArticulos.forEach(a => {
+            const n = palabras(a.NombreArticulo);
+            if (n.length && n.every(w => t.has(w)) && n.length > puntos) { mejor = a; puntos = n.length; }
+        });
+        return mejor ? String(mejor.IdArticulo) : '';
+    }
+    function nombreDe(id) { const c = todosArticulos.find(x => x.IdArticulo == id); return c ? c.NombreArticulo : ''; }
+    function idPorNombre(n) { n = normaliza(n).trim(); const c = todosArticulos.find(x => normaliza(x.NombreArticulo).trim() === n); return c ? String(c.IdArticulo) : ''; }
+    // Aprendizaje: recuerda qué artículo se eligió para cada tipo de producto
+    function leerAprendido() { try { return JSON.parse(localStorage.getItem('ms_aprendido') || '[]'); } catch(e) { return []; } }
+    function aprender(titulo, idArt) {
+        if (!titulo || !idArt) return;
+        const w = [...new Set(palabras(titulo))].slice(0, 12);
+        let l = leerAprendido().filter(x => x.t.join(' ') !== w.join(' '));
+        l.unshift({ t: w, id: String(idArt) });
+        try { localStorage.setItem('ms_aprendido', JSON.stringify(l.slice(0, 500))); } catch(e) {}
+    }
+    function adivinarAprendido(titulo) {
+        const t = new Set(palabras(titulo)); let mejor = '', pts = 0;
+        leerAprendido().forEach(x => {
+            const comunes = x.t.filter(w => t.has(w)).length;
+            const score = comunes / Math.max(x.t.length, 1);
+            if (comunes >= 2 && score >= 0.5 && score > pts && todosArticulos.some(a => a.IdArticulo == x.id)) { mejor = x.id; pts = score; }
+        });
+        return mejor;
+    }
+    // ── Crear artículo sin salir de la ventana ──
+    var naFila = -1, categoriasCache = null;
+    async function abrirNuevoArt(nombre, fila) {
+        naFila = fila;
+        const panel = document.getElementById('na-panel');
+        document.getElementById('na-nombre').value = nombre || '';
+        document.getElementById('na-peso').value = '';
+        document.getElementById('na-para').textContent = fila >= 0 ? '· para ' + (filasPegadas[fila].desc || filasPegadas[fila].sku).substring(0, 50) : '';
+        panel.style.display = 'block';
+        if (!categoriasCache) {
+            try { const d = await fetch('/api/catalogo/categorias').then(r => r.json()); categoriasCache = d.ok ? d.data : []; } catch(e) { categoriasCache = []; }
+            document.getElementById('na-cat').innerHTML = '<option value="">— Elegir —</option>' +
+                categoriasCache.map(c => `<option value="${c.IdCategoria}">${(c.CategoriaProducto||'').replace(/</g,'&lt;')}</option>`).join('');
+        }
+        document.getElementById(nombre ? 'na-cat' : 'na-nombre').focus();
+    }
+    async function crearArtRapido() {
+        const msg = document.getElementById('msg-na');
+        const nombre = document.getElementById('na-nombre').value.trim();
+        const idCat = document.getElementById('na-cat').value;
+        const peso = parseFloat(document.getElementById('na-peso').value) || 0;
+        if (!nombre || !idCat) { mostrarMsg(msg, 'err', 'Escribe el nombre y elige la categoría'); return; }
+        if (idPorNombre(nombre)) { mostrarMsg(msg, 'err', 'Ese artículo ya existe en el catálogo'); return; }
+        const btn = document.getElementById('na-btn'); btn.disabled = true;
+        try {
+            const d = await fetch('/api/catalogo/articulos', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ Nombre: nombre, IdCategoria: +idCat, Peso: peso }) }).then(r => r.json());
+            if (!d.ok) { mostrarMsg(msg, 'err', 'Error: ' + d.error); return; }
+            const a = await fetch('/api/crear-pedidos/articulos').then(r => r.json());
+            if (a.ok) todosArticulos = a.data;
+            document.getElementById('dl-articulos').innerHTML = todosArticulos.map(x => `<option value="${(x.NombreArticulo||'').replace(/"/g,'&quot;')}">`).join('');
+            const nuevo = idPorNombre(nombre);
+            document.getElementById('na-panel').style.display = 'none';
+            if (naFila >= 0 && nuevo) cambiarArtFila(naFila, nombre);
+            else renderPegados();
+            mostrarMsg(document.getElementById('msg-pegar'), 'ok', '✓ Artículo "' + nombre + '" creado');
+        } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
+        finally { btn.disabled = false; }
+    }
+    function pesoDe(idArt) { const c = todosArticulos.find(x => x.IdArticulo == idArt); return c ? (parseFloat(c.PesoArticulo) || 0) : 0; }
+    function aplicarArtTodos(v) { if (!v) return; filasPegadas.forEach(f => { if (!f.guardado && !f.idArt) f.idArt = v; }); renderPegados(); }
+    function cambiarArtFila(i, nombre) {
+        const id = idPorNombre(nombre);
+        if (!id && nombre.trim()) { abrirNuevoArt(nombre.trim(), i); return; }
+        filasPegadas[i].idArt = id;
+        if (id) aprender(filasPegadas[i].desc, id);
+        // Aplicar lo aprendido a otras filas parecidas que aún no tienen artículo
+        filasPegadas.forEach(f => { if (!f.idArt && !f.guardado) f.idArt = adivinarAprendido(f.desc); });
+        renderPegados();
+        const sig = filasPegadas.findIndex(f => !f.idArt && !f.guardado);
+        if (sig >= 0) { const el = document.querySelector(`.pv-art[data-i="${sig}"]`); el.focus(); el.scrollIntoView({block:'nearest'}); }
+    }
+    function asignarArticulos() {
+        const general = idPorNombre(document.getElementById('pv-art-todos').value);
+        filasPegadas.forEach(f => { f.idArt = adivinarAprendido(f.desc) || adivinarArticulo(f.desc) || general; });
+    }
+    function pesoDefPegar() { const c = todosArticulos.find(x => x.IdArticulo == document.getElementById('a-articulo-id').value); return c ? (parseFloat(c.PesoArticulo) || 0) : 0; }
+    function esc(t) { return String(t ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
     function renderPegados() {
         const tb = document.getElementById('pv-tbody');
+        const pend = filasPegadas.filter(f => !f.guardado);
+        const unidades = filasPegadas.reduce((a,f) => a + f.cant, 0);
         const tot = filasPegadas.reduce((a,f) => a + f.precio*f.cant, 0);
-        document.getElementById('pv-resumen').textContent = filasPegadas.length + ' artículos · $' + tot.toFixed(2);
-        tb.innerHTML = filasPegadas.length ? filasPegadas.map((f,i) => `<tr id="pv-row-${i}">
-            <td>${f.foto ? `<img src="${f.foto}" style="width:30px;height:30px;object-fit:cover;border-radius:4px">` : ''}</td>
-            <td style="font-family:monospace">${f.sku}</td><td>${f.talla||'—'}</td>
-            <td style="text-align:right">$${f.precio.toFixed(2)}</td><td style="text-align:right">${f.cant}</td>
-            <td style="text-align:right">${f.peso}g</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${(f.desc||'').replace(/"/g,'&quot;')}">${f.desc||'—'}</td>
-            <td id="pv-st-${i}"></td></tr>`).join('')
-            : '<tr><td colspan="8" class="tbl-empty">Pega las filas arriba</td></tr>';
+        const peso = filasPegadas.reduce((a,f) => a + (f.peso || pesoDe(f.idArt)) * f.cant, 0);
+        const faltan = pend.filter(f => !f.idArt).length;
+        document.getElementById('pv-resumen').innerHTML = filasPegadas.length
+            ? `<span><b>${filasPegadas.length}</b> artículos</span><span><b>${unidades}</b> unidades</span><span>Peso <b>${peso.toLocaleString('es-HN')} g</b></span><span>Total <b class="tot">$${tot.toFixed(2)}</b></span>`
+              + (faltan ? `<span style="color:#f87171">● ${faltan} sin artículo</span>` : '')
+            : '';
+        const btn = document.getElementById('pv-btn');
+        btn.textContent = pend.length ? `✓ Guardar ${pend.length} artículo${pend.length === 1 ? '' : 's'}` : '✓ Guardar';
+        tb.innerHTML = filasPegadas.length ? filasPegadas.map((f,i) => {
+            const pesoF = f.peso || pesoDe(f.idArt);
+            const meta = [esc(f.sku), f.talla ? `<span>${esc(f.talla)}</span>` : ''].filter(Boolean).join(' · ');
+            return `<tr id="pv-row-${i}" style="${f.guardado ? 'opacity:.55' : ''}">
+            <td>${f.foto ? `<img class="imp-img" src="${esc(f.foto)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="imp-img"></div>'}</td>
+            <td>
+                <div class="imp-prod" title="${esc(f.desc)}">${f.link ? `<a href="${esc(f.link)}" target="_blank" style="color:inherit;text-decoration:none">${esc(f.desc || f.sku)}</a>` : esc(f.desc || f.sku)}</div>
+                <div class="imp-meta">${meta}</div>
+            </td>
+            <td><input class="form-input pv-art" data-i="${i}" list="dl-articulos" autocomplete="off" placeholder="🔍 Buscar…" value="${esc(nombreDe(f.idArt))}"
+                style="padding:6px 9px;font-size:12px;width:100%;${f.idArt ? '' : 'border-color:#b91c1c;background:#1f0707'}" ${f.guardado ? 'disabled' : ''}
+                onchange="cambiarArtFila(${i}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></td>
+            <td style="text-align:right;color:#e2e8f0">${f.cant}</td>
+            <td style="text-align:right">$${f.precio.toFixed(2)}</td>
+            <td style="text-align:right;color:#6b7280">${pesoF} g</td>
+            <td style="text-align:right;color:#4ade80;font-weight:700">$${(f.precio*f.cant).toFixed(2)}</td>
+            <td id="pv-st-${i}" style="text-align:center;color:#4ade80;font-weight:700">${f.guardado ? '✓' : `<button class="imp-del" title="Quitar esta fila" onclick="eliminarFila(${i})">🗑</button>`}</td></tr>`;
+        }).join('')
+            : '<tr><td colspan="8" class="imp-empty">Pega un pedido de SHEIN o filas de Excel para ver los artículos aquí</td></tr>';
     }
+    function eliminarFila(i) {
+        if (!filasPegadas[i] || filasPegadas[i].guardado) return;
+        filasPegadas.splice(i, 1);
+        renderPegados();
+    }
+    function cambiarOrigen() {
+        document.getElementById('pv-origen').style.display = 'block';
+        document.getElementById('pv-cargado').style.display = 'none';
+        document.getElementById('pv-texto').value = '';
+        if (filasPegadas.some(f => !f.guardado)) { filasPegadas = filasPegadas.filter(f => f.guardado); renderPegados(); }
+        setTimeout(() => document.getElementById('pv-texto').focus(), 50);
+    }
+    function mostrarCargado(txt) {
+        if (!filasPegadas.length) return;
+        document.getElementById('pv-origen').style.display = 'none';
+        document.getElementById('pv-cargado').style.display = 'flex';
+        document.getElementById('pv-cargado-txt').innerHTML = txt;
+    }
+    function cerrarPegar() { document.getElementById('modal-pegar').classList.remove('open'); }
     async function guardarPegados() {
         const idPed = document.getElementById('a-pedido').value;
         const msg = document.getElementById('msg-pegar');
         if (!filasPegadas.length) { mostrarMsg(msg,'err','No hay filas para guardar'); return; }
+        const faltan = filasPegadas.filter(f => !f.guardado && !f.idArt).length;
+        if (faltan) { mostrarMsg(msg,'err', `Elige el artículo del catálogo en ${faltan} fila(s) marcadas en rojo`); return; }
         const btn = document.getElementById('pv-btn'); btn.disabled = true;
         const idArt = document.getElementById('a-articulo-id').value;
         const noPed = document.getElementById('pv-nopedido').value.trim() || null;
         const artCat = todosArticulos.find(x => x.IdArticulo == idArt);
         const pesoDef = artCat ? (parseFloat(artCat.PesoArticulo) || 0) : 0;
-        let ok = 0, err = 0;
+        let ok = 0, err = 0, primerError = '';
         for (let i = 0; i < filasPegadas.length; i++) {
             const f = filasPegadas[i], st = document.getElementById('pv-st-' + i);
+            if (f.guardado) continue;
             st.textContent = '⏳';
             try {
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDef, fotoUrl:f.foto||null, idArticulo: idArt ? +idArt : null,
+                    body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDe(f.idArt), fotoUrl:f.foto||null, idArticulo: +f.idArt,
                         idPedido:+idPed, tallaColor:f.talla, valorCompra:f.precio, cantidadArticulos:f.cant, link:f.link||null, noPedidoAplicacion:noPed }) }).then(r => r.json());
-                if (d.ok) { ok++; st.textContent = '✓'; st.style.color = '#4ade80'; } else { err++; st.textContent = '✗'; st.title = d.error; st.style.color = '#f87171'; }
-            } catch(e) { err++; st.textContent = '✗'; st.style.color = '#f87171'; }
+                if (d.ok) { ok++; f.guardado = true; aprender(f.desc, f.idArt); st.textContent = '✓'; st.style.color = '#4ade80'; } else { err++; st.textContent = '✗'; st.title = d.error; st.style.color = '#f87171'; if (!primerError) primerError = d.error; }
+            } catch(e) { err++; st.textContent = '✗'; st.style.color = '#f87171'; if (!primerError) primerError = 'Error de conexión'; }
         }
         btn.disabled = false;
-        mostrarMsg(msg, err ? 'err' : 'ok', `✓ ${ok} guardados` + (err ? ` · ✗ ${err} con error (pasa el mouse sobre ✗)` : ''));
+        mostrarMsg(msg, err ? 'err' : 'ok', `✓ ${ok} guardados` + (err ? ` · ✗ ${err} con error: ${primerError}` : ''));
         cargarArticulosPedido(+idPed); cargarPedidosAbiertos();
-        if (!err) setTimeout(() => document.getElementById('modal-pegar').classList.remove('open'), 1200);
+        renderPegados();
+        if (!err) setTimeout(cerrarPegar, 1400);
     }
 
     // ── INIT ──
@@ -1145,48 +1328,95 @@
 
 <!-- ══ MODAL PEGAR VARIOS ══ -->
 <div class="modal-bg" id="modal-pegar">
-    <div class="modal" style="max-width:820px;width:95%">
+    <div class="modal imp-modal">
         <div class="modal-head">
-            <div class="modal-title">📋 Pegar varios artículos</div>
-            <button class="modal-x" onclick="document.getElementById('modal-pegar').classList.remove('open')">×</button>
+            <div class="imp-head">
+                <div class="imp-ico">📦</div>
+                <div>
+                    <div class="modal-title">Importar artículos</div>
+                    <div class="imp-sub" id="pv-subtitulo">—</div>
+                </div>
+            </div>
+            <button class="modal-x" onclick="cerrarPegar()">×</button>
         </div>
         <div class="modal-body">
-            <div style="background:#0c1a30;border:1px solid #1e3a5f;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#9ca3af">
-                <b style="color:#93c5fd">Desde SHEIN:</b> arrastra este botón a tu barra de marcadores (solo una vez) →
-                <a id="bm-shein" href="#" onclick="event.preventDefault();alert('Arrástralo a la barra de marcadores. Luego úsalo en la página del pedido en SHEIN.')"
-                   style="display:inline-block;background:#1d4ed8;color:#fff;padding:5px 12px;border-radius:6px;font-weight:700;text-decoration:none;margin:0 4px">📦 SHEIN → MultiStore</a><br>
-                Abre el detalle del pedido en shein.com, toca el marcador y vuelve aquí: pulsa
-                <button class="btn btn-ghost btn-sm" onclick="pegarDelPortapapeles()">📥 Pegar</button> o Ctrl+V en el cuadro.
-            </div>
-            <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">
-                O copia las filas de Excel y pégalas aquí. Orden de columnas:<br>
-                <b style="color:#60a5fa;font-family:monospace">SKU · Talla/Color · Precio · Cantidad · Peso · Descripción · Link</b><br>
-                <span style="color:#4b5563">Solo el SKU es obligatorio; las demás columnas pueden ir vacías.</span>
-            </div>
-            <textarea class="form-input" id="pv-texto" rows="6" style="width:100%;font-family:monospace;font-size:12px" oninput="parsearPegado()" placeholder="sz2401123&#9;M / Negro&#9;12.50&#9;1&#9;250"></textarea>
-            <div style="display:flex;gap:12px;margin:10px 0;flex-wrap:wrap">
-                <div class="form-group" style="flex:1;min-width:180px">
-                    <label class="form-label">N° Pedido Tienda (para todos)</label>
-                    <input class="form-input" id="pv-nopedido" type="text" placeholder="ORDER-12345">
+            <div id="pv-origen">
+                <div class="imp-src">
+                    <div class="imp-card">
+                        <h4>🛍️ Desde SHEIN</h4>
+                        Abre el detalle del pedido en shein.com, toca el marcador y vuelve aquí.<br>
+                        <a id="bm-shein" class="imp-bm" href="#" title="Arrástralo a tu barra de marcadores"
+                           onclick="event.preventDefault();alert('Arrástralo a la barra de marcadores. Luego úsalo en la página del pedido en SHEIN.')">📦 SHEIN → MultiStore</a>
+                        <span style="font-size:11px;color:#4b5563"> ← arrástralo a tus marcadores (solo una vez)</span>
+                    </div>
+                    <div class="imp-card">
+                        <h4>📊 Desde Excel</h4>
+                        Copia las filas con estas columnas, en este orden:<br>
+                        <span class="imp-cols">SKU · Talla/Color · Precio · Cantidad · Peso · Descripción · Link</span><br>
+                        <span style="font-size:11px;color:#4b5563">Solo el SKU es obligatorio.</span>
+                    </div>
                 </div>
-                <div class="form-group" style="flex:1;min-width:180px">
-                    <label class="form-label">Artículo (del formulario)</label>
-                    <div style="padding:10px 0;font-size:12px;color:#d1d5db" id="pv-articulo">—</div>
+                <div style="display:flex;gap:8px;align-items:stretch">
+                    <textarea class="form-input" id="pv-texto" rows="3" style="flex:1;font-family:monospace;font-size:12px;resize:vertical" oninput="parsearPegado()" placeholder="Haz clic aquí y pega con Ctrl+V…"></textarea>
+                    <button class="btn btn-blue" onclick="pegarDelPortapapeles()" style="flex-direction:column;justify-content:center;min-width:96px">📥<span>Pegar</span></button>
                 </div>
             </div>
-            <div class="tbl-wrap" style="max-height:260px;overflow-y:auto">
-                <table class="tbl"><thead><tr><th>📷</th><th>SKU</th><th>Talla</th><th style="text-align:right">Precio</th><th style="text-align:right">Cant.</th><th style="text-align:right">Peso</th><th>Descripción</th><th></th></tr></thead>
-                <tbody id="pv-tbody"></tbody></table>
+            <div class="imp-loaded" id="pv-cargado">
+                <span style="font-size:16px">✓</span>
+                <div style="flex:1" id="pv-cargado-txt"></div>
+                <button class="btn btn-ghost btn-sm" onclick="cambiarOrigen()">↺ Pegar otro</button>
             </div>
-            <div style="font-size:12px;color:#4ade80;margin-top:8px;font-weight:700" id="pv-resumen"></div>
+
+            <div class="imp-opts">
+                <div class="form-group">
+                    <label class="form-label">N° pedido de la tienda</label>
+                    <input class="form-input" id="pv-nopedido" type="text" placeholder="GSU…">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Artículo para filas vacías</label>
+                    <input class="form-input" id="pv-art-todos" list="dl-articulos" placeholder="🔍 Escribe para buscar…" autocomplete="off" onchange="aplicarArtTodos(idPorNombre(this.value))">
+                    <datalist id="dl-articulos"></datalist>
+                </div>
+                <button class="btn btn-ghost" onclick="abrirNuevoArt('', -1)" style="height:41px">➕ Nuevo artículo</button>
+            </div>
+
+            <div id="na-panel" style="display:none;background:#071a11;border:1px solid #14532d;border-radius:10px;padding:14px;margin-bottom:12px">
+                <div style="font-size:11px;color:#4ade80;font-weight:700;margin-bottom:10px;letter-spacing:.5px">➕ NUEVO ARTÍCULO DEL CATÁLOGO <span id="na-para" style="color:#6b7280;font-weight:400"></span></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                    <div class="form-group" style="flex:2;min-width:160px"><label class="form-label">Nombre</label>
+                        <input class="form-input" id="na-nombre" type="text" placeholder="Ej: Maquillaje" onkeydown="if(event.key==='Enter'){event.preventDefault();crearArtRapido();}"></div>
+                    <div class="form-group" style="flex:2;min-width:140px"><label class="form-label">Categoría</label>
+                        <select class="form-input" id="na-cat"></select></div>
+                    <div class="form-group" style="width:100px"><label class="form-label">Peso (g)</label>
+                        <input class="form-input" id="na-peso" type="number" min="0" step="1" placeholder="0" onkeydown="if(event.key==='Enter'){event.preventDefault();crearArtRapido();}"></div>
+                    <button class="btn btn-green" id="na-btn" onclick="crearArtRapido()" style="height:41px">Crear</button>
+                    <button class="btn btn-ghost" onclick="document.getElementById('na-panel').style.display='none'" style="height:41px">Cancelar</button>
+                </div>
+                <div class="msg" id="msg-na"></div>
+            </div>
+
+            <div class="tbl-wrap">
+                <table class="tbl imp-tbl">
+                    <thead><tr>
+                        <th style="width:52px"></th><th>Producto</th><th style="width:180px">Artículo del catálogo *</th>
+                        <th style="text-align:right;width:60px">Cant.</th><th style="text-align:right;width:80px">Precio</th>
+                        <th style="text-align:right;width:70px">Peso</th><th style="text-align:right;width:90px">Subtotal</th><th style="width:44px"></th>
+                    </tr></thead>
+                    <tbody id="pv-tbody"></tbody>
+                </table>
+            </div>
             <div class="msg" id="msg-pegar"></div>
         </div>
-        <div class="modal-foot">
-            <button class="btn btn-ghost" onclick="document.getElementById('modal-pegar').classList.remove('open')">Cancelar</button>
-            <button class="btn btn-green" id="pv-btn" onclick="guardarPegados()">✓ Guardar todos</button>
+        <div class="modal-foot imp-foot">
+            <div class="imp-stats" id="pv-resumen"></div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost" onclick="cerrarPegar()">Cancelar</button>
+                <button class="btn btn-green" id="pv-btn" onclick="guardarPegados()" style="min-width:170px;justify-content:center">✓ Guardar</button>
+            </div>
         </div>
     </div>
 </div>
+
 
 <!-- ══ MODAL CERRAR PEDIDO ══ -->
 <div class="modal-bg" id="modal-cerrar-cp">
