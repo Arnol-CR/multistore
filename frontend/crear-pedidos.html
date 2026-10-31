@@ -986,6 +986,53 @@
         }
     });
 
+    // ── IMPORTAR DE SHEIN (botón de marcadores) ──
+    // Esta función se ejecuta en la página de SHEIN, no en MultiStore: debe ser autocontenida.
+    function sheinScraper() {
+        var m = location.pathname.match(/detail\/([A-Z0-9]+)/i);
+        var pedido = m ? m[1] : '';
+        var vistos = [], items = [];
+        var all = document.querySelectorAll('body *');
+        for (var i = 0; i < all.length; i++) {
+            var el = all[i];
+            if (el.children.length > 2) continue;
+            var t = (el.textContent || '').trim();
+            var ms = t.match(/^SKU\s*[:：]\s*([A-Za-z0-9\-_]+)$/);
+            if (!ms) continue;
+            var row = el;
+            while (row && row !== document.body && !row.querySelector('img')) row = row.parentElement;
+            if (!row || row === document.body || vistos.indexOf(row) >= 0) continue;
+            vistos.push(row);
+            var lineas = (row.innerText || '').split(/[\n\t]/).map(function(x){ return x.trim(); }).filter(Boolean);
+            var txt = lineas.join('\n');
+            var precio = (txt.match(/\$\s*([\d,]+\.\d{1,2})/) || [])[1] || '0';
+            var cant = 1, titulo = '', talla = '';
+            lineas.forEach(function(l){
+                if (/^\d{1,3}$/.test(l) && cant === 1) cant = parseInt(l, 10);
+                else if (!talla && / \/ /.test(l) && l.length < 50 && l.indexOf('$') < 0 && !/SKU/i.test(l)) talla = l;
+                else if (!titulo && l.length > 12 && !/SKU|\$|devolver|devoluci|Pol[ií]tica/i.test(l)) titulo = l;
+            });
+            var img = row.querySelector('img');
+            var foto = img ? (img.getAttribute('data-src') || img.currentSrc || img.src || '') : '';
+            if (foto.indexOf('//') === 0) foto = 'https:' + foto;
+            if (/^data:/.test(foto)) foto = '';
+            foto = foto.replace(/_thumbnail_\d+x\d*/, '');
+            var a = row.querySelector('a[href*="-p-"], a[href*="goods"]');
+            items.push({ sku: ms[1], titulo: titulo.replace(/^\d+\s+piezas?\s+/i, ''), talla: talla,
+                precio: parseFloat(precio.replace(/,/g, '')) || 0, cant: cant, foto: foto, link: a ? a.href : location.href });
+        }
+        if (!items.length) { alert('MultiStore: no encontré artículos. Abre el DETALLE de un pedido de SHEIN y espera a que cargue.'); return; }
+        var data = 'MULTISTORE_SHEIN' + JSON.stringify({ pedido: pedido, items: items });
+        var ok = function(){ alert('✓ MultiStore: ' + items.length + ' artículos copiados del pedido ' + pedido + '.\nVe a MultiStore → Pegar varios → Ctrl+V'); };
+        function viejo() { var ta = document.createElement('textarea'); ta.value = data; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(data).then(ok, viejo); else viejo();
+    }
+
+    async function pegarDelPortapapeles() {
+        try { document.getElementById('pv-texto').value = await navigator.clipboard.readText(); parsearPegado(); }
+        catch(e) { mostrarMsg(document.getElementById('msg-pegar'),'err','El navegador no dejó leer el portapapeles: haz clic en el cuadro y pulsa Ctrl+V'); }
+    }
+
     // Pegar varios artículos desde Excel
     var filasPegadas = [];
     function abrirPegarVarios() {
@@ -993,12 +1040,22 @@
         document.getElementById('pv-texto').value = '';
         document.getElementById('pv-nopedido').value = document.getElementById('a-nopedido').value;
         document.getElementById('pv-articulo').textContent = document.getElementById('a-articulo-txt').value || '(ninguno — elige uno en el formulario si quieres)';
+        document.getElementById('bm-shein').href = 'javascript:' + encodeURIComponent('(' + sheinScraper.toString() + ')()');
         filasPegadas = []; renderPegados();
         document.getElementById('modal-pegar').classList.add('open');
         setTimeout(() => document.getElementById('pv-texto').focus(), 50);
     }
     function numero(v) { return parseFloat(String(v || '').replace(/[$,\s]/g, '')) || 0; }
     function parsearPegado() {
+        const crudo = document.getElementById('pv-texto').value.trim();
+        if (crudo.startsWith('MULTISTORE_SHEIN')) {
+            try {
+                const d = JSON.parse(crudo.substring('MULTISTORE_SHEIN'.length));
+                if (d.pedido) document.getElementById('pv-nopedido').value = d.pedido;
+                filasPegadas = d.items.map(x => ({ sku:x.sku, talla:x.talla||'', precio:+x.precio||0, cant:+x.cant||1, peso:0, desc:x.titulo||'', link:x.link||'', foto:x.foto||'' }));
+            } catch(e) { filasPegadas = []; }
+            renderPegados(); return;
+        }
         const lineas = document.getElementById('pv-texto').value.split(/\r?\n/).filter(l => l.trim());
         filasPegadas = lineas.map(l => l.split(l.includes('\t') ? '\t' : ';').map(x => x.trim()))
             .filter(c => c[0] && !/^(sku|c[oó]digo)$/i.test(c[0]))
@@ -1010,11 +1067,12 @@
         const tot = filasPegadas.reduce((a,f) => a + f.precio*f.cant, 0);
         document.getElementById('pv-resumen').textContent = filasPegadas.length + ' artículos · $' + tot.toFixed(2);
         tb.innerHTML = filasPegadas.length ? filasPegadas.map((f,i) => `<tr id="pv-row-${i}">
+            <td>${f.foto ? `<img src="${f.foto}" style="width:30px;height:30px;object-fit:cover;border-radius:4px">` : ''}</td>
             <td style="font-family:monospace">${f.sku}</td><td>${f.talla||'—'}</td>
             <td style="text-align:right">$${f.precio.toFixed(2)}</td><td style="text-align:right">${f.cant}</td>
-            <td style="text-align:right">${f.peso}g</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${f.desc||'—'}</td>
+            <td style="text-align:right">${f.peso}g</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${(f.desc||'').replace(/"/g,'&quot;')}">${f.desc||'—'}</td>
             <td id="pv-st-${i}"></td></tr>`).join('')
-            : '<tr><td colspan="7" class="tbl-empty">Pega las filas arriba</td></tr>';
+            : '<tr><td colspan="8" class="tbl-empty">Pega las filas arriba</td></tr>';
     }
     async function guardarPegados() {
         const idPed = document.getElementById('a-pedido').value;
@@ -1023,13 +1081,15 @@
         const btn = document.getElementById('pv-btn'); btn.disabled = true;
         const idArt = document.getElementById('a-articulo-id').value;
         const noPed = document.getElementById('pv-nopedido').value.trim() || null;
+        const artCat = todosArticulos.find(x => x.IdArticulo == idArt);
+        const pesoDef = artCat ? (parseFloat(artCat.PesoArticulo) || 0) : 0;
         let ok = 0, err = 0;
         for (let i = 0; i < filasPegadas.length; i++) {
             const f = filasPegadas[i], st = document.getElementById('pv-st-' + i);
             st.textContent = '⏳';
             try {
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso, idArticulo: idArt ? +idArt : null,
+                    body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDef, fotoUrl:f.foto||null, idArticulo: idArt ? +idArt : null,
                         idPedido:+idPed, tallaColor:f.talla, valorCompra:f.precio, cantidadArticulos:f.cant, link:f.link||null, noPedidoAplicacion:noPed }) }).then(r => r.json());
                 if (d.ok) { ok++; st.textContent = '✓'; st.style.color = '#4ade80'; } else { err++; st.textContent = '✗'; st.title = d.error; st.style.color = '#f87171'; }
             } catch(e) { err++; st.textContent = '✗'; st.style.color = '#f87171'; }
@@ -1091,8 +1151,15 @@
             <button class="modal-x" onclick="document.getElementById('modal-pegar').classList.remove('open')">×</button>
         </div>
         <div class="modal-body">
+            <div style="background:#0c1a30;border:1px solid #1e3a5f;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#9ca3af">
+                <b style="color:#93c5fd">Desde SHEIN:</b> arrastra este botón a tu barra de marcadores (solo una vez) →
+                <a id="bm-shein" href="#" onclick="event.preventDefault();alert('Arrástralo a la barra de marcadores. Luego úsalo en la página del pedido en SHEIN.')"
+                   style="display:inline-block;background:#1d4ed8;color:#fff;padding:5px 12px;border-radius:6px;font-weight:700;text-decoration:none;margin:0 4px">📦 SHEIN → MultiStore</a><br>
+                Abre el detalle del pedido en shein.com, toca el marcador y vuelve aquí: pulsa
+                <button class="btn btn-ghost btn-sm" onclick="pegarDelPortapapeles()">📥 Pegar</button> o Ctrl+V en el cuadro.
+            </div>
             <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">
-                Copia las filas de Excel y pégalas aquí. Orden de columnas:<br>
+                O copia las filas de Excel y pégalas aquí. Orden de columnas:<br>
                 <b style="color:#60a5fa;font-family:monospace">SKU · Talla/Color · Precio · Cantidad · Peso · Descripción · Link</b><br>
                 <span style="color:#4b5563">Solo el SKU es obligatorio; las demás columnas pueden ir vacías.</span>
             </div>
@@ -1108,7 +1175,7 @@
                 </div>
             </div>
             <div class="tbl-wrap" style="max-height:260px;overflow-y:auto">
-                <table class="tbl"><thead><tr><th>SKU</th><th>Talla</th><th style="text-align:right">Precio</th><th style="text-align:right">Cant.</th><th style="text-align:right">Peso</th><th>Descripción</th><th></th></tr></thead>
+                <table class="tbl"><thead><tr><th>📷</th><th>SKU</th><th>Talla</th><th style="text-align:right">Precio</th><th style="text-align:right">Cant.</th><th style="text-align:right">Peso</th><th>Descripción</th><th></th></tr></thead>
                 <tbody id="pv-tbody"></tbody></table>
             </div>
             <div style="font-size:12px;color:#4ade80;margin-top:8px;font-weight:700" id="pv-resumen"></div>

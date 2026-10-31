@@ -135,10 +135,11 @@ const agregarArticulo = async (req, res) => {
     const {
       codigoArticulo, descripcionArticulo, peso, idArticulo,
       idPedido, tallaColor, valorCompra, cantidadArticulos,
-      link, noPedidoAplicacion, fotoBase64, fotoMime
+      link, noPedidoAplicacion, fotoBase64, fotoMime, fotoUrl
     } = req.body;
 
-    let urlFoto = null;
+    // Foto por URL (importación SHEIN): se guarda el link directo
+    let urlFoto = (!fotoBase64 && fotoUrl && /^https?:\/\//.test(fotoUrl)) ? fotoUrl : null;
 
     // Subir foto a Azure Blob si viene
     if (fotoBase64 && process.env.AZURE_STORAGE_CONNECTION_STRING) {
