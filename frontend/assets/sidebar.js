@@ -121,6 +121,8 @@
       <div class="sidebar-logo">
         <img src="/assets/Recurso 3.png" alt="Logo" onerror="this.style.display='none'">
         <div class="sidebar-logo-text">Multi<span>Store</span></div>
+        <button class="sb-pin" id="sb-pin" onclick="fijarMenu()" title="Dejar el menú fijo">📌</button>
+        <button class="sb-close" onclick="cerrarMenu()" title="Cerrar menú">✕</button>
       </div>
       <div class="sidebar-user">
         <div class="avatar" id="avatar">${ini}</div>
@@ -140,6 +142,35 @@
       </div>`;
   }
 
+  // ── Menú hamburguesa: el botón ☰ se ve siempre arriba; el menú se abre encima.
+  //    En pantallas grandes se puede dejar fijo con 📌 (se recuerda).
+  if (!document.getElementById('sb-estilos')) {
+    const st = document.createElement('style');
+    st.id = 'sb-estilos';
+    st.textContent = `
+      .btn-menu { display:flex !important; align-items:center; justify-content:center; width:38px; height:38px; border-radius:8px !important; flex-shrink:0; }
+      .btn-menu:hover { background:#13181f !important; }
+      .btn-menu svg { width:22px !important; height:22px !important; }
+      .sidebar { position:fixed !important; top:0; left:0; bottom:0; transform:translateX(-100%); transition:transform .25s ease, box-shadow .25s; z-index:250 !important; }
+      .sidebar.open { transform:translateX(0); box-shadow:6px 0 30px rgba(0,0,0,.6); }
+      .overlay { z-index:240 !important; }
+      .sidebar-logo { position:relative; }
+      .sb-pin, .sb-close { margin-left:auto; background:none; border:1px solid transparent; color:#6b7280; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:13px; }
+      .sb-close { margin-left:4px; }
+      .sb-pin:hover, .sb-close:hover { border-color:#1e2530; color:#e2e8f0; background:#13181f; }
+      @media (min-width:901px) {
+        body.sb-fijo .sidebar { position:relative !important; transform:none; box-shadow:none; }
+        body.sb-fijo .sb-pin { color:#60a5fa; border-color:#1e3a5f; background:#0c1a30; }
+        body.sb-fijo .sb-close { display:none; }
+        body.sb-fijo .overlay { display:none !important; }
+      }
+      @media (max-width:900px) { .sb-pin { display:none; } }`;
+    document.head.appendChild(st);
+  }
+  function leerFijo() { try { return localStorage.getItem('ms_menu_fijo') === '1'; } catch (e) { return false; } }
+  function esGrande() { return window.matchMedia('(min-width:901px)').matches; }
+  if (leerFijo()) document.body.classList.add('sb-fijo');
+
   // Funciones globales que usan los HTMLs
   window.cerrarMenu   = function () {
     document.getElementById('sidebar').classList.remove('open');
@@ -147,10 +178,22 @@
     if (ov) ov.classList.remove('active');
   };
   window.abrirMenu    = function () {
-    document.getElementById('sidebar').classList.add('open');
+    const sb = document.getElementById('sidebar');
+    if (esGrande() && document.body.classList.contains('sb-fijo')) {   // fijo: el ☰ lo oculta
+      window.fijarMenu(); return;
+    }
+    if (sb.classList.contains('open')) { window.cerrarMenu(); return; }
+    sb.classList.add('open');
     const ov = document.getElementById('overlay');
     if (ov) ov.classList.add('active');
   };
+  window.fijarMenu = function () {
+    const fijo = !document.body.classList.contains('sb-fijo');
+    document.body.classList.toggle('sb-fijo', fijo);
+    try { localStorage.setItem('ms_menu_fijo', fijo ? '1' : '0'); } catch (e) {}
+    window.cerrarMenu();
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.cerrarMenu(); });
   window.cerrarSesion = function () {
     localStorage.removeItem('ms_usuario');
     window.location.href = '/login.html';

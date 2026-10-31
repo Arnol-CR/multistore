@@ -166,10 +166,10 @@
         .imp-bm { display:inline-flex; align-items:center; gap:6px; background:#1d4ed8; color:#fff; padding:5px 12px; border-radius:6px; font-weight:700; text-decoration:none; font-size:12px; cursor:grab; }
         .imp-loaded { display:none; align-items:center; gap:10px; background:#052e16; border:1px solid #14532d; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#86efac; }
         .imp-loaded b { color:#4ade80; }
-        .imp-opts { display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; margin-bottom:12px; }
+        .imp-opts { display:grid; grid-template-columns:1fr 1.2fr 1.2fr auto; gap:12px; align-items:end; margin-bottom:12px; }
         .imp-tbl td { white-space:normal; padding:8px 10px; }
         .imp-tbl th { padding:9px 10px; }
-        .imp-prod { font-weight:600; color:#d1d5db; font-size:12px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; max-width:330px; }
+        .imp-prod { font-weight:600; color:#d1d5db; font-size:12px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; max-width:300px; }
         .imp-meta { font-size:10.5px; color:#6b7280; margin-top:2px; font-family:monospace; }
         .imp-meta span { color:#9ca3af; font-family:'Segoe UI',sans-serif; }
         .imp-img { width:42px; height:42px; object-fit:cover; border-radius:6px; background:#13181f; display:block; }
@@ -1106,6 +1106,8 @@
         const selP = document.getElementById('a-pedido'), optP = selP.options[selP.selectedIndex];
         document.getElementById('pv-subtitulo').textContent = 'Pedido ' + (optP.dataset.numero || '') + (optP.dataset.tienda ? ' · ' + optP.dataset.tienda : '');
         cambiarOrigen();
+        document.getElementById('pv-cli-todos').value = '';
+        cargarClientesPV();
         document.getElementById('modal-pegar').classList.add('open');
         setTimeout(() => document.getElementById('pv-texto').focus(), 50);
     }
@@ -1214,6 +1216,35 @@
         } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
         finally { btn.disabled = false; }
     }
+    // ── Clientes ──
+    var todosClientes = [];
+    function etiquetaCli(c) { return (c.NombreCompleto || '').trim() + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : ''); }
+    function nombreCli(id) { const c = todosClientes.find(x => x.IdCliente == id); return c ? etiquetaCli(c) : ''; }
+    function idCliPorTexto(t) {
+        t = normaliza(t).trim(); if (!t) return '';
+        const c = todosClientes.find(x => normaliza(etiquetaCli(x)) === t) || todosClientes.find(x => normaliza(x.NombreCompleto).trim() === t)
+              || todosClientes.find(x => x.CodigoCliente && normaliza(x.CodigoCliente) === t);
+        return c ? String(c.IdCliente) : null;
+    }
+    async function cargarClientesPV() {
+        if (!todosClientes.length) {
+            try { const d = await fetch('/api/clientes/todos').then(r => r.json()); if (d.ok) todosClientes = d.data; } catch(e) {}
+        }
+        document.getElementById('dl-clientes').innerHTML = todosClientes.map(c => `<option value="${esc(etiquetaCli(c))}">`).join('');
+    }
+    function cambiarCliFila(i, txt) {
+        const id = idCliPorTexto(txt);
+        if (id === null) { mostrarMsg(document.getElementById('msg-pegar'), 'err', 'No encontré el cliente "' + txt + '". Elígelo de la lista.'); filasPegadas[i].idCli = ''; renderPegados(); return; }
+        filasPegadas[i].idCli = id;
+        renderPegados();
+        const sig = document.querySelector(`.pv-cli[data-i="${i + 1}"]`); if (sig && !sig.disabled) sig.focus();
+    }
+    function aplicarCliTodos(txt) {
+        const id = idCliPorTexto(txt);
+        if (!id) { if (txt.trim()) mostrarMsg(document.getElementById('msg-pegar'), 'err', 'Elige el cliente de la lista'); return; }
+        filasPegadas.forEach(f => { if (!f.guardado && !f.idCli) f.idCli = id; });
+        renderPegados();
+    }
     function pesoDe(idArt) { const c = todosArticulos.find(x => x.IdArticulo == idArt); return c ? (parseFloat(c.PesoArticulo) || 0) : 0; }
     function aplicarArtTodos(v) { if (!v) return; filasPegadas.forEach(f => { if (!f.guardado && !f.idArt) f.idArt = v; }); renderPegados(); }
     function cambiarArtFila(i, nombre) {
@@ -1258,13 +1289,16 @@
             <td><input class="form-input pv-art" data-i="${i}" list="dl-articulos" autocomplete="off" placeholder="🔍 Buscar…" value="${esc(nombreDe(f.idArt))}"
                 style="padding:6px 9px;font-size:12px;width:100%;${f.idArt ? '' : 'border-color:#b91c1c;background:#1f0707'}" ${f.guardado ? 'disabled' : ''}
                 onchange="cambiarArtFila(${i}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></td>
+            <td><input class="form-input pv-cli" data-i="${i}" list="dl-clientes" autocomplete="off" placeholder="👤 Sin cliente" value="${esc(nombreCli(f.idCli))}"
+                style="padding:6px 9px;font-size:12px;width:100%;${f.idCli ? 'border-color:#1e3a5f;color:#93c5fd' : ''}" ${f.guardado ? 'disabled' : ''}
+                onchange="cambiarCliFila(${i}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></td>
             <td style="text-align:right;color:#e2e8f0">${f.cant}</td>
             <td style="text-align:right">$${f.precio.toFixed(2)}</td>
             <td style="text-align:right;color:#6b7280">${pesoF} g</td>
             <td style="text-align:right;color:#4ade80;font-weight:700">$${(f.precio*f.cant).toFixed(2)}</td>
             <td id="pv-st-${i}" style="text-align:center;color:#4ade80;font-weight:700">${f.guardado ? '✓' : `<button class="imp-del" title="Quitar esta fila" onclick="eliminarFila(${i})">🗑</button>`}</td></tr>`;
         }).join('')
-            : '<tr><td colspan="8" class="imp-empty">Pega un pedido de SHEIN o filas de Excel para ver los artículos aquí</td></tr>';
+            : '<tr><td colspan="9" class="imp-empty">Pega un pedido de SHEIN o filas de Excel para ver los artículos aquí</td></tr>';
     }
     // ── Eliminar artículo guardado ──
     var artAEliminar = null;
@@ -1345,14 +1379,24 @@
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDe(f.idArt), fotoUrl:f.foto||null, idArticulo: +f.idArt,
                         idPedido:+idPed, tallaColor:f.talla, valorCompra:f.precio, cantidadArticulos:f.cant, link:f.link||null, noPedidoAplicacion:noPed }) }).then(r => r.json());
+                if (d.ok && f.idCli && d.idDetallePedido) {
+                    try {
+                        const c = await fetch('/api/clientes/asignar', { method:'POST', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ idCliente: +f.idCli, idDetallePedido: d.idDetallePedido }) }).then(r => r.json());
+                        if (!c.ok) { f.errCli = c.error; }
+                    } catch(e) { f.errCli = 'Error de conexión'; }
+                }
+                if (d.ok && f.idCli && !d.idDetallePedido) f.errCli = 'el servidor no devolvió el ID (reinicia el backend)';
                 if (d.ok) { ok++; f.guardado = true; aprender(f.desc, f.idArt); st.textContent = '✓'; st.style.color = '#4ade80'; } else { err++; st.textContent = '✗'; st.title = d.error; st.style.color = '#f87171'; if (!primerError) primerError = d.error; }
             } catch(e) { err++; st.textContent = '✗'; st.style.color = '#f87171'; if (!primerError) primerError = 'Error de conexión'; }
         }
         btn.disabled = false;
         mostrarMsg(msg, err ? 'err' : 'ok', `✓ ${ok} guardados` + (err ? ` · ✗ ${err} con error: ${primerError}` : ''));
         cargarArticulosPedido(+idPed); cargarPedidosAbiertos();
+        const sinCli = filasPegadas.filter(f => f.errCli).length;
+        if (sinCli) { mostrarMsg(msg, 'err', `✓ ${ok} guardados, pero ${sinCli} no se pudieron asignar al cliente: ${filasPegadas.find(f => f.errCli).errCli}. Asígnalos en Clientes.`); }
         renderPegados();
-        if (!err) setTimeout(cerrarPegar, 1400);
+        if (!err && !sinCli) setTimeout(cerrarPegar, 1400);
     }
 
     // ── INIT ──
@@ -1449,6 +1493,11 @@
                     <input class="form-input" id="pv-art-todos" list="dl-articulos" placeholder="🔍 Escribe para buscar…" autocomplete="off" onchange="aplicarArtTodos(idPorNombre(this.value))">
                     <datalist id="dl-articulos"></datalist>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Cliente para filas vacías <span style="text-transform:none;letter-spacing:0;color:#374151">(opcional)</span></label>
+                    <input class="form-input" id="pv-cli-todos" list="dl-clientes" placeholder="👤 Buscar cliente…" autocomplete="off" onchange="aplicarCliTodos(this.value)">
+                    <datalist id="dl-clientes"></datalist>
+                </div>
                 <button class="btn btn-ghost" onclick="abrirNuevoArt('', -1)" style="height:41px">➕ Nuevo artículo</button>
             </div>
 
@@ -1470,7 +1519,7 @@
             <div class="tbl-wrap imp-scroll">
                 <table class="tbl imp-tbl">
                     <thead><tr>
-                        <th style="width:52px"></th><th>Producto</th><th style="width:180px">Artículo del catálogo *</th>
+                        <th style="width:52px"></th><th>Producto</th><th style="width:170px">Artículo del catálogo *</th><th style="width:170px">Cliente</th>
                         <th style="text-align:right;width:60px">Cant.</th><th style="text-align:right;width:80px">Precio</th>
                         <th style="text-align:right;width:70px">Peso</th><th style="text-align:right;width:90px">Subtotal</th><th style="width:44px"></th>
                     </tr></thead>

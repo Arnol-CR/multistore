@@ -178,19 +178,22 @@ const agregarArticulo = async (req, res) => {
       .input('NoPedidoAplicacion',  sql.NVarChar,     noPedidoAplicacion || null)
       .execute('In_DetallePedido');
 
+    // ID del artículo recién insertado (mismo pedido y mismo SKU, el más reciente)
+    const rId = await pool.request()
+      .input('IdPedido', sql.Int, parseInt(idPedido))
+      .input('Codigo',   sql.NVarChar, codigoArticulo)
+      .query('SELECT TOP 1 IdDetallePedido FROM C_DetallePedido WHERE IdPedido = @IdPedido AND CodigoArticulo = @Codigo ORDER BY IdDetallePedido DESC');
+    const idDetallePedido = rId.recordset[0] ? rId.recordset[0].IdDetallePedido : null;
+
     // Guardar URL de foto si existe
-    if (urlFoto) {
-      const pool2 = await poolPromise;
-      await pool2.request()
+    if (urlFoto && idDetallePedido) {
+      await pool.request()
         .input('UrlFoto', sql.NVarChar(sql.MAX), urlFoto)
-        .input('IdPedido', sql.Int, parseInt(idPedido))
-        .query(`
-          UPDATE C_DetallePedido SET Fotografia = @UrlFoto
-          WHERE IdDetallePedido = (SELECT MAX(IdDetallePedido) FROM C_DetallePedido WHERE IdPedido = @IdPedido)
-        `);
+        .input('Id', sql.Int, idDetallePedido)
+        .query('UPDATE C_DetallePedido SET Fotografia = @UrlFoto WHERE IdDetallePedido = @Id');
     }
 
-    res.json({ ok: true, mensaje: 'Artículo agregado', urlFoto });
+    res.json({ ok: true, mensaje: 'Artículo agregado', urlFoto, idDetallePedido });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
