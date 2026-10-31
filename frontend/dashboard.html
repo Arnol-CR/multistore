@@ -109,6 +109,32 @@
         .fila-otro-vendedor td { border-left:2px solid #854d0e; }
         .badge-otro-vendedor { font-size:9px; background:#2d1f0a; color:#f59e0b; border-radius:4px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
 
+        /* ── Selección múltiple ── */
+        .sel-chk { width:16px; height:16px; cursor:pointer; accent-color:#3b82f6; vertical-align:middle; }
+        tr.fila-sel td { background:#0c1a30 !important; }
+        .celda-asig { cursor:pointer; border-radius:6px; padding:2px 4px; margin:-2px -4px; }
+        .celda-asig:hover { background:#13181f; outline:1px dashed #1e3a5f; }
+        .bulk-bar { position:fixed; left:50%; bottom:18px; transform:translate(-50%, 140%); transition:transform .25s ease; z-index:200;
+                    background:#0d1017; border:1px solid #1e3a5f; border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.7);
+                    padding:12px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:min(1100px, calc(100vw - 32px)); }
+        .bulk-bar.visible { transform:translate(-50%, 0); }
+        .bulk-count { background:#1d4ed8; color:#fff; font-weight:800; border-radius:8px; padding:7px 12px; font-size:13px; white-space:nowrap; }
+        .bulk-link { font-size:11px; color:#60a5fa; cursor:pointer; text-decoration:underline; white-space:nowrap; }
+        .bulk-in { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:13px; outline:none; flex:1; min-width:180px; font-family:inherit; }
+        .bulk-in:focus { border-color:#3b82f6; background:#0c1525; }
+        .bulk-btn { border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+        .bulk-ok { background:#065f46; color:#34d399; border:1px solid #14532d; }
+        .bulk-ok:hover { background:#047857; }
+        .bulk-ok:disabled { opacity:.5; cursor:wait; }
+        .bulk-x { background:transparent; color:#6b7280; border:1px solid #1e2530; }
+        .bulk-x:hover { color:#e2e8f0; border-color:#374151; }
+        .toast-ms { position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:400; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:600;
+                    box-shadow:0 8px 30px rgba(0,0,0,.6); display:none; }
+        .toast-ms.ok  { background:#052e16; border:1px solid #14532d; color:#4ade80; }
+        .toast-ms.err { background:#1f0707; border:1px solid #7f1d1d; color:#f87171; }
+        .tarjeta-pedido.fila-sel { border-color:#3b82f6 !important; background:#0c1a30 !important; }
+        @media (max-width:768px) { .bulk-bar { bottom:10px; padding:10px; } .bulk-in { min-width:100%; } }
+
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
 
@@ -225,11 +251,16 @@
                         <input type="checkbox" id="chk-sin-precio" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
                         <span>Sin precio</span>
                     </label>
+                    <label class="chk-wrap">
+                        <input type="checkbox" id="chk-sin-cliente" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
+                        <span>Sin cliente</span>
+                    </label>
                 </div>
                 <div class="tbl-wrap">
                     <table class="tbl">
                         <thead>
                             <tr>
+                                <th style="width:28px"><input type="checkbox" class="sel-chk" id="chk-pagina" title="Seleccionar toda la página" onchange="toggleSelPagina(this.checked)"></th>
                                 <th>#</th>
                                 <th>Fecha</th>
                                 <th>Artículo</th>
@@ -243,7 +274,7 @@
                             </tr>
                         </thead>
                         <tbody id="tabla-pedidos">
-                            <tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Cargando...</td></tr>
+                            <tr><td colspan="11" style="color:#374151;text-align:center;padding:20px">Cargando...</td></tr>
                         </tbody>
                     </table>
                     </div>
@@ -317,6 +348,20 @@
 </main>
 
 <script src="/assets/sidebar.js"></script>
+    <!-- ══ BARRA DE ASIGNACIÓN MÚLTIPLE ══ -->
+    <div class="bulk-bar" id="bulk-bar">
+        <span class="bulk-count" id="bulk-count">0 seleccionados</span>
+        <span class="bulk-link" id="bulk-todos" onclick="seleccionarFiltrados()"></span>
+        <input class="bulk-in" id="bulk-cliente" list="dl-bulk-clientes" placeholder="👤 Cliente…" autocomplete="off"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();aplicarBulk();}">
+        <datalist id="dl-bulk-clientes"></datalist>
+        <input class="bulk-in solo-admin-bulk" id="bulk-vendedor" list="dl-bulk-vendedores" placeholder="👥 Vendedor…" autocomplete="off"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();aplicarBulk();}">
+        <datalist id="dl-bulk-vendedores"></datalist>
+        <button class="bulk-btn bulk-ok" id="bulk-aplicar" onclick="aplicarBulk()">✓ Asignar</button>
+        <button class="bulk-btn bulk-x" onclick="limpiarSeleccion()" title="Quitar selección (Esc)">✕</button>
+    </div>
+
     <script>
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
@@ -326,6 +371,7 @@
         weekday:'long', year:'numeric', month:'long', day:'numeric'
     });
 
+    if (!usuario.esAdmin) { const bv = document.getElementById('bulk-vendedor'); if (bv) bv.remove(); }
     if (usuario.esAdmin) {
         document.querySelectorAll('.solo-admin').forEach(el => {
             el.style.display = el.tagName === 'TD' || el.tagName === 'TH' ? 'table-cell' : 'flex';
@@ -366,6 +412,8 @@
         if (chkSin) chkSin.checked = false;
         const chkSinPrecio = document.getElementById('chk-sin-precio');
         if (chkSinPrecio) chkSinPrecio.checked = false;
+        const chkSinCli = document.getElementById('chk-sin-cliente');
+        if (chkSinCli) chkSinCli.checked = false;
         articulosFiltrados = articulosDisponibles;
         paginaActual = 1;
         renderizarPagina();
@@ -377,11 +425,13 @@
         const soloMios     = document.getElementById('chk-solo-mis')?.checked || false;
         const sinVendedor  = document.getElementById('chk-sin-vendedor')?.checked || false;
         const sinPrecio    = document.getElementById('chk-sin-precio')?.checked || false;
+        const sinCliente   = document.getElementById('chk-sin-cliente')?.checked || false;
 
         articulosFiltrados = articulosDisponibles.filter(p => {
             if (soloMios   && p.IdVendedor !== usuario.id) return false;
             if (sinVendedor && p.IdVendedor) return false;
             if (sinPrecio  && p.ValorCobroCliente) return false;
+            if (sinCliente && p.IdCliente) return false;
             if (!q) return true;
             return (
                 (p.NombreArticulo      || '').toLowerCase().includes(q) ||
@@ -420,7 +470,7 @@
                 paginaActual = Math.min(paginaPrevia, totalPaginasNueva);
                 renderizarPagina();
             } else {
-                tbody.innerHTML = '<tr><td colspan="9" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
                 document.getElementById('tarjetas-mobile').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;">Sin pedidos pendientes</p>';
                 document.getElementById('search-count').textContent = '';
             }
@@ -452,13 +502,14 @@
             ? `<span class="badge-otro-vendedor" title="Vendedor: ${p.NombreVendedor || 'otro'}">👤 ${p.NombreVendedor || 'otro vend.'}</span>`
             : '';
         return `
-        <tr${claseExtra}>
+        <tr${claseExtra.replace('class="', 'class="' + (seleccion.has(p.IdDetallePedido) ? 'fila-sel ' : '')) || (seleccion.has(p.IdDetallePedido) ? ' class="fila-sel"' : '')}>
+            <td><input type="checkbox" class="sel-chk" ${seleccion.has(p.IdDetallePedido) ? 'checked' : ''} onchange="toggleSel(${p.IdDetallePedido}, this.checked)"></td>
             <td style="color:#4b5563;font-size:11px">${inicio + i + 1}</td>
             <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${formatFecha(p.FechaPedido)}</td>
             <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
             <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
             <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">
-                ${p.NombreCliente || 'Sin cliente'}
+                <span class="celda-asig" title="Clic para seleccionar y asignar cliente" onclick="seleccionarYEnfocar(${p.IdDetallePedido}, 'bulk-cliente')">${p.NombreCliente || 'Sin cliente'}</span>
             </td>
             <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap">
                 ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
@@ -471,7 +522,7 @@
                 ${p.CodigoVendedor
                     ? `<span style="color:#c084fc;font-weight:600;">${p.CodigoVendedor}</span><br>
                        <span style="font-size:10px;color:#6b7280;">${p.NombreVendedor || ''}</span>`
-                    : '<span style="color:#ef4444;">Sin vendedor</span>'
+                    : '<span style="color:#ef4444;" class="celda-asig" title="Clic para seleccionar y asignar vendedor" onclick="seleccionarYEnfocar(' + p.IdDetallePedido + ', \'bulk-vendedor\')">Sin vendedor</span>'
                 }
             </td>
             <td style="white-space:nowrap">
@@ -522,9 +573,9 @@
             ? `<span style="font-size:9px;background:#2d1f0a;color:#f59e0b;border-radius:4px;padding:1px 5px;margin-left:4px;">👤 ${p.NombreVendedor || 'otro vend.'}</span>`
             : '';
         return `
-        <div class="tarjeta-pedido" style="${borderStyle}">
+        <div class="tarjeta-pedido${seleccion.has(p.IdDetallePedido) ? ' fila-sel' : ''}" style="${borderStyle}">
             <div class="tarjeta-header">
-                <span class="tarjeta-num">#${inicio + i + 1}</span>
+                <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="sel-chk" ${seleccion.has(p.IdDetallePedido) ? 'checked' : ''} onchange="toggleSel(${p.IdDetallePedido}, this.checked)"><span class="tarjeta-num">#${inicio + i + 1}</span></label>
                 <span class="tarjeta-fecha">${formatFecha(p.FechaPedido)}</span>
             </div>
             <div class="tarjeta-articulo">${p.NombreArticulo}</div>
@@ -549,6 +600,8 @@
             </div>
         </div>
     `}).join('');
+
+    actualizarBarraSel(pagina);
 
     // Aplicar display correcto a celdas solo-admin generadas dinámicamente
     if (usuario.esAdmin) {
@@ -1297,6 +1350,138 @@ lista.innerHTML = itemSinVendedor + vendedoresCargados.map(v => {
         idDetallePedidoVendedor = null;
         idVendedorSeleccionado = undefined;;
     }
+
+    // ══════════ SELECCIÓN MÚLTIPLE + ASIGNACIÓN RÁPIDA ══════════
+    const seleccion = new Set();
+    let paginaVisible = [];
+    let bulkClientes = [], bulkVendedores = [], bulkListasCargadas = false;
+
+    function escB(t) { return String(t ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+    function normB(t) { return (t || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+    function etiqCli(c) { return (c.NombreCompleto || '').trim() + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : ''); }
+    function etiqVen(v) { return `${v.Nombres} ${v.Apellidos || ''}`.trim() + (v.CodigoVendedor ? ' (' + v.CodigoVendedor + ')' : ''); }
+
+    function toastMS(tipo, txt) {
+        let t = document.getElementById('toast-ms');
+        if (!t) { t = document.createElement('div'); t.id = 'toast-ms'; document.body.appendChild(t); }
+        t.className = 'toast-ms ' + tipo; t.textContent = txt; t.style.display = 'block';
+        clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+
+    async function cargarListasBulk() {
+        if (bulkListasCargadas) return;
+        bulkListasCargadas = true;
+        try { const d = await fetch('/api/clientes/todos').then(r => r.json()); bulkClientes = d.ok ? d.data : []; } catch (e) {}
+        if (usuario.esAdmin) {
+            try {
+                if (typeof vendedoresCargados !== 'undefined' && vendedoresCargados.length) bulkVendedores = vendedoresCargados;
+                else { const d = await fetch('/api/vendedores').then(r => r.json()); bulkVendedores = d.ok ? d.data : []; }
+            } catch (e) {}
+        }
+        document.getElementById('dl-bulk-clientes').innerHTML = bulkClientes.map(c => `<option value="${escB(etiqCli(c))}">`).join('');
+        document.getElementById('dl-bulk-vendedores').innerHTML =
+            '<option value="— Sin vendedor —">' + bulkVendedores.map(v => `<option value="${escB(etiqVen(v))}">`).join('');
+    }
+
+    function toggleSel(id, on) {
+        if (on) seleccion.add(id); else seleccion.delete(id);
+        renderizarPagina();
+    }
+    function toggleSelPagina(on) {
+        paginaVisible.forEach(p => on ? seleccion.add(p.IdDetallePedido) : seleccion.delete(p.IdDetallePedido));
+        renderizarPagina();
+    }
+    function seleccionarFiltrados() {
+        articulosFiltrados.forEach(p => seleccion.add(p.IdDetallePedido));
+        renderizarPagina();
+    }
+    function limpiarSeleccion() {
+        seleccion.clear();
+        document.getElementById('bulk-cliente').value = '';
+        const v = document.getElementById('bulk-vendedor'); if (v) v.value = '';
+        renderizarPagina();
+    }
+    function seleccionarYEnfocar(id, campo) {
+        seleccion.add(id);
+        renderizarPagina();
+        setTimeout(() => { const el = document.getElementById(campo); if (el) el.focus(); }, 60);
+    }
+
+    function actualizarBarraSel(pagina) {
+        paginaVisible = pagina || [];
+        // quitar de la selección lo que ya no existe (p. ej. entregado)
+        const existentes = new Set(articulosDisponibles.map(p => p.IdDetallePedido));
+        [...seleccion].forEach(id => { if (!existentes.has(id)) seleccion.delete(id); });
+
+        const chkP = document.getElementById('chk-pagina');
+        if (chkP) {
+            const enPag = paginaVisible.filter(p => seleccion.has(p.IdDetallePedido)).length;
+            chkP.checked = paginaVisible.length > 0 && enPag === paginaVisible.length;
+            chkP.indeterminate = enPag > 0 && enPag < paginaVisible.length;
+        }
+        const bar = document.getElementById('bulk-bar');
+        const n = seleccion.size;
+        bar.classList.toggle('visible', n > 0);
+        document.getElementById('bulk-count').textContent = `${n} seleccionado${n === 1 ? '' : 's'}`;
+        const faltan = articulosFiltrados.filter(p => !seleccion.has(p.IdDetallePedido)).length;
+        const link = document.getElementById('bulk-todos');
+        link.style.display = (n > 0 && faltan > 0) ? 'inline' : 'none';
+        link.textContent = `Seleccionar los ${articulosFiltrados.length} filtrados`;
+        if (n > 0) cargarListasBulk();
+    }
+
+    async function aplicarBulk() {
+        const ids = [...seleccion];
+        if (!ids.length) return;
+        const txtCli = document.getElementById('bulk-cliente').value.trim();
+        const inVen  = document.getElementById('bulk-vendedor');
+        const txtVen = inVen ? inVen.value.trim() : '';
+        if (!txtCli && !txtVen) { toastMS('err', 'Escribe un cliente o un vendedor para asignar'); return; }
+
+        let cli = null, ven, venNombre = '';
+        if (txtCli) {
+            const t = normB(txtCli);
+            cli = bulkClientes.find(c => normB(etiqCli(c)) === t) || bulkClientes.find(c => normB(c.NombreCompleto) === t) || bulkClientes.find(c => normB(c.CodigoCliente) === t);
+            if (!cli) { toastMS('err', `No encontré el cliente "${txtCli}". Elígelo de la lista.`); document.getElementById('bulk-cliente').focus(); return; }
+        }
+        if (txtVen) {
+            if (txtVen === '— Sin vendedor —') { ven = null; venNombre = 'Sin vendedor'; }
+            else {
+                const t = normB(txtVen);
+                const v = bulkVendedores.find(x => normB(etiqVen(x)) === t) || bulkVendedores.find(x => normB(x.CodigoVendedor) === t)
+                       || bulkVendedores.find(x => normB(`${x.Nombres} ${x.Apellidos || ''}`) === t);
+                if (!v) { toastMS('err', `No encontré el vendedor "${txtVen}". Elígelo de la lista.`); inVen.focus(); return; }
+                ven = v.IdVendedor; venNombre = `${v.Nombres} ${v.Apellidos || ''}`.trim();
+            }
+        }
+
+        const btn = document.getElementById('bulk-aplicar'); btn.disabled = true; btn.textContent = 'Guardando…';
+        try {
+            if (txtVen) {
+                // de 8 en 8 para no saturar el servidor
+                for (let i = 0; i < ids.length; i += 8) {
+                    const res = await Promise.all(ids.slice(i, i + 8).map(id => fetch('/api/vendedores/asignar', {
+                        method:'POST', headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({ idDetalle: id, idVendedor: ven }) }).then(r => r.json())));
+                    const e = res.find(r => !r.ok); if (e) throw new Error(e.error);
+                }
+            }
+            if (cli) {
+                const d = await fetch('/api/clientes/asignar-multiple', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ idCliente: cli.IdCliente, idDetalles: ids.join(',') }) }).then(r => r.json());
+                if (!d.ok) throw new Error(d.error);
+            }
+            const partes = [cli ? `cliente "${cli.NombreCompleto}"` : '', txtVen ? `vendedor "${venNombre}"` : ''].filter(Boolean).join(' y ');
+            toastMS('ok', `✓ ${partes} asignado a ${ids.length} artículo${ids.length === 1 ? '' : 's'}`);
+            limpiarSeleccion();
+            recargarConFiltros(); cargarStats();
+        } catch (e) { toastMS('err', '❌ ' + (e.message || 'Error de conexión')); }
+        finally { btn.disabled = false; btn.textContent = '✓ Asignar'; }
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && seleccion.size && !document.querySelector('[id^="modal"][style*="flex"]')) limpiarSeleccion();
+    });
 
     async function confirmarVendedor() {
         if (idVendedorSeleccionado === undefined) {
