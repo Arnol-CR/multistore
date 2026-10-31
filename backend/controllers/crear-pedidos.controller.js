@@ -119,6 +119,9 @@ const getDetallesPedido = async (req, res) => {
           D.NoPedidoAplicacion,
           D.Link,
           D.Fotografia,
+          D.IdArticulo,
+          D.IdCliente,
+          D.EstaEntregado,
           A.NombreArticulo
         FROM C_DetallePedido D
         LEFT JOIN A_Articulos A ON A.IdArticulo = D.IdArticulo
@@ -265,8 +268,27 @@ const actualizarCuentaPedido = async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
+// Eliminar artículo del pedido
+const eliminarArticulo = async (req, res) => {
+  try {
+    const id = parseInt(req.query.id);
+    if (!id) return res.status(400).json({ ok: false, error: 'Falta el id del artículo.' });
+    const pool = await poolPromise;
+    const r = await pool.request().input('Id', sql.Int, id)
+      .query('SELECT EstaEntregado FROM C_DetallePedido WHERE IdDetallePedido = @Id');
+    if (!r.recordset.length) return res.status(404).json({ ok: false, error: 'El artículo ya no existe.' });
+    if (r.recordset[0].EstaEntregado) return res.status(400).json({ ok: false, error: 'No se puede eliminar: el artículo ya fue entregado.' });
+    await pool.request().input('Id', sql.Int, id)
+      .query('DELETE FROM C_DetallePedido WHERE IdDetallePedido = @Id');
+    res.json({ ok: true });
+  } catch (e) {
+    const fk = /REFERENCE constraint|FOREIGN KEY/i.test(e.message);
+    res.status(fk ? 400 : 500).json({ ok: false, error: fk ? 'No se puede eliminar: el artículo tiene pagos, cobros o seguimiento registrados.' : e.message });
+  }
+};
+
 function verFaltantes(numeroPedido) {
     window.location.href = `/dashboard.html?pedido=${encodeURIComponent(numeroPedido)}`;
 }
 
-module.exports = { getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido };
+module.exports = { getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };

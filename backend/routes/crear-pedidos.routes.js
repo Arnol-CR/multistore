@@ -4,7 +4,7 @@ const {
   getTiendas, getCasilleros, getMonedas, getArticulos,
   getNumeroPedido, crearPedido, getPedidosAbiertos,
   getDetallesPedido, agregarArticulo, editarArticulo,
-  actualizarCuentaPedido
+  actualizarCuentaPedido, eliminarArticulo
 } = require('../controllers/crear-pedidos.controller');
 
 router.get('/tiendas',          getTiendas);
@@ -18,5 +18,6 @@ router.get('/detalles',         getDetallesPedido);
 router.post('/agregar',         agregarArticulo);
 router.put('/editar-articulo',  editarArticulo);
 router.put('/cuenta-pedido',    actualizarCuentaPedido);
+router.delete('/articulo',      eliminarArticulo);
 
 module.exports = router;

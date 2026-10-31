@@ -174,6 +174,7 @@
         .imp-meta span { color:#9ca3af; font-family:'Segoe UI',sans-serif; }
         .imp-img { width:42px; height:42px; object-fit:cover; border-radius:6px; background:#13181f; display:block; }
         .imp-del { background:none; border:1px solid transparent; color:#4b5563; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:14px; }
+        .imp-del-btn:hover { color:#f87171 !important; border-color:#7f1d1d !important; background:#1f0707 !important; }
         .imp-del:hover { color:#f87171; border-color:#7f1d1d; background:#1f0707; }
         .imp-foot { justify-content:space-between !important; align-items:center; }
         .imp-stats { display:flex; gap:18px; font-size:12px; color:#6b7280; flex-wrap:wrap; }
@@ -677,7 +678,7 @@
                 <td style="text-align:right;color:#9ca3af">$${precio.toFixed(2)}</td>
                 <td style="text-align:right;color:#4ade80;font-weight:700">$${(precio*cant).toFixed(2)}</td>
                 <td>${foto}</td>
-                <td style="display:flex;gap:4px"><button onclick="editarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Editar">✏️</button><button onclick="duplicarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Duplicar (mismo artículo, otra talla/color)">⧉</button></td>
+                <td style="display:flex;gap:4px"><button onclick="editarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Editar">✏️</button><button onclick="duplicarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Duplicar (mismo artículo, otra talla/color)">⧉</button>${a.EstaEntregado ? '' : `<button onclick="pedirEliminarArt(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm imp-del-btn" title="Eliminar artículo">🗑</button>`}</td>
             </tr>`;
         }).join('');
         actualizarTotales(data);
@@ -1237,11 +1238,43 @@
         }).join('')
             : '<tr><td colspan="8" class="imp-empty">Pega un pedido de SHEIN o filas de Excel para ver los artículos aquí</td></tr>';
     }
+    // ── Eliminar artículo guardado ──
+    var artAEliminar = null;
+    function pedirEliminarArt(a) {
+        artAEliminar = a;
+        document.getElementById('del-art-info').innerHTML =
+            `<div style="display:flex;gap:12px;align-items:center">
+                ${a.Fotografia ? `<img src="${esc(a.Fotografia)}" style="width:52px;height:52px;object-fit:cover;border-radius:8px">` : ''}
+                <div><div style="color:#e2e8f0;font-weight:700">${esc(a.NombreArticulo || '—')} <span style="color:#6b7280;font-weight:400">· ${esc(a.TallaColor || '')}</span></div>
+                <div style="font-family:monospace;font-size:11px;color:#6b7280;margin-top:2px">${esc(a.CodigoArticulo || '')}</div>
+                <div style="font-size:12px;color:#4ade80;margin-top:2px">$${(parseFloat(a.ValorCompra||0) * parseInt(a.CantidadArticulos||1)).toFixed(2)}</div></div>
+             </div>` + (a.IdCliente ? '<div style="margin-top:10px;font-size:12px;color:#fbbf24">⚠ Este artículo ya está asignado a un cliente.</div>' : '');
+        document.getElementById('msg-del-art').style.display = 'none';
+        document.getElementById('modal-del-art').classList.add('open');
+    }
+    async function confirmarEliminarArt() {
+        const msg = document.getElementById('msg-del-art'), btn = document.getElementById('btn-del-art');
+        if (!artAEliminar) return;
+        btn.disabled = true;
+        try {
+            const d = await fetch('/api/crear-pedidos/articulo?id=' + artAEliminar.IdDetallePedido, { method:'DELETE' }).then(r => r.json());
+            if (!d.ok) { mostrarMsg(msg, 'err', d.error); return; }
+            document.getElementById('modal-del-art').classList.remove('open');
+            if (document.getElementById('a-detalle-id').value == artAEliminar.IdDetallePedido) limpiarArticulo();
+            mostrarMsg(document.getElementById('msg-agregar'), 'ok', '✓ Artículo eliminado');
+            const idPed = document.getElementById('a-pedido').value;
+            cargarArticulosPedido(+idPed); cargarPedidosAbiertos();
+        } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
+        finally { btn.disabled = false; artAEliminar = artAEliminar; }
+    }
+
+    var ultimoFaltante = -1;
     function irSiguienteFaltante() {
-        const act = +(document.activeElement?.dataset?.i ?? -1);
+        const act = ultimoFaltante;
         const idx = filasPegadas.map((f,i) => i).filter(i => !filasPegadas[i].idArt && !filasPegadas[i].guardado);
         const sig = idx.find(i => i > act) ?? idx[0];
         if (sig === undefined) return;
+        ultimoFaltante = sig;
         const el = document.querySelector(`.pv-art[data-i="${sig}"]`);
         el.scrollIntoView({ block:'center', behavior:'smooth' }); el.focus();
     }
@@ -1428,6 +1461,25 @@
     </div>
 </div>
 
+
+<!-- ══ MODAL ELIMINAR ARTÍCULO ══ -->
+<div class="modal-bg" id="modal-del-art">
+    <div class="modal">
+        <div class="modal-head">
+            <div class="modal-title">🗑 Eliminar artículo</div>
+            <button class="modal-x" onclick="document.getElementById('modal-del-art').classList.remove('open')">×</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:#d1d5db;font-size:13px;margin-bottom:12px">¿Seguro que deseas eliminar este artículo del pedido? No se puede deshacer.</p>
+            <div id="del-art-info" style="background:#0a0f18;border:1px solid #1e2530;border-radius:10px;padding:12px"></div>
+            <div class="msg" id="msg-del-art"></div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="document.getElementById('modal-del-art').classList.remove('open')">Cancelar</button>
+            <button class="btn btn-red" id="btn-del-art" onclick="confirmarEliminarArt()">🗑 Sí, eliminar</button>
+        </div>
+    </div>
+</div>
 
 <!-- ══ MODAL CERRAR PEDIDO ══ -->
 <div class="modal-bg" id="modal-cerrar-cp">
