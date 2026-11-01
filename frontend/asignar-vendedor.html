@@ -339,6 +339,7 @@
     function verFoto(src) { document.getElementById('zoom-img').src = src; document.getElementById('zoom').style.display = 'flex'; }
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && marcados.size) limpiar(); });
 
+    window.addEventListener('articulo-actualizado', () => { if (typeof renderVendedores === 'function') renderVendedores(); render(); });
     cargar();
 </script>
 <script src="/assets/ver-articulo.js"></script>

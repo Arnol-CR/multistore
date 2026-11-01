@@ -582,6 +582,7 @@
 
     let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => D && pintarGrafica(), 150); });
     if (usuario) { cargar(); setInterval(cargar, 120000); }
+    window.addEventListener('articulo-actualizado', () => { if (D) pintarUrgentes(); });
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>

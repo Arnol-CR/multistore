@@ -19,5 +19,6 @@ router.post('/agregar',         agregarArticulo);
 router.put('/editar-articulo',  editarArticulo);
 router.put('/cuenta-pedido',    actualizarCuentaPedido);
 router.delete('/articulo',      eliminarArticulo);
+router.put('/foto',            require('../controllers/crear-pedidos.controller').cambiarFoto);
 
 module.exports = router;

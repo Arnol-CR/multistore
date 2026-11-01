@@ -57,4 +57,13 @@ const getCostos = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { getDashboardStats, getPedidosRecientes, getPedidos, getTodosPedidos, getCostos };
+// Foto y link de todos los artículos (para la página Pedidos)
+const getExtras = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const r = await pool.request().query('SELECT IdDetallePedido, Fotografia, Link FROM C_DetallePedido');
+    res.json({ ok: true, data: r.recordset });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+module.exports = { getExtras, getDashboardStats, getPedidosRecientes, getPedidos, getTodosPedidos, getCostos };

@@ -138,6 +138,46 @@
             .content { padding:12px; }
             .tbl { min-width:1100px; }
         }
+        /* Edición rápida */
+        .ed-foto { width:42px; height:42px; border-radius:7px; background:#13181f; border:1px dashed #2a3342; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
+        .ed-foto img { width:100%; height:100%; object-fit:cover; }
+        .ed-foto span { font-size:9.5px; color:#4b5563; }
+        .ed-foto:hover { border-color:#3b82f6; }
+        .ed-celda { cursor:pointer; }
+        .ed-celda:hover { background:#0c1525 !important; outline:1px dashed #1e3a5f; }
+        .ed-btn { background:#13181f; border:1px solid #1e2530; color:#9ca3af; border-radius:7px; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+        .ed-btn:hover { color:#60a5fa; border-color:#1e3a5f; background:#0c1525; }
+        .ed-fondo { display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:600; align-items:center; justify-content:center; padding:16px; }
+        .ed-fondo.on { display:flex; }
+        .ed-caja { background:#0d1017; border:1px solid #1e2530; border-radius:14px; width:100%; max-width:560px; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+        .ed-cab { display:flex; align-items:center; justify-content:space-between; padding:15px 18px; border-bottom:1px solid #1e2530; }
+        .ed-cab h3 { font-size:15px; color:#fff; margin:0; }
+        .ed-cab small { display:block; font-size:11.5px; color:#6b7280; font-weight:400; margin-top:2px; }
+        .ed-x { background:none; border:none; color:#6b7280; cursor:pointer; font-size:20px; line-height:1; padding:4px 8px; border-radius:6px; }
+        .ed-x:hover { color:#fff; background:#13181f; }
+        .ed-cuerpo { padding:16px 18px; display:flex; flex-direction:column; gap:16px; }
+        .ed-sec { display:flex; flex-direction:column; gap:7px; }
+        .ed-sec > b { font-size:10.5px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .ed-fila { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .ed-prev { width:110px; height:110px; border-radius:10px; background:#fff; border:1px solid #1e2530; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; outline:none; }
+        .ed-prev:focus { box-shadow:0 0 0 2px #3b82f6; }
+        .ed-prev img { width:100%; height:100%; object-fit:contain; }
+        .ed-prev span { color:#6b7280; font-size:11px; text-align:center; padding:6px; background:#13181f; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+        .ed-in { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:9px 11px; color:#e2e8f0; font-size:13px; outline:none; font-family:inherit; }
+        .ed-in:focus { border-color:#3b82f6; background:#0c1525; }
+        .ed-b { border:1px solid #1e2530; background:#13181f; color:#9ca3af; border-radius:8px; padding:8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
+        .ed-b:hover { color:#fff; border-color:#2a3342; }
+        .ed-b.prim { background:#1d4ed8; border-color:#1d4ed8; color:#fff; }
+        .ed-b.prim:hover { background:#2563eb; }
+        .ed-b:disabled { opacity:.55; cursor:wait; }
+        .ed-nota { font-size:11.5px; color:#6b7280; }
+        .ed-nuevo { display:none; background:#0a0d13; border:1px solid #1e2530; border-radius:9px; padding:10px; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+        .ed-nuevo.on { display:flex; }
+        .ed-nuevo label { display:flex; flex-direction:column; gap:4px; font-size:10.5px; color:#6b7280; }
+        .ed-pie { display:flex; gap:8px; justify-content:flex-end; padding:14px 18px; border-top:1px solid #1e2530; }
+        .ed-msg { font-size:12.5px; padding:8px 11px; border-radius:8px; display:none; }
+        .ed-msg.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
+        .ed-msg.ok { display:block; background:#052e16; border:1px solid #14532d; color:#4ade80; }
     </style>
 </head>
 <body>
@@ -287,6 +327,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Foto</th>
                             <th>N° Pedido</th>
                             <th>Artículo</th>
                             <th>Tienda</th>
@@ -300,6 +341,7 @@
                             <th>Tracking</th>
                             <th>Estado</th>
                             <th>Entregado</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="tabla-pedidos">
@@ -373,6 +415,7 @@
                 todosPedidos = json.data;
                 document.getElementById('badge-pedidos').textContent = todosPedidos.length;
                 pedidosFiltrados = todosPedidos;
+                cargarExtras();
                 cargarTiendasDinamicas();
                 if (usuario.esAdmin) cargarVendedoresDinamicos();
                 renderizarPagina();
@@ -515,12 +558,13 @@
 
             return `<tr>
                 <td style="color:#4b5563;font-size:11px;">${num}</td>
+                <td><div class="ed-foto" onclick="abrirEdicion(${p.IdDetallePedido}, 'foto')" title="Cambiar foto">${p.Fotografia ? `<img src="${escE(p.Fotografia)}" loading="lazy" onerror="this.remove()">` : '<span>+ Foto</span>'}</div></td>
                 <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${p.NumeroPedido || '—'}</td>
                 <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
                 <td style="font-size:11px;color:#9ca3af;">${p.NombreEmpresa || '—'}</td>
                 <td style="font-size:10px;font-family:monospace;color:#6b7280;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${p.CodigoArticulo||''}">${p.CodigoArticulo ? p.CodigoArticulo.substring(0,22)+'...' : '—'}</td>
                 <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};max-width:110px;word-break:break-word;line-height:1.3;">${(p.NombreCliente || 'Sin cliente').replace(' ', '<br>')}</td>
-                <td class="solo-admin" style="font-size:11px;white-space:nowrap;">${vendedorTxt}</td>
+                <td class="solo-admin ed-celda" style="font-size:11px;white-space:nowrap;" onclick="abrirEdicion(${p.IdDetallePedido}, 'vendedor')" title="Cambiar vendedor">${vendedorTxt}</td>
                 <td style="max-width:140px;font-size:11px;color:#6b7280;">
                     ${descCorta}
                     ${tieneDesc ? `<button onclick="verDesc('${(p.NombreArticulo||'').replace(/'/g,"\\'")}','${(p.TallaColor||'').replace(/'/g,"\\'")}','${(p.DescripcionArticulo||'').replace(/[\r\n]/g,' ').replace(/'/g,"\\'")}')" style="background:none;border:none;color:#3b82f6;cursor:pointer;font-size:10px;padding:0 3px;">ver más</button>` : ''}
@@ -532,9 +576,10 @@
                 <td style="white-space:nowrap;">
                     ${sugerido > 0 ? `<span class="precio-sugerido">L ${sugerido.toFixed(2)}</span>` : '<span style="color:#4b5563">—</span>'}
                 </td>
-                <td style="font-size:10px;font-family:monospace;color:#6b7280;white-space:nowrap;">${tracking}</td>
+                <td class="ed-celda" style="font-size:10px;font-family:monospace;color:#6b7280;white-space:nowrap;" onclick="abrirEdicion(${p.IdDetallePedido}, 'tracking')" title="${p.Seguimiento ? escE(p.Seguimiento) + ' · clic para cambiar' : 'Asignar tracking'}">${tracking}</td>
                 <td>${estado}</td>
                 <td style="text-align:center;">${entregado}</td>
+                <td><button class="ed-btn" onclick="abrirEdicion(${p.IdDetallePedido})" title="Editar foto, vendedor y tracking"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg></button></td>
             </tr>`;
         }).join('');
 
@@ -791,6 +836,173 @@
         } catch(e) { alert('❌ Error al generar imagen: ' + e.message); }
     }
 </script>
+<div class="ed-fondo" id="ed-fondo" onclick="if(event.target===this)cerrarEdicion()">
+  <div class="ed-caja">
+    <div class="ed-cab"><div><h3 id="ed-tit">Editar artículo</h3><small id="ed-sub"></small></div><button class="ed-x" onclick="cerrarEdicion()" title="Cerrar (Esc)">&times;</button></div>
+    <div class="ed-cuerpo">
+      <div class="ed-sec" id="sec-foto"><b>Foto</b>
+        <div class="ed-fila">
+          <div class="ed-prev" id="ed-prev" tabindex="0" title="Hacé clic aquí y pegá una imagen con Ctrl+V"></div>
+          <div style="display:flex;flex-direction:column;gap:7px;flex:1;min-width:200px">
+            <div class="ed-fila"><button class="ed-b" type="button" onclick="document.getElementById('ed-archivo').click()">Subir imagen</button><button class="ed-b" type="button" onclick="quitarFoto()">Quitar foto</button></div>
+            <input class="ed-in" id="ed-url" placeholder="o pegá el link del producto (SHEIN, Temu, Amazon) o de la imagen" onchange="linkFoto(this.value.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();linkFoto(this.value.trim());}">
+            <div class="ed-nota">También podés hacer clic en el cuadro y pegar con Ctrl+V una captura.</div>
+            <input type="file" id="ed-archivo" accept="image/*" style="display:none" onchange="leerArchivo(this.files[0])">
+          </div>
+        </div>
+      </div>
+      <div class="ed-sec" id="sec-vendedor"><b>Vendedor</b><select class="ed-in" id="ed-vendedor"></select></div>
+      <div class="ed-sec" id="sec-tracking"><b>Tracking</b>
+        <div class="ed-fila"><input class="ed-in" id="ed-tracking" list="dl-seguimientos" placeholder="Buscar número de tracking…" style="flex:1;min-width:220px" autocomplete="off" oninput="revisarTracking()"><datalist id="dl-seguimientos"></datalist>
+          <button class="ed-b" type="button" onclick="document.getElementById('ed-nuevo').classList.toggle('on')">+ Nuevo tracking</button></div>
+        <div class="ed-nota" id="ed-tr-nota"></div>
+        <div class="ed-nuevo" id="ed-nuevo">
+          <label style="flex:1;min-width:160px">Número de tracking<input class="ed-in" id="nt-num" placeholder="Ej. 1Z999AA10123456784"></label>
+          <label>Salida<input class="ed-in" type="date" id="nt-salida"></label>
+          <label>Entrega estimada<input class="ed-in" type="date" id="nt-entrega"></label>
+          <button class="ed-b prim" type="button" id="nt-btn" onclick="crearTracking()">Crear</button>
+        </div>
+      </div>
+      <div class="ed-msg" id="ed-msg"></div>
+    </div>
+    <div class="ed-pie"><button class="ed-b" onclick="cerrarEdicion()">Cancelar</button><button class="ed-b prim" id="ed-guardar" onclick="guardarEdicion()">Guardar cambios</button></div>
+  </div>
+</div>
+<script>
+    const escE = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    let seguimientos = null, vendedoresEd = null, edActual = null, edFoto = null;   // edFoto: {base64, mime} | {url}
+
+    async function cargarExtras() {
+        try {
+            const d = await fetch('/api/pedidos/extras').then(r => r.json());
+            if (!d.ok) return;
+            const m = new Map(d.data.map(x => [x.IdDetallePedido, x]));
+            todosPedidos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.Fotografia = x.Fotografia; p.Link = x.Link; } });
+            renderizarPagina();
+        } catch (e) {}
+    }
+    async function cargarCatalogosEd() {
+        if (!seguimientos) { try { const d = await fetch('/api/tracking/seguimientos').then(r => r.json()); seguimientos = d.ok ? d.data : []; } catch (e) { seguimientos = []; } }
+        if (usuario.esAdmin && !vendedoresEd) { try { const d = await fetch('/api/vendedores').then(r => r.json()); vendedoresEd = d.ok ? d.data : []; } catch (e) { vendedoresEd = []; } }
+        document.getElementById('dl-seguimientos').innerHTML = seguimientos.map(s => `<option value="${escE(s.Seguimiento)}">`).join('');
+        if (vendedoresEd) document.getElementById('ed-vendedor').innerHTML = '<option value="">Sin vendedor</option>' + vendedoresEd.map(v => `<option value="${v.IdVendedor}">${escE(((v.Nombres || '') + ' ' + (v.Apellidos || '')).trim())}${v.CodigoVendedor ? ' (' + escE(v.CodigoVendedor) + ')' : ''}</option>`).join('');
+    }
+    function vistaFoto(src, datos) {
+        edFoto = datos || (src ? { url: src } : edFoto);
+        document.getElementById('ed-prev').innerHTML = src ? `<img src="${escE(src)}" onerror="this.parentElement.innerHTML='<span>No se pudo cargar la imagen</span>'">` : '<span>Sin foto<br>Ctrl+V aquí</span>';
+    }
+    function leerArchivo(file) {
+        if (!file || !/^image\//.test(file.type)) return;
+        if (file.size > 8 * 1024 * 1024) { msgEd('err', 'La imagen es muy grande (máx. 8 MB)'); return; }
+        const r = new FileReader();
+        r.onload = e => { document.getElementById('ed-url').value = ''; vistaFoto(e.target.result, { base64: e.target.result.split(',')[1], mime: file.type }); };
+        r.readAsDataURL(file);
+    }
+    async function linkFoto(u) {
+        if (!u) return;
+        const fm = window.fotoDeMarcadorMS && window.fotoDeMarcadorMS(u);
+        if (fm) { document.getElementById('ed-url').value = ''; vistaFoto(fm, { url: fm }); msgEd('ok', 'Foto tomada del marcador. Dale a Guardar cambios.'); return; }
+        if (!/^https?:\/\/\S+$/i.test(u)) { msgEd('err', 'El link no es válido'); return; }
+        msgEd('ok', 'Buscando la foto…');
+        try { const f = await window.fotoDesdeLinkMS(u); vistaFoto(f, { url: f }); msgEd('ok', 'Foto encontrada. Dale a Guardar cambios.'); }
+        catch (e) { msgEd('err', 'No se pudo: ' + e.message); }
+    }
+    function quitarFoto() { document.getElementById('ed-url').value = ''; edFoto = { url: '' }; vistaFoto('', { url: '' }); }
+    document.addEventListener('paste', e => {
+        if (!document.getElementById('ed-fondo').classList.contains('on')) return;
+        const it = [...(e.clipboardData?.items || [])].find(x => x.type.startsWith('image/'));
+        if (it) { e.preventDefault(); leerArchivo(it.getAsFile()); return; }
+        const txt = (e.clipboardData?.getData('text') || '').trim();
+        const fm = window.fotoDeMarcadorMS && window.fotoDeMarcadorMS(txt);
+        if (fm) { e.preventDefault(); vistaFoto(fm, { url: fm }); msgEd('ok', 'Foto tomada del marcador. Dale a Guardar cambios.'); return; }
+        if (/^https?:\/\/\S+$/i.test(txt) && !(e.target.closest && e.target.closest('input'))) { e.preventDefault(); document.getElementById('ed-url').value = txt; linkFoto(txt); }
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('ed-fondo').classList.contains('on')) cerrarEdicion(); });
+
+    function revisarTracking() {
+        const v = document.getElementById('ed-tracking').value.trim(), n = document.getElementById('ed-tr-nota');
+        const s = seguimientos && seguimientos.find(x => String(x.Seguimiento).trim().toLowerCase() === v.toLowerCase());
+        n.textContent = !v ? '' : s ? 'Tracking encontrado.' : 'Ese tracking no existe todavía. Crealo con "+ Nuevo tracking".';
+        n.style.color = !v ? '' : s ? '#4ade80' : '#fbbf24';
+    }
+    async function crearTracking() {
+        const num = document.getElementById('nt-num').value.trim(), sal = document.getElementById('nt-salida').value, ent = document.getElementById('nt-entrega').value;
+        if (!num || !sal || !ent) { msgEd('err', 'Completá el número, la fecha de salida y la entrega estimada'); return; }
+        const b = document.getElementById('nt-btn'); b.disabled = true;
+        try {
+            const d = await fetch('/api/tracking/seguimientos', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ Seguimiento:num, FechaSalidaInicio:sal, FechaEstimadaEntrega:ent }) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error || d.mensaje);
+            seguimientos = null; await cargarCatalogosEd();
+            document.getElementById('ed-tracking').value = num; revisarTracking();
+            document.getElementById('ed-nuevo').classList.remove('on');
+            msgEd('ok', 'Tracking ' + num + ' creado. Dale a Guardar cambios para asignarlo.');
+        } catch (e) { msgEd('err', 'No se pudo crear el tracking: ' + e.message); }
+        b.disabled = false;
+    }
+    function msgEd(t, x) { const m = document.getElementById('ed-msg'); m.className = 'ed-msg ' + t; m.textContent = x; }
+
+    async function abrirEdicion(id, foco) {
+        const p = todosPedidos.find(x => x.IdDetallePedido === id); if (!p) return;
+        edActual = p; edFoto = null;
+        document.getElementById('ed-sub').textContent = `${p.NombreArticulo || ''}${p.TallaColor ? ' · ' + p.TallaColor : ''} · ${p.NumeroPedido || ''}`;
+        document.getElementById('ed-url').value = '';
+        vistaFoto(p.Fotografia || '', null); edFoto = null;
+        document.getElementById('sec-vendedor').style.display = usuario.esAdmin ? '' : 'none';
+        document.getElementById('ed-tracking').value = p.Seguimiento || '';
+        document.getElementById('ed-tr-nota').textContent = '';
+        document.getElementById('ed-nuevo').classList.remove('on');
+        document.getElementById('ed-msg').className = 'ed-msg';
+        const hoy = new Date().toISOString().slice(0, 10), en30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+        document.getElementById('nt-salida').value = hoy; document.getElementById('nt-entrega').value = en30; document.getElementById('nt-num').value = '';
+        document.getElementById('ed-fondo').classList.add('on');
+        await cargarCatalogosEd();
+        if (usuario.esAdmin) document.getElementById('ed-vendedor').value = p.IdVendedor || '';
+        const el = { foto:'ed-prev', vendedor:'ed-vendedor', tracking:'ed-tracking' }[foco];
+        if (el) document.getElementById(el).focus();
+    }
+    function cerrarEdicion() { document.getElementById('ed-fondo').classList.remove('on'); edActual = null; }
+
+    async function guardarEdicion() {
+        const p = edActual; if (!p) return;
+        const b = document.getElementById('ed-guardar'); b.disabled = true;
+        const hechos = [], errores = [];
+        try {
+            // Foto
+            if (edFoto && (edFoto.base64 || edFoto.url !== undefined) && !(edFoto.url !== undefined && edFoto.url === (p.Fotografia || ''))) {
+                const d = await fetch('/api/crear-pedidos/foto', { method:'PUT', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(edFoto.base64 ? { idDetallePedido:p.IdDetallePedido, fotoBase64:edFoto.base64, fotoMime:edFoto.mime } : { idDetallePedido:p.IdDetallePedido, url:edFoto.url }) }).then(r => r.json());
+                if (d.ok) { p.Fotografia = d.fotografia; hechos.push('foto'); } else errores.push('foto: ' + d.error);
+            }
+            // Vendedor
+            if (usuario.esAdmin) {
+                const v = document.getElementById('ed-vendedor').value;
+                if (v && String(v) !== String(p.IdVendedor || '')) {
+                    const d = await fetch('/api/vendedores/asignar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idDetalle:p.IdDetallePedido, idVendedor:+v }) }).then(r => r.json());
+                    if (d.ok) { const vv = vendedoresEd.find(x => String(x.IdVendedor) === v); p.IdVendedor = +v; p.CodigoVendedor = vv && vv.CodigoVendedor; p.NombreVendedor = vv ? ((vv.Nombres || '') + ' ' + (vv.Apellidos || '')).trim() : ''; hechos.push('vendedor'); }
+                    else errores.push('vendedor: ' + d.error);
+                }
+            }
+            // Tracking
+            const t = document.getElementById('ed-tracking').value.trim();
+            if (t && t !== (p.Seguimiento || '')) {
+                const s = seguimientos.find(x => String(x.Seguimiento).trim().toLowerCase() === t.toLowerCase());
+                if (!s) errores.push('tracking: "' + t + '" no existe; crealo con "+ Nuevo tracking"');
+                else {
+                    const d = await fetch('/api/tracking/asignar-seguimiento', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ IdDetalleCliente:p.IdDetallePedido, IdSeguimiento:s.IdSeguimiento }) }).then(r => r.json());
+                    if (d.ok) { p.IdSeguimiento = s.IdSeguimiento; p.Seguimiento = s.Seguimiento; if (!p.IdEstado) p.IdEstado = 1; hechos.push('tracking'); }
+                    else errores.push('tracking: ' + (d.error || d.mensaje));
+                }
+            }
+        } catch (e) { errores.push('Error de conexión'); }
+        b.disabled = false;
+        renderizarPagina();
+        if (errores.length) msgEd('err', (hechos.length ? 'Guardado: ' + hechos.join(', ') + '. ' : '') + 'No se pudo: ' + errores.join(' · '));
+        else if (!hechos.length) msgEd('err', 'No hay cambios para guardar');
+        else cerrarEdicion();
+    }
+    document.getElementById('ed-prev').addEventListener('click', function () { this.focus(); });
+</script>
+<script src="/assets/ver-articulo.js"></script>
 <script src="/assets/sidebar.js"></script>
 </body>
 </html>

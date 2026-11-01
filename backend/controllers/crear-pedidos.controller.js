@@ -294,4 +294,33 @@ function verFaltantes(numeroPedido) {
     window.location.href = `/dashboard.html?pedido=${encodeURIComponent(numeroPedido)}`;
 }
 
-module.exports = { getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };
+// Cambiar solo la foto de un artículo: imagen subida (base64) o un link de imagen
+const cambiarFoto = async (req, res) => {
+  try {
+    const { idDetallePedido, fotoBase64, fotoMime, url } = req.body;
+    const id = parseInt(idDetallePedido);
+    if (!id) return res.status(400).json({ ok: false, error: 'Falta el artículo' });
+    let nueva = null;
+    if (fotoBase64) {
+      if (!process.env.AZURE_STORAGE_CONNECTION_STRING) return res.status(500).json({ ok: false, error: 'No está configurado el almacenamiento de fotos' });
+      const blobService = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+      const container = blobService.getContainerClient('fotos-articulos');
+      const ext = fotoMime === 'image/jpeg' ? 'jpg' : fotoMime === 'image/webp' ? 'webp' : 'png';
+      const blob = container.getBlockBlobClient(uuidv4() + '.' + ext);
+      const buffer = Buffer.from(fotoBase64, 'base64');
+      if (buffer.length > 8 * 1024 * 1024) return res.status(413).json({ ok: false, error: 'La imagen es muy grande (máx. 8 MB)' });
+      await blob.uploadData(buffer, { blobHTTPHeaders: { blobContentType: fotoMime || 'image/png' } });
+      nueva = blob.url;
+    } else if (typeof url === 'string') {
+      const u = url.trim();
+      if (u && !/^https?:\/\/\S+$/i.test(u)) return res.status(400).json({ ok: false, error: 'El link de la imagen no es válido' });
+      nueva = u || null;   // vacío = quitar la foto
+    } else return res.status(400).json({ ok: false, error: 'Falta la imagen' });
+    const pool = await poolPromise;
+    await pool.request().input('Foto', sql.NVarChar(sql.MAX), nueva).input('Id', sql.Int, id)
+      .query('UPDATE C_DetallePedido SET Fotografia = @Foto WHERE IdDetallePedido = @Id');
+    res.json({ ok: true, fotografia: nueva });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+};
+
+module.exports = { cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };

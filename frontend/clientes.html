@@ -792,6 +792,7 @@
         cargar();
         cargarVendedores();
     }
+    window.addEventListener('articulo-actualizado', e => { const a = e.detail && e.detail.articulo; if (!EC || !a) return; const x = EC.articulos.find(z => z.IdDetallePedido === a.IdDetallePedido); if (x) { x.Fotografia = a.Fotografia; pintarEstado(); } });
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>

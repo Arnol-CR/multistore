@@ -584,6 +584,7 @@
 
     window.addEventListener('beforeunload', e => { if (cambios.size) { e.preventDefault(); e.returnValue = ''; } });
 
+    window.addEventListener('articulo-actualizado', () => render());
     cargar();
 </script>
 <script src="/assets/ver-articulo.js"></script>
