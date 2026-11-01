@@ -114,6 +114,17 @@
         .leyenda i { width:10px; height:10px; border-radius:3px; display:inline-block; }
         .tip { position:absolute; pointer-events:none; background:#0b0f16; border:1px solid var(--borde2); border-radius:8px; padding:8px 10px; font-size:12px; color:var(--texto); box-shadow:0 8px 24px rgba(0,0,0,.5); display:none; white-space:nowrap; z-index:5; }
         .tip b { color:#fff; }
+        .form { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; padding:14px 16px; border-bottom:1px solid var(--borde); background:#0b0f15; }
+        .form label { display:flex; flex-direction:column; gap:4px; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--tenue); font-weight:700; }
+        .form .inp { width:100%; text-transform:none; letter-spacing:0; font-weight:400; }
+        .form .acciones { display:flex; gap:8px; align-items:flex-end; }
+        .form[hidden] { display:none; }
+        .btn.prim { background:#1d4ed8; border-color:#1d4ed8; color:#fff; }
+        .btn.ok { background:#15803d; border-color:#15803d; color:#fff; }
+        .btn.mini { padding:4px 9px; font-size:11.5px; }
+        .btn:disabled { opacity:.35; cursor:default; }
+        .lnk { background:none; border:none; color:#93c5fd; font:600 12px 'Segoe UI',sans-serif; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:2px; }
+        td .inp.chico { width:90px; padding:5px 7px; font-size:12.5px; text-align:right; }
         .cargando { padding:60px; text-align:center; color:var(--tenue); }
         .avisos { font-size:12px; color:#fca5a5; background:#1f0707; border:1px solid #7f1d1d; border-radius:8px; padding:10px 12px; margin:0 auto 14px; max-width:1400px; display:none; }
         ::-webkit-scrollbar { width:6px; height:6px; }
@@ -238,6 +249,27 @@
     const enPeriodo = f => { if (!f) return false; const a = document.getElementById('desde').value, b = document.getElementById('hasta').value; return (!a || f >= a) && (!b || f <= b); };
 
     // ══════════ Carga y repartos ══════════
+    // Volver a leer todo después de guardar algo
+    async function recargar() {
+        const r = await fetch('/api/finanzas/datos').then(x => x.json());
+        if (!r.ok) throw new Error(r.error || 'Error');
+        D = r; partCache.clear(); bancosCache = {}; repartir(); pintar();
+    }
+    async function enviar(url, metodo, cuerpo) {
+        const r = await fetch(url, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || !d.ok) throw new Error(d.error || 'Error ' + r.status);
+        return d;
+    }
+    function aviso(txt, err) {
+        let t = document.getElementById('toast-fin');
+        if (!t) { t = document.createElement('div'); t.id = 'toast-fin'; t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:10px 16px;border-radius:10px;font:600 13px Segoe UI,sans-serif;z-index:2000;box-shadow:0 8px 30px rgba(0,0,0,.6)'; document.body.appendChild(t); }
+        t.textContent = txt; t.style.background = err ? '#1f0707' : '#052e16'; t.style.border = '1px solid ' + (err ? '#7f1d1d' : '#14532d'); t.style.color = err ? '#fca5a5' : '#4ade80'; t.style.display = 'block';
+        clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 3500);
+    }
+    const opts = (lista, val, txt, sel, vacio) => (vacio ? `<option value="">${vacio}</option>` : '') + lista.map(x => `<option value="${esc(x[val])}"${String(x[val]) === String(sel ?? '') ? ' selected' : ''}>${esc(txt(x))}</option>`).join('');
+    const nomCuenta = c => c.NombreCuenta + (c.Banco ? ' · ' + c.Banco : '');
+
     async function cargar() {
         try {
             const r = await fetch('/api/finanzas/datos').then(x => x.json());
@@ -466,53 +498,103 @@
     }
 
     // ── GASTOS ──
+    let edGasto = null, edComb = null;
     function pGastos() {
         const comb = D.combustible.filter(c => enPeriodo(c.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const otros = D.otros.filter(g => enPeriodo(g.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const trans = D.transacciones.filter(g => enPeriodo(g.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
-        const ptos = D.puntos.filter(p => enPeriodo(p.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const peds = D.puntos.filter(p => enPeriodo(p.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha) || b.IdPedido - a.IdPedido);
         const sum = (a, k) => a.reduce((s, x) => s + num(x[k]), 0);
-        const ordenesDe = id => ORD.filter(o => o.IdCombustible === id).length;
+        const ordenesDe = id => ORD.filter(o => o.IdCombustible === id);
         const grupo = (arr, k, v) => { const m = new Map(); arr.forEach(x => { const n = x[k] || 'Sin nombre'; m.set(n, (m.get(n) || 0) + num(x[v])); }); return [...m.entries()].sort((a, b) => b[1] - a[1]); };
         const gOtros = grupo(otros, 'NombreGasto', 'Monto'), gTrans = grupo(trans, 'CuentaPorPagar', 'Valor');
+        const tiendas = [...new Set(D.lineas.map(l => l.Tienda).concat(D.otros.map(g => g.Empresa)).filter(t => t && nT(t) !== 'todos'))].sort();
+        const conceptos = [...new Set(D.otros.map(g => g.NombreGasto).filter(Boolean))].sort();
+        const g = edGasto || {}, c = edComb ? D.combustible.find(x => x.IdCombustible === edComb) : null;
+        const conPuntos = peds.filter(p => num(p.ValorPunto) > 0);
         document.getElementById('v-gastos').innerHTML = `
         <div class="kpis">
-            <div class="kpi"><div class="kpi-tit">Combustible</div><div class="kpi-val">${L0(sum(comb, 'Monto'))}</div><div class="kpi-pie">${comb.length} registros · ${comb.filter(c => !c.Cancelado).length} sin cancelar</div></div>
-            <div class="kpi"><div class="kpi-tit">Otros gastos</div><div class="kpi-val">${L0(sum(otros, 'Monto'))}</div><div class="kpi-pie">${otros.length} registros · se restan de la utilidad</div></div>
-            <div class="kpi"><div class="kpi-tit">Cuentas por pagar</div><div class="kpi-val">${L0(sum(trans, 'Valor'))}</div><div class="kpi-pie">${trans.length} pagos · no se restan todavía</div></div>
-            <div class="kpi"><div class="kpi-tit">Puntos</div><div class="kpi-val">${ptos.length}</div><div class="kpi-pie">pedidos con puntos registrados</div></div>
+            <div class="kpi"><div class="kpi-tit">Combustible</div><div class="kpi-val">${L0(sum(comb, 'Monto'))}</div><div class="kpi-pie">${pl(comb.length, 'registro', 'registros')} · ${comb.filter(c => !num(c.Monto)).length} sin monto</div></div>
+            <div class="kpi"><div class="kpi-tit">Otros gastos</div><div class="kpi-val">${L0(sum(otros, 'Monto'))}</div><div class="kpi-pie">${pl(otros.length, 'registro', 'registros')} · se restan en Reparto</div></div>
+            <div class="kpi"><div class="kpi-tit">Cuentas por pagar</div><div class="kpi-val">${L0(sum(trans, 'Valor'))}</div><div class="kpi-pie">${pl(trans.length, 'pago', 'pagos')} · no se restan todavía</div></div>
+            <div class="kpi"><div class="kpi-tit">Puntos</div><div class="kpi-val">$${sum(conPuntos, 'ValorPunto').toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div><div class="kpi-pie">${pl(conPuntos.length, 'pedido con puntos', 'pedidos con puntos')}</div></div>
         </div>
-        <div class="grid2">
-            <div class="card">
-                <div class="card-cab"><div><div class="card-tit">Otros gastos por concepto</div><div class="card-sub">Período seleccionado</div></div></div>
-                ${gOtros.length ? `<table><tbody>${gOtros.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(otros, 'Monto'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin gastos en el período</div>'}
-            </div>
-            <div class="card">
-                <div class="card-cab"><div><div class="card-tit">Combustible</div><div class="card-sub">Se reparte entre las órdenes de entrega de la misma fecha, según su peso</div></div></div>
-                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${comb.length ? `<table><thead><tr><th>Fecha</th><th>Detalle</th><th class="num">Órdenes</th><th class="num">Monto</th><th>Estado</th></tr></thead><tbody>
-                ${comb.map(c => `<tr><td>${fFecha(c.Fecha)}</td><td>${esc(c.Observaciones || '—')}<div class="meta">${esc([c.Vendedor, c.Cuenta].filter(Boolean).join(' · '))}</div></td><td class="num">${ordenesDe(c.IdCombustible)}</td><td class="num">${num(c.Monto) ? L(c.Monto) : '<span class="amb">sin monto</span>'}</td><td>${c.Cancelado ? '<span class="tag real">Pagado</span>' : '<span class="tag est">Pendiente</span>'}</td></tr>`).join('')}
-                </tbody></table>` : '<div class="vacio">Sin combustible en el período</div>'}</div>
-            </div>
-        </div>
+
         <div class="card">
-            <div class="card-cab"><div><div class="card-tit">Detalle de otros gastos</div></div></div>
-            <div class="tabla-wrap">${otros.length ? `<table><thead><tr><th>Fecha</th><th>Gasto</th><th>Detalle</th><th>Cuenta</th><th class="num">Monto</th></tr></thead><tbody>
-            ${otros.map(g => `<tr><td>${fFecha(g.Fecha)}</td><td>${esc(g.NombreGasto || '—')}</td><td>${esc([g.Empresa, g.Observaciones, g.Referencia].filter(Boolean).join(' · ') || '—')}</td><td>${esc(g.Cuenta || '—')}</td><td class="num">${L(num(g.Monto))}</td></tr>`).join('')}
-            </tbody></table>` : '<div class="vacio">Sin gastos en el período</div>'}</div>
+            <div class="card-cab"><div><div class="card-tit">Otros gastos</div><div class="card-sub">Se reparten entre las ventas de su año y de su tienda; TODOS = todas las tiendas</div></div>
+                <button class="btn prim" onclick="edGasto = {}; pGastos(); document.getElementById('g-concepto').focus()">+ Registrar gasto</button></div>
+            <div class="form" id="f-gasto" ${edGasto ? '' : 'hidden'}>
+                <label>Fecha<input class="inp" type="date" id="g-fecha" value="${esc(g.Fecha || hoy())}"></label>
+                <label>Concepto<input class="inp" id="g-concepto" list="dl-conceptos" value="${esc(g.NombreGasto || '')}" placeholder="Servidor, suscripción…"></label>
+                <label>Tienda<select class="inp" id="g-empresa"><option value="TODOS">TODOS</option>${tiendas.map(t => `<option${nT(t) === nT(g.Empresa) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+                <label>Monto (L)<input class="inp" type="number" min="0" step="0.01" id="g-monto" value="${g.Monto != null ? num(g.Monto) : ''}"></label>
+                <label>Cuenta<select class="inp" id="g-cuenta">${opts(D.cuentas, 'IdCuentaBanco', nomCuenta, (D.cuentas.find(x => x.NombreCuenta === g.Cuenta) || {}).IdCuentaBanco, 'Sin cuenta')}</select></label>
+                <label>Referencia<input class="inp" id="g-ref" value="${esc(g.Referencia || '')}"></label>
+                <label>Nota<input class="inp" id="g-obs" value="${esc(g.Observaciones || '')}"></label>
+                <div class="acciones"><button class="btn ok" onclick="guardarGasto()">${g.IdOtrosGastos ? 'Guardar cambios' : 'Guardar'}</button><button class="btn" onclick="edGasto = null; pGastos()">Cancelar</button></div>
+            </div>
+            <datalist id="dl-conceptos">${conceptos.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+            <div class="grid2" style="padding:0;margin:0;gap:0">
+                <div style="border-right:1px solid var(--borde)">${gOtros.length ? `<table><thead><tr><th>Concepto</th><th class="num">Total</th></tr></thead><tbody>${gOtros.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(otros, 'Monto'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin gastos en el período</div>'}</div>
+                <div class="tabla-wrap" style="max-height:360px;overflow-y:auto">${otros.length ? `<table><thead><tr><th>Fecha</th><th>Gasto</th><th>Tienda</th><th class="num">Monto</th><th></th></tr></thead><tbody>
+                ${otros.map(x => `<tr><td>${fFecha(x.Fecha)}</td><td>${esc(x.NombreGasto || '—')}${x.Observaciones || x.Referencia || x.Cuenta ? `<div class="meta">${esc([x.Cuenta, x.Referencia, x.Observaciones].filter(Boolean).join(' · '))}</div>` : ''}</td><td>${esc(x.Empresa || 'TODOS')}</td><td class="num">${L(num(x.Monto))}</td><td><button class="lnk" onclick="editarGastoFila(${x.IdOtrosGastos})">Editar</button></td></tr>`).join('')}
+                </tbody></table>` : '<div class="vacio">Sin gastos en el período</div>'}</div>
+            </div>
         </div>
-        <div class="grid2">
-            <div class="card">
-                <div class="card-cab"><div><div class="card-tit">Pagos a cuentas por pagar</div><div class="card-sub">Decidí si son gasto del negocio, retiro de socio o pago de deuda</div></div></div>
-                ${gTrans.length ? `<table><tbody>${gTrans.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(trans, 'Valor'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin pagos en el período</div>'}
-            </div>
-            <div class="card">
-                <div class="card-cab"><div><div class="card-tit">Puntos usados en pedidos</div><div class="card-sub">Falta confirmar si el valor es por punto o total</div></div></div>
-                <div class="tabla-wrap" style="max-height:300px;overflow-y:auto">${ptos.length ? `<table><thead><tr><th>Fecha</th><th>Pedido</th><th class="num">Puntos</th><th class="num">Valor ($)</th></tr></thead><tbody>
-                ${ptos.map(p => `<tr><td>${fFecha(p.Fecha)}</td><td>${esc(p.NumeroPedido)}<div class="meta">${esc(p.Tienda || '')}</div></td><td class="num">${num(p.Puntos).toLocaleString('es-HN')}</td><td class="num">$${num(p.ValorPunto).toFixed(2)}</td></tr>`).join('')}
-                </tbody></table>` : '<div class="vacio">Sin puntos en el período</div>'}</div>
-            </div>
+
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Combustible por fecha de órdenes</div><div class="card-sub">Cada fecha con órdenes de entrega tiene su registro. Se reparte entre esas órdenes según su peso y se le paga a la persona indicada.</div></div></div>
+            ${c ? `<div class="form">
+                <label>Fecha<input class="inp" value="${fFecha(c.Fecha)}" disabled></label>
+                <label>Monto (L)<input class="inp" type="number" min="0" step="0.01" id="c-monto" value="${num(c.Monto) || ''}"></label>
+                <label>Persona<select class="inp" id="c-vend">${opts(D.vendedores, 'IdVendedor', v => v.Nombre, c.IdVendedor, 'Elegí la persona')}</select></label>
+                <label>Cuenta<select class="inp" id="c-cuenta">${opts(D.cuentas, 'IdCuentaBanco', nomCuenta, (D.cuentas.find(x => x.NombreCuenta === c.Cuenta) || {}).IdCuentaBanco, 'Sin cuenta')}</select></label>
+                <label>Nota<input class="inp" id="c-obs" value="${esc(c.Observaciones && c.Observaciones !== 'Registro automático' ? c.Observaciones : '')}"></label>
+                <label style="flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--suave)"><input type="checkbox" id="c-pagado" ${c.Cancelado ? 'checked' : ''}> Ya se pagó</label>
+                <div class="acciones"><button class="btn ok" onclick="guardarCombustible(${c.IdCombustible})">Guardar</button><button class="btn" onclick="edComb = null; pGastos()">Cancelar</button></div>
+            </div>` : ''}
+            <div class="tabla-wrap" style="max-height:380px;overflow-y:auto">${comb.length ? `<table><thead><tr><th>Fecha</th><th>Órdenes</th><th>Persona</th><th class="num">Monto</th><th>Estado</th><th></th></tr></thead><tbody>
+            ${comb.map(x => { const os = ordenesDe(x.IdCombustible); return `<tr><td>${fFecha(x.Fecha)}</td><td>${os.length ? esc(os.map(o => o.NumeroOrden).join(', ')) : '<span style="color:var(--mudo)">—</span>'}<div class="meta">${os.length ? os.reduce((a, o) => a + o.PesoLb, 0).toFixed(2) + ' lb' : ''}</div></td><td>${esc(x.Vendedor || '') || '<span class="amb">Sin persona</span>'}</td><td class="num">${num(x.Monto) ? L(num(x.Monto)) : '<span class="amb">Sin monto</span>'}</td><td>${x.Cancelado ? '<span class="tag real">Pagado</span>' : '<span class="tag est">Pendiente</span>'}</td><td><button class="lnk" onclick="edComb = ${x.IdCombustible}; pGastos()">Editar</button></td></tr>`; }).join('')}
+            </tbody></table>` : '<div class="vacio">Sin combustible en el período</div>'}</div>
+        </div>
+
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Puntos por pedido</div><div class="card-sub">Valor total en dólares de los puntos usados en el pedido. Se convierte con la tasa del pedido y se reparte entre sus artículos según su costo.</div></div>
+                <input class="inp" id="pt-buscar" placeholder="Buscar pedido o tienda…" style="width:200px" oninput="filtrarPuntos(this.value)"></div>
+            <div class="tabla-wrap" style="max-height:420px;overflow-y:auto">${peds.length ? `<table id="t-puntos"><thead><tr><th>Fecha</th><th>Pedido</th><th>Tienda</th><th class="num">Compra</th><th class="num">Puntos</th><th class="num">Valor ($)</th><th class="num">Valor (L)</th><th></th></tr></thead><tbody>
+            ${peds.map(p => `<tr data-q="${esc(nT(p.NumeroPedido + ' ' + p.Tienda))}"><td>${fFecha(p.Fecha)}</td><td>${esc(p.NumeroPedido)}<div class="meta">${pl(num(p.Lineas), 'artículo', 'artículos')}</div></td><td>${esc(p.Tienda || '')}</td><td class="num">$${num(p.TotalCompra).toFixed(2)}</td>
+                <td class="num"><input class="inp chico" type="number" min="0" step="1" id="pp-${p.IdPedido}" value="${num(p.Puntos) || ''}" placeholder="0" oninput="this.closest('tr').querySelector('button').disabled=false"></td>
+                <td class="num"><input class="inp chico" type="number" min="0" step="0.01" id="pv-${p.IdPedido}" value="${num(p.ValorPunto) || ''}" placeholder="0.00" oninput="this.closest('tr').querySelector('button').disabled=false"></td>
+                <td class="num">${num(p.ValorPunto) && num(p.TasaCambio) ? L(num(p.ValorPunto) * num(p.TasaCambio)) : '<span style="color:var(--mudo)">—</span>'}</td>
+                <td><button class="btn ok mini" disabled onclick="guardarPuntos(${p.IdPedido})">Guardar</button></td></tr>`).join('')}
+            </tbody></table>` : '<div class="vacio">Sin pedidos en el período</div>'}</div>
+        </div>
+
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Pagos a cuentas por pagar</div><div class="card-sub">Todavía no se restan de la utilidad</div></div></div>
+            ${gTrans.length ? `<table><tbody>${gTrans.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(trans, 'Valor'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin pagos en el período</div>'}
         </div>`;
+        if (edComb) document.getElementById('c-monto').focus();
     }
+    function editarGastoFila(id) { edGasto = { ...D.otros.find(x => x.IdOtrosGastos === id) }; edComb = null; pGastos(); document.getElementById('f-gasto').scrollIntoView({ block: 'center' }); }
+    async function guardarGasto() {
+        const v = id => document.getElementById(id).value;
+        const cuerpo = { id: edGasto && edGasto.IdOtrosGastos, fecha: v('g-fecha'), concepto: v('g-concepto'), empresa: v('g-empresa'), monto: v('g-monto'), idCuenta: v('g-cuenta'), referencia: v('g-ref'), observaciones: v('g-obs') };
+        try { await enviar('/api/finanzas/gastos', cuerpo.id ? 'PUT' : 'POST', cuerpo); aviso(cuerpo.id ? 'Gasto actualizado' : 'Gasto registrado'); edGasto = null; await recargar(); }
+        catch (e) { aviso('No se pudo guardar: ' + e.message, true); }
+    }
+    async function guardarCombustible(id) {
+        const v = x => document.getElementById(x).value;
+        const cuerpo = { id, monto: v('c-monto') || 0, idVendedor: v('c-vend'), idCuenta: v('c-cuenta'), observaciones: v('c-obs'), pagado: document.getElementById('c-pagado').checked };
+        try { await enviar('/api/finanzas/combustible', 'PUT', cuerpo); aviso('Combustible guardado'); edComb = null; await recargar(); }
+        catch (e) { aviso('No se pudo guardar: ' + e.message, true); }
+    }
+    async function guardarPuntos(id) {
+        const cuerpo = { idPedido: id, puntos: document.getElementById('pp-' + id).value || 0, valorDolares: document.getElementById('pv-' + id).value || 0 };
+        try { await enviar('/api/finanzas/puntos', 'PUT', cuerpo); aviso('Puntos guardados'); await recargar(); }
+        catch (e) { aviso('No se pudo guardar: ' + e.message, true); }
+    }
+    function filtrarPuntos(q) { q = nT(q); document.querySelectorAll('#t-puntos tbody tr').forEach(tr => tr.style.display = !q || q.split(/\s+/).every(w => tr.dataset.q.includes(w)) ? '' : 'none'); }
 
     // ── REPARTO DE UTILIDAD ──
     // Tramos de rentabilidad (utilidad ÷ venta): [desde, hasta, comisión, dividendo]
@@ -536,6 +618,20 @@
         });
         return out;
     }
+    // Otros gastos: cada gasto se reparte entre las ventas de su mismo año y de su tienda (TODOS = todas las tiendas)
+    const nT = t => String(t || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    function gastosPorLinea() {
+        const mapa = new Map(), sinAsignar = [];
+        D.otros.forEach(g => {
+            const y = (g.Fecha || '').slice(0, 4), e = nT(g.Empresa), monto = num(g.Monto);
+            if (!y || !monto) return;
+            const lins = LIN.filter(l => l.Venta > 0 && (l.Fecha || '').slice(0, 4) === y && (!e || e === 'todos' || nT(l.Tienda) === e));
+            const base = lins.reduce((a, l) => a + l.Venta, 0);
+            if (!base) { sinAsignar.push(g); return; }
+            lins.forEach(l => mapa.set(l.IdDetallePedido, (mapa.get(l.IdDetallePedido) || 0) + monto * l.Venta / base));
+        });
+        return { mapa, sinAsignar };
+    }
     // Participación de cada socio con lo aportado hasta esa fecha
     const partCache = new Map();
     function participacion(fecha) {
@@ -548,7 +644,7 @@
     }
     let repPersonas = [];
     function pReparto() {
-        const ptsL = puntosPorLinea();
+        const ptsL = puntosPorLinea(), GAS = gastosPorLinea();
         const nombres = new Map();
         LIN.forEach(l => l.IdVendedor && nombres.set(l.IdVendedor, l.Vendedor));
         D.capital.forEach(c => c.IdVendedor && nombres.set(c.IdVendedor, c.Socio));
@@ -561,8 +657,8 @@
         const listas = per1.filter(l => l.envioReal), pend = per1.filter(l => !l.envioReal);
         let ptsNoRep = 0, divSinSocio = 0;
         const filas = listas.map(l => {
-            const pts = ptsL.get(l.IdDetallePedido) || 0;
-            const costo = l.CostoCompra + l.envio + l.comb + pts;
+            const pts = ptsL.get(l.IdDetallePedido) || 0, gas = GAS.mapa.get(l.IdDetallePedido) || 0;
+            const costo = l.CostoCompra + l.envio + l.comb + pts + gas;
             const util = l.Venta - costo, m = util / l.Venta, t = tramo(m);
             const com = util * t[2], div = util * t[3];
             const v = l.IdVendedor ? per(kId(l.IdVendedor), nom(l.IdVendedor)) : per('sinv', 'Sin vendedor asignado');
@@ -572,11 +668,11 @@
             if (pts) {
                 if (m > 0) {
                     (idDaniela ? per(kId(idDaniela[0]), idDaniela[1]) : per('daniela', 'Daniela Mendoza')).pts += pts * t[2];
-                    if (socios.length) socios.forEach(s => { per(s.id ? kId(s.id) : 'socio-' + s.nombre, s.id ? nom(s.id) : s.nombre).pts += pts * t[3] * s.p; }); else ptsNoRep += pts * t[3];
+                    v.pts += pts * t[3];   // la otra parte, al vendedor del artículo
                 } else ptsNoRep += pts;
             }
             if (l.comb) { const c = l.combDe; (c && c.IdVendedor ? per(kId(c.IdVendedor), nom(c.IdVendedor)) : per('comb', 'Combustible sin persona')).comb += l.comb; }
-            return { l, pts, costo, util, m, t, com, div };
+            return { l, pts, gas, costo, util, m, t, com, div };
         });
         repPersonas = [...P.values()].map(x => ({ ...x, tot: x.com + x.div + x.pts + x.comb })).sort((a, b) => b.tot - a.tot);
         const T = repPersonas.reduce((a, x) => { a.com += x.com; a.div += x.div; a.pts += x.pts; a.comb += x.comb; a.tot += x.tot; return a; }, { com: 0, div: 0, pts: 0, comb: 0, tot: 0 });
@@ -592,6 +688,7 @@
             <div class="kpi"><div class="kpi-tit">Puntos y combustible</div><div class="kpi-val">${L0(T.pts + T.comb)}</div><div class="kpi-pie">Puntos ${L0(T.pts)} · combustible ${L0(T.comb)}</div></div>
         </div>
         ${pend.length ? `<div class="nota"><b>${pl(pend.length, 'artículo con precio todavía no entra', 'artículos con precio todavía no entran')}</b> al reparto porque su envío aún no tiene orden de entrega pagada (venta ${L(pend.reduce((a, l) => a + l.Venta, 0))}).</div>` : ''}
+        ${(() => { const a = document.getElementById('desde').value.slice(0, 4), b = (document.getElementById('hasta').value || hoy()).slice(0, 4); const sa = GAS.sinAsignar.filter(g => g.Fecha.slice(0, 4) >= a && g.Fecha.slice(0, 4) <= b); return `<div class="nota">Los otros gastos se reparten entre las ventas de su mismo año y de su tienda (TODOS = todas). Del año en curso cambian a medida que se vende más.${sa.length ? ` <b>${pl(sa.length, 'gasto no tiene', 'gastos no tienen')} ventas de su tienda en ese año</b> (${L(sa.reduce((x, g) => x + num(g.Monto), 0))}) y no se restaron.` : ''}</div>`; })()}
         ${ptsNoRep > 0.004 || divSinSocio ? `<div class="nota">${ptsNoRep > 0.004 ? `Puntos sin repartir por falta de rentabilidad: <b>${L(ptsNoRep)}</b>. ` : ''}${divSinSocio ? `Dividendo sin socios registrados a esa fecha: <b>${L(divSinSocio)}</b>.` : ''}</div>` : ''}
         <div class="card">
             <div class="card-cab"><div><div class="card-tit">Cuánto gana cada persona</div><div class="card-sub">Comisión como vendedor, dividendo como socio, puntos y combustible del período</div></div><button class="btn" onclick="exportarReparto()">Exportar CSV</button></div>
@@ -612,9 +709,9 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-cab"><div><div class="card-tit">Detalle por artículo</div><div class="card-sub">Costo = artículo + envío real + combustible + puntos</div></div></div>
-            <div class="tabla-wrap" style="max-height:520px;overflow-y:auto">${filas.length ? `<table><thead><tr><th>Artículo</th><th>Vendedor</th><th class="num">Venta</th><th class="num">Costo</th><th class="num">Puntos</th><th class="num">Utilidad</th><th class="num">Rentab.</th><th class="num">Comisión</th><th class="num">Dividendo</th></tr></thead><tbody>
-            ${filas.sort((a, b) => b.l.Fecha.localeCompare(a.l.Fecha)).slice(0, 400).map(f => `<tr><td>${esc(f.l.NombreArticulo || '—')}<div class="meta">${esc([f.l.NumeroPedido, fFecha(f.l.Fecha), f.l.Cliente].filter(Boolean).join(' · '))}</div></td><td>${esc(f.l.Vendedor || 'Sin vendedor')}</td><td class="num">${L(f.l.Venta)}</td><td class="num">${L(f.costo)}</td>${td(f.pts)}<td class="num ${clsU(f.util)}">${L(f.util)}</td><td class="num">${pc(f.m)}<div class="meta">${pc(f.t[2])} / ${pc(f.t[3])}</div></td>${td(f.com)}${td(f.div)}</tr>`).join('')}
+            <div class="card-cab"><div><div class="card-tit">Detalle por artículo</div><div class="card-sub">Costo = artículo + envío real + combustible + puntos + otros gastos</div></div></div>
+            <div class="tabla-wrap" style="max-height:520px;overflow-y:auto">${filas.length ? `<table><thead><tr><th>Artículo</th><th>Vendedor</th><th class="num">Venta</th><th class="num">Costo</th><th class="num">Puntos</th><th class="num">Gastos</th><th class="num">Utilidad</th><th class="num">Rentab.</th><th class="num">Comisión</th><th class="num">Dividendo</th></tr></thead><tbody>
+            ${filas.sort((a, b) => b.l.Fecha.localeCompare(a.l.Fecha)).slice(0, 400).map(f => `<tr><td>${esc(f.l.NombreArticulo || '—')}<div class="meta">${esc([f.l.NumeroPedido, fFecha(f.l.Fecha), f.l.Cliente].filter(Boolean).join(' · '))}</div></td><td>${esc(f.l.Vendedor || 'Sin vendedor')}</td><td class="num">${L(f.l.Venta)}</td><td class="num">${L(f.costo)}</td>${td(f.pts)}${td(f.gas)}<td class="num ${clsU(f.util)}">${L(f.util)}</td><td class="num">${pc(f.m)}<div class="meta">${pc(f.t[2])} / ${pc(f.t[3])}</div></td>${td(f.com)}${td(f.div)}</tr>`).join('')}
             </tbody></table>` : '<div class="vacio">Sin artículos</div>'}</div>
         </div>`;
     }
@@ -627,7 +724,9 @@
 
     // ── CAPITAL Y BANCOS ──
     let bancosCache = {};
+    let edCap = null;
     async function pCapital() {
+        const k0 = edCap || {};
         const cap = D.capital.filter(c => enPeriodo(c.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const socios = new Map();
         D.capital.forEach(c => { const k = c.Socio || 'Sin socio'; if (!socios.has(k)) socios.set(k, { total: 0, per: 0, n: 0, ult: '' }); const s = socios.get(k); s.total += num(c.Valor); s.n++; if (enPeriodo(c.Fecha)) s.per += num(c.Valor); if (c.Fecha > s.ult) s.ult = c.Fecha; });
@@ -635,6 +734,19 @@
         const movs = D.movimientos.filter(m => enPeriodo(m.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const v = document.getElementById('v-capital');
         v.innerHTML = `
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Aportes de capital</div><div class="card-sub">Cada aporte cambia la participación de los socios desde su fecha</div></div>
+                <button class="btn prim" onclick="edCap = {}; pCapital()">+ Registrar aporte</button></div>
+            ${edCap ? `<div class="form">
+                <label>Fecha<input class="inp" type="date" id="k-fecha" value="${esc(k0.Fecha || hoy())}"></label>
+                <label>Socio<select class="inp" id="k-socio">${opts(D.vendedores, 'IdVendedor', x => x.Nombre, k0.IdVendedor, 'Elegí el socio')}</select></label>
+                <label>Monto (L)<input class="inp" type="number" min="0" step="0.01" id="k-monto" value="${k0.Valor != null ? num(k0.Valor) : ''}"></label>
+                <label>Cuenta<select class="inp" id="k-cuenta">${opts(D.cuentas, 'IdCuentaBanco', nomCuenta, (D.cuentas.find(x => x.NombreCuenta === k0.Cuenta) || {}).IdCuentaBanco, 'Elegí la cuenta')}</select></label>
+                <label>Método<select class="inp" id="k-metodo">${opts(D.metodos || [], 'IdMetodoPago', x => x.Metodo, (( D.metodos || []).find(x => x.Metodo === k0.Metodo) || {}).IdMetodoPago, 'Sin método')}</select></label>
+                <label>Referencia<input class="inp" id="k-ref" maxlength="50" value="${esc(k0.Referencia || '')}"></label>
+                <div class="acciones"><button class="btn ok" onclick="guardarAporte()">${k0.IdCapital ? 'Guardar cambios' : 'Guardar'}</button><button class="btn" onclick="edCap = null; pCapital()">Cancelar</button></div>
+            </div>` : ''}
+        </div>
         <div class="grid2">
             <div class="card">
                 <div class="card-cab"><div><div class="card-tit">Aportes de capital por socio</div><div class="card-sub">Total histórico y lo aportado en el período</div></div></div>
@@ -650,8 +762,8 @@
         <div class="grid2">
             <div class="card">
                 <div class="card-cab"><div><div class="card-tit">Aportes del período</div></div></div>
-                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${cap.length ? `<table><thead><tr><th>Fecha</th><th>Socio</th><th>Cuenta</th><th class="num">Monto</th></tr></thead><tbody>
-                ${cap.map(c => `<tr><td>${fFecha(c.Fecha)}</td><td>${esc(c.Socio || '—')}<div class="meta">${esc([c.Metodo, c.Referencia].filter(Boolean).join(' · '))}</div></td><td>${esc(c.Cuenta || '—')}</td><td class="num">${L(num(c.Valor))}</td></tr>`).join('')}
+                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${cap.length ? `<table><thead><tr><th>Fecha</th><th>Socio</th><th>Cuenta</th><th class="num">Monto</th><th></th></tr></thead><tbody>
+                ${cap.map(c => `<tr><td>${fFecha(c.Fecha)}</td><td>${esc(c.Socio || '—')}<div class="meta">${esc([c.Metodo, c.Referencia].filter(Boolean).join(' · '))}</div></td><td>${esc(c.Cuenta || '—')}</td><td class="num">${L(num(c.Valor))}</td><td><button class="lnk" onclick="edCap = { ...D.capital.find(x => x.IdCapital === ${c.IdCapital}) }; pCapital(); scrollTo({ top: 0, behavior: 'smooth' })">Editar</button></td></tr>`).join('')}
                 </tbody></table>` : '<div class="vacio">Sin aportes en el período</div>'}</div>
             </div>
             <div class="card">
@@ -677,6 +789,13 @@
             ${per.data.map(x => { const sal = num((hm.get(x.IdCuentaBanco) || {}).Saldo); return `<tr><td>${esc(x.NombreCuenta || '—')}<div class="meta">${esc([x.Banco, x.NumeroCuenta].filter(Boolean).join(' · '))}</div></td><td class="num pos">${L(num(x.TotalIngresos))}</td><td class="num neg">${L(num(x.TotalEgresos))}</td><td class="num ${clsU(sal)}">${L(sal)}</td></tr>`; }).join('')}
             </tbody><tfoot><tr><td>Total</td><td class="num">${L(t.i)}</td><td class="num">${L(t.e)}</td><td class="num">${L(t.s)}</td></tr></tfoot></table>`;
         } catch (e) { const el = document.getElementById('bancos'); if (el) el.innerHTML = `<div class="vacio">No se pudo cargar: ${esc(e.message)}</div>`; }
+    }
+
+    async function guardarAporte() {
+        const v = id => document.getElementById(id).value;
+        const cuerpo = { id: edCap && edCap.IdCapital, fecha: v('k-fecha'), idSocio: v('k-socio'), valor: v('k-monto'), idCuenta: v('k-cuenta'), idMetodo: v('k-metodo'), referencia: v('k-ref') };
+        try { await enviar('/api/finanzas/capital', 'POST', cuerpo); aviso(cuerpo.id ? 'Aporte actualizado' : 'Aporte registrado'); edCap = null; await recargar(); }
+        catch (e) { aviso('No se pudo guardar: ' + e.message, true); }
     }
 
     // ══════════ Eventos ══════════
