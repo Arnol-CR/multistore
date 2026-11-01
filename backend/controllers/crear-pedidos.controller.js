@@ -350,4 +350,24 @@ const cambiarArticuloCatalogo = async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
-module.exports = { cambiarArticuloCatalogo, cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };
+// Cambiar el peso (por unidad, en gramos) de una línea; devuelve el sugerido recalculado
+const cambiarPeso = async (req, res) => {
+  try {
+    const id = parseInt(req.body.idDetallePedido), peso = parseFloat(req.body.peso);
+    if (!id || !(peso >= 0) || peso > 100000) return res.status(400).json({ ok: false, error: 'Peso no válido' });
+    const pool = await poolPromise;
+    const r = await pool.request().input('Id', sql.Int, id).input('Peso', sql.Decimal(18, 2), peso).query(`
+      UPDATE C_DetallePedido SET Peso = @Peso WHERE IdDetallePedido = @Id;
+      SELECT D.Peso, D.PesoTotal,
+             (D.TotalCompraLempiras + ((D.PesoTotal / 454.0) * CA.PrecioLibra)) / 0.80 AS PrecioSugerido
+      FROM C_DetallePedido D
+      JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
+      LEFT JOIN A_Casilleros CA ON P.IdCasillero = CA.IdEmpresa
+      WHERE D.IdDetallePedido = @Id;`);
+    const x = r.recordset[0];
+    if (!x) return res.status(404).json({ ok: false, error: 'No encontré el artículo' });
+    res.json({ ok: true, peso: x.Peso, pesoTotal: x.PesoTotal, precioSugerido: x.PrecioSugerido });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+};
+
+module.exports = { cambiarPeso, cambiarArticuloCatalogo, cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };

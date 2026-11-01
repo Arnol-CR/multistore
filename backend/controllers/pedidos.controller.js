@@ -49,7 +49,7 @@ const getCostos = async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT D.IdDetallePedido, D.ValorCompra, D.CantidadArticulos, D.Link, P.TasaCambio
+      SELECT D.IdDetallePedido, D.ValorCompra, D.CantidadArticulos, D.Link, P.TasaCambio, D.Peso
       FROM C_DetallePedido D
       JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
       WHERE ISNULL(D.EstaEntregado, 0) = 0`);

@@ -93,10 +93,12 @@
         .precio.cambio { border-color:#b45309; color:#fbbf24; background:#1a1205; }
         .estado { width:26px; text-align:center; font-weight:800; }
         .grupo table { table-layout:fixed; }
-        .grupo th:nth-child(1) { width:62px; } .grupo th:nth-child(3) { width:190px; } .grupo th:nth-child(4) { width:90px; }
-        .grupo th:nth-child(5) { width:100px; } .grupo th:nth-child(6) { width:140px; } .grupo th:nth-child(7) { width:34px; }
+        /* anchos por columna (no por posición): Artículo se queda con el resto */
+        .grupo th.c-foto { width:62px; } .grupo th.col-pedido { width:160px; } .grupo th.col-vend { width:150px; }
+        .grupo th.col-costo { width:90px; } .grupo th.col-peso { width:100px; } .grupo th.c-sug { width:105px; }
+        .grupo th.c-precio { width:150px; } .grupo th.c-est { width:34px; }
         .art, .meta { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        @media (max-width:900px) { .grupo th:nth-child(6) { width:100px; } .grupo th:nth-child(5) { width:70px; } }
+        @media (max-width:900px) { .grupo th.c-precio { width:110px; } .grupo th.c-sug { width:75px; } }
         .cli-in { display:flex; align-items:center; gap:6px; margin-top:6px; max-width:420px; }
         .cli-in .lbl { font-size:10.5px; color:#f87171; font-weight:700; white-space:nowrap; display:flex; align-items:center; gap:4px; }
         .cli-in input { flex:1; min-width:0; padding:6px 9px !important; font-size:12px !important; border-color:#7f1d1d !important; }
@@ -117,6 +119,11 @@
         .cu { display:block; font-size:10.5px; color:#6b7280; margin-top:3px; text-align:right; white-space:nowrap; }
         .vend { display:inline-block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(96,165,250,.1); border:1px solid rgba(96,165,250,.3); color:#93c5fd; vertical-align:middle; }
         .vend.sin { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.3); color:#fca5a5; }
+        .peso-in { width:70px; background:transparent; border:1px solid transparent; border-radius:6px; color:#cbd5e1; font:600 12.5px inherit; font-family:inherit; text-align:right; padding:4px 6px; outline:none; -moz-appearance:textfield; }
+        .peso-in::-webkit-outer-spin-button, .peso-in::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .peso-in:hover { border-color:#1e2530; }
+        .peso-in:focus { border-color:#3b82f6; background:#0d1117; }
+        .peso-tot { display:block; font-size:10.5px; color:#6b7280; margin-top:2px; white-space:nowrap; }
         .antes { display:block; font-size:10px; color:#7c3aed; margin-top:3px; text-align:right; }
         .asig-todos { display:flex; align-items:center; gap:6px; }
         .asig-todos input { width:230px; padding:7px 10px !important; font-size:12px !important; }
@@ -149,7 +156,7 @@
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
         @media (max-width:900px) {
             .stats { grid-template-columns:1fr 1fr; }
-            .col-pedido, .col-costo, .col-vend { display:none; }
+            .col-pedido, .col-costo, .col-vend, .col-peso { display:none; }
             .content { padding:12px 10px 120px; }
             td, th { padding:7px 6px; }
             .precio { width:86px; }
@@ -269,7 +276,7 @@
                 fetch('/api/pedidos/costos').then(r => r.json()).catch(() => ({}))
             ]);
             datos = d.ok ? d.data : [];
-            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; } }); }
+            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; p.Peso = x.Peso; } }); }
         } catch (e) { datos = []; toast('err', 'No se pudieron cargar los artículos'); }
         opcionesFiltros();
         const qp = new URLSearchParams(location.search).get('pedido');
@@ -401,6 +408,7 @@
             <td class="col-pedido" style="font-size:11px;white-space:nowrap">${esc(p.NoPedidoAplicacion || p.NumeroPedido || '')}<div class="meta">${fecha(p.FechaPedido)} · ${esc(p.NombreEmpresa || '')}</div></td>
             <td class="col-vend">${p.IdVendedor ? `<span class="vend" title="${esc(p.NombreVendedor || '')}${p.CodigoVendedor ? ' · ' + esc(p.CodigoVendedor) : ''}">${esc(nomCorto(p.NombreVendedor) || p.CodigoVendedor || 'Asignado')}</span>` : '<span class="vend sin">Sin vendedor</span>'}</td>
             <td class="num col-costo">${costo}</td>
+            <td class="num col-peso"><input class="peso-in" type="number" min="0" step="1" inputmode="numeric" data-peso="${id}" value="${p.Peso != null ? parseFloat(p.Peso) : ''}" placeholder="—" title="Peso por unidad en gramos. Enter para guardar" onchange="guardarPeso(${id}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"><span style="color:#6b7280;font-size:11px">g</span>${cant > 1 && p.Peso ? `<span class="peso-tot">× ${cant} = ${(parseFloat(p.Peso) * cant).toLocaleString('es-HN')} g</span>` : ''}</td>
             <td class="num">${sug ? `<span class="sug" title="Usar sugerido${cant > 1 ? ' (total de la línea)' : ''}" onclick="ponerSugerido(${id}, ${sug})">L ${sug}</span>${cant > 1 ? `<span class="sub-num">${Lc(sug / cant)} c/u</span>` : ''}` : '<span style="color:#374151">—</span>'}</td>
             <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>${cant > 1 ? `<span class="cu">${textoCU(p, p.ValorCobroCliente)}</span>` : ''}`
                 : `<input class="inp precio ${cambiado ? (parseFloat(p.ValorCobroCliente) > 0 ? 'correccion' : 'cambio') : (val ? 'tiene' : '')}" type="number" min="0" step="5" inputmode="decimal"
@@ -411,7 +419,7 @@
     }
 
     function cabeceraTabla() {
-        return `<thead><tr><th></th><th>Artículo</th><th class="col-pedido">Pedido</th><th class="col-vend">Vendedor</th><th class="num col-costo">Costo</th><th class="num">Sugerido</th><th class="num">Precio (L)</th><th></th></tr></thead>`;
+        return `<thead><tr><th class="c-foto"></th><th>Artículo</th><th class="col-pedido">Pedido</th><th class="col-vend">Vendedor</th><th class="num col-costo">Costo</th><th class="num col-peso" title="Peso por unidad">Peso</th><th class="num c-sug">Sugerido</th><th class="num c-precio">Precio (L)</th><th class="c-est"></th></tr></thead>`;
     }
 
     function render() {
@@ -563,6 +571,23 @@
             const todos = [...document.querySelectorAll('.precio')];
             const ant = todos[todos.indexOf(el) - 1]; if (ant) ant.focus();
         }
+    }
+
+    // Peso por unidad (g): se guarda al salir de la casilla y recalcula el sugerido
+    async function guardarPeso(id, inp) {
+        const p = datos.find(x => x.IdDetallePedido === id); if (!p) return;
+        const v = inp.value.trim() === '' ? null : parseFloat(inp.value);
+        if (v === null || !(v >= 0)) { inp.value = p.Peso != null ? parseFloat(p.Peso) : ''; return; }
+        if (p.Peso != null && Math.abs(v - parseFloat(p.Peso)) < 0.005) return;
+        try {
+            const d = await fetch('/api/crear-pedidos/peso', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idDetallePedido: id, peso: v }) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error);
+            const antes = red5(p.PrecioSugerido);
+            p.Peso = d.peso; if (d.precioSugerido != null) p.PrecioSugerido = d.precioSugerido;
+            render();
+            const ahora = red5(p.PrecioSugerido);
+            toast('ok', `Peso guardado: ${parseFloat(d.peso)} g por unidad` + (antes !== ahora ? ` · sugerido L ${antes} → L ${ahora}` : ''));
+        } catch (e) { inp.value = p.Peso != null ? parseFloat(p.Peso) : ''; toast('err', 'No se pudo guardar el peso: ' + e.message); }
     }
 
     function ponerSugerido(id, sug) {
