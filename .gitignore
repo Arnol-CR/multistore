@@ -2,3 +2,7 @@ node_modules/
 .env
 *.log
 .azure/
+
+# Revisiones de base de datos (no subir)
+backend/db/esquema.sql
+backend/db/revision-cantidades.json

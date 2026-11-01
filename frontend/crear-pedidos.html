@@ -395,16 +395,17 @@
                         <input class="form-input" id="a-talla" type="text" placeholder="M / Rojo">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Peso (g)</label>
+                        <label class="form-label">Peso por unidad (g)</label>
                         <input class="form-input" id="a-peso" type="number" step="0.01" min="0" placeholder="0.00">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Precio U. ($)</label>
-                        <input class="form-input" id="a-precio" type="number" step="0.01" min="0" placeholder="0.00">
+                        <label class="form-label">Precio por unidad ($)</label>
+                        <input class="form-input" id="a-precio" type="number" step="0.01" min="0" placeholder="0.00" oninput="totalForm()">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Cantidad</label>
-                        <input class="form-input" id="a-cantidad" type="number" min="1" value="1">
+                        <input class="form-input" id="a-cantidad" type="number" min="1" value="1" oninput="totalForm()">
+                        <div id="a-total" style="font-size:11px;color:#6b7280;margin-top:4px;min-height:14px"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Link (opcional)</label>
@@ -461,9 +462,9 @@
                             <tr>
                                 <th>#</th><th>SKU</th><th>Artículo</th><th>N° Tienda</th>
                                 <th>Talla</th>
-                                <th style="text-align:right">Peso</th>
+                                <th style="text-align:right">Peso c/u</th>
                                 <th style="text-align:right">Cant.</th>
-                                <th style="text-align:right">Precio</th>
+                                <th style="text-align:right">Precio c/u</th>
                                 <th style="text-align:right">Total</th>
                                 <th><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></th><th></th>
                             </tr>
@@ -744,12 +745,18 @@
     }
 
     function actualizarTotales(data) {
-        const peso   = data.reduce((a, x) => a + parseFloat(x.Peso||0), 0);
+        const peso   = data.reduce((a, x) => a + parseFloat(x.Peso||0) * parseInt(x.CantidadArticulos||1), 0);   // peso por unidad × cantidad
         const arts   = data.reduce((a, x) => a + parseInt(x.CantidadArticulos||1), 0);
         const precio = data.reduce((a, x) => a + parseFloat(x.ValorCompra||0) * parseInt(x.CantidadArticulos||1), 0);
         document.getElementById('tot-peso').textContent  = peso.toFixed(0) + ' g';
         document.getElementById('tot-arts').textContent  = arts;
         document.getElementById('tot-precio').textContent = '$' + precio.toFixed(2);
+    }
+
+    // Total de la línea mientras se escribe (precio por unidad × cantidad)
+    function totalForm() {
+        const pr = parseFloat(document.getElementById('a-precio').value) || 0, c = parseInt(document.getElementById('a-cantidad').value) || 1;
+        document.getElementById('a-total').textContent = c > 1 && pr ? `Total de la línea: $${(pr * c).toFixed(2)}` : '';
     }
 
     // ── BUSCADOR ARTÍCULO ──
@@ -903,7 +910,7 @@
         document.getElementById('a-talla').value        = a.TallaColor || '';
         document.getElementById('a-peso').value         = a.Peso || '';
         document.getElementById('a-precio').value       = a.ValorCompra || '';
-        document.getElementById('a-cantidad').value     = a.CantidadArticulos || 1;
+        document.getElementById('a-cantidad').value     = a.CantidadArticulos || 1; totalForm();
         document.getElementById('a-link').value         = a.Link || '';
         // Mostrar foto existente en el preview, si hay
         fotoBase64 = null; fotoMime = null;
@@ -936,7 +943,7 @@
         });
         const artK = keep.length && todosArticulos.find(x => x.IdArticulo == document.getElementById('a-articulo-id').value);
         if (artK && artK.PesoArticulo) document.getElementById('a-peso').value = artK.PesoArticulo;
-        document.getElementById('a-cantidad').value = '1';
+        document.getElementById('a-cantidad').value = '1'; totalForm();
         document.getElementById('foto-preview').style.display = 'none';
         document.getElementById('foto-ph').style.display = 'block';
         document.getElementById('foto-input').value = '';
@@ -1512,7 +1519,7 @@
                     <div class="imp-card">
                         <h4><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg> Desde Excel</h4>
                         Copia las filas con estas columnas, en este orden:<br>
-                        <span class="imp-cols">SKU · Talla/Color · Precio · Cantidad · Peso · Descripción · Link</span><br>
+                        <span class="imp-cols">SKU · Talla/Color · Precio c/u · Cantidad · Peso c/u · Descripción · Link</span><br>
                         <span style="font-size:11px;color:#4b5563">Solo el SKU es obligatorio.</span>
                     </div>
                 </div>
@@ -1582,8 +1589,8 @@
                 <table class="tbl imp-tbl">
                     <thead><tr>
                         <th style="width:52px"></th><th>Producto</th><th style="width:170px">Artículo del catálogo *</th><th style="width:170px">Cliente</th>
-                        <th style="text-align:right;width:60px">Cant.</th><th style="text-align:right;width:80px">Precio</th>
-                        <th style="text-align:right;width:70px">Peso</th><th style="text-align:right;width:90px">Subtotal</th><th style="width:44px"></th>
+                        <th style="text-align:right;width:60px">Cant.</th><th style="text-align:right;width:80px">Precio c/u</th>
+                        <th style="text-align:right;width:70px">Peso c/u</th><th style="text-align:right;width:90px">Subtotal</th><th style="width:44px"></th>
                     </tr></thead>
                     <tbody id="pv-tbody"></tbody>
                 </table>

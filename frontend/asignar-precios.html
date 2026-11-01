@@ -112,6 +112,9 @@
         .precio-bloq { display:inline-flex; align-items:center; justify-content:flex-end; gap:6px; width:110px; padding:8px 10px; border:1px dashed #1e2530; border-radius:8px; color:#4ade80; font-weight:800; font-size:14px; cursor:not-allowed; }
         .precio-bloq svg { color:#4b5563; flex-shrink:0; }
         .precio.correccion { border-color:#7c3aed; color:#c4b5fd; background:#140d24; }
+        .cant-tag { display:inline-block; margin-left:7px; padding:1px 8px; border-radius:999px; background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#fbbf24; font-size:11px; font-weight:800; vertical-align:1px; }
+        .sub-num { display:block; font-size:10.5px; color:#6b7280; font-weight:500; margin-top:3px; white-space:nowrap; }
+        .cu { display:block; font-size:10.5px; color:#6b7280; margin-top:3px; text-align:right; white-space:nowrap; }
         .antes { display:block; font-size:10px; color:#7c3aed; margin-top:3px; text-align:right; }
         .asig-todos { display:flex; align-items:center; gap:6px; }
         .asig-todos input { width:230px; padding:7px 10px !important; font-size:12px !important; }
@@ -344,8 +347,13 @@
 
     function verArt(id) { const a = datos.find(x => x.IdDetallePedido === id); if (a) verArticuloModal(a); }
 
+    const cantDe = p => Math.max(1, parseInt(p.CantidadArticulos) || 1);
+    const Lc = v => 'L ' + (Math.abs(v - Math.round(v)) < 0.005 ? Math.round(v).toLocaleString('es-HN') : v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    function textoCU(p, v) { const c = cantDe(p), n = parseFloat(v); return c > 1 && n > 0 ? `${c} × ${Lc(n / c)} c/u` : ''; }
+
     function fila(p) {
         const id = p.IdDetallePedido;
+        const cant = cantDe(p);
         const val = precioActual(p);
         const sug = red5(p.PrecioSugerido);
         const cambiado = cambios.has(id);
@@ -353,11 +361,11 @@
         const icono = st === 'ok' ? '<span style="color:#4ade80" title="Guardado"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg></span>'
                     : st.startsWith('err') ? `<span style="color:#f87171" title="${esc(st.substring(4))}"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>`
                     : cambiado ? '<span style="color:#fbbf24" title="Sin guardar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></span>' : '';
-        const costo = p.ValorCompra != null ? `$${Number(p.ValorCompra).toFixed(2)}` : '—';
+        const costo = p.ValorCompra != null ? (cant > 1 ? `$${(Number(p.ValorCompra) * cant).toFixed(2)}<span class="sub-num">$${Number(p.ValorCompra).toFixed(2)} c/u</span>` : `$${Number(p.ValorCompra).toFixed(2)}`) : '—';
         return `<tr class="${cambiado ? 'dirty' : ''}">
             <td style="width:54px">${p.Fotografia ? `<img class="foto" src="${esc(p.Fotografia)}" loading="lazy" onclick="verArt(${id})" title="Ver artículo" onerror="this.style.visibility='hidden'">` : `<div class="foto" onclick="verArt(${id})" title="Ver artículo"></div>`}</td>
             <td>
-                <div class="art"><button class="btn-ver" type="button" onclick="verArt(${id})" title="Ver artículo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>${esc(p.NombreArticulo || '—')}${p.TallaColor ? ` <span style="color:#6b7280;font-weight:400">· ${esc(p.TallaColor)}</span>` : ''}</div>
+                <div class="art"><button class="btn-ver" type="button" onclick="verArt(${id})" title="Ver artículo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>${esc(p.NombreArticulo || '—')}${cant > 1 ? `<span class="cant-tag" title="Cantidad pedida">×${cant}</span>` : ''}${p.TallaColor ? ` <span style="color:#6b7280;font-weight:400">· ${esc(p.TallaColor)}</span>` : ''}</div>
                 <div class="meta">${p.DescripcionArticulo ? esc(String(p.DescripcionArticulo).substring(0, 70)) + ' · ' : ''}<code>${esc(p.CodigoArticulo || '')}</code></div>
                 ${p.IdCliente && !editCli.has(id) ? `<div class="cli-act">${document.getElementById('f-agrupar').checked ? '' : `<span style="color:#93c5fd">${esc(p.NombreCliente || '')}</span>`}<button class="lnk" type="button" onclick="editarCli([${id}])">Cambiar cliente</button></div>` : p.IdCliente ? `
                 <div class="cli-in editar">
@@ -374,11 +382,11 @@
             </td>
             <td class="col-pedido" style="font-size:11px;white-space:nowrap">${esc(p.NoPedidoAplicacion || p.NumeroPedido || '')}<div class="meta">${fecha(p.FechaPedido)} · ${esc(p.NombreEmpresa || '')}</div></td>
             <td class="num col-costo">${costo}</td>
-            <td class="num">${sug ? `<span class="sug" title="Usar sugerido" onclick="ponerSugerido(${id}, ${sug})">L ${sug}</span>` : '<span style="color:#374151">—</span>'}</td>
-            <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>`
+            <td class="num">${sug ? `<span class="sug" title="Usar sugerido${cant > 1 ? ' (total de la línea)' : ''}" onclick="ponerSugerido(${id}, ${sug})">L ${sug}</span>${cant > 1 ? `<span class="sub-num">${Lc(sug / cant)} c/u</span>` : ''}` : '<span style="color:#374151">—</span>'}</td>
+            <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>${cant > 1 ? `<span class="cu">${textoCU(p, p.ValorCobroCliente)}</span>` : ''}`
                 : `<input class="inp precio ${cambiado ? (parseFloat(p.ValorCobroCliente) > 0 ? 'correccion' : 'cambio') : (val ? 'tiene' : '')}" type="number" min="0" step="5" inputmode="decimal"
                    data-id="${id}" value="${val}" placeholder="0" oninput="escribir(${id}, this.value)" onkeydown="teclaPrecio(event, this)" onfocus="this.select()"
-                   title="${parseFloat(p.ValorCobroCliente) > 0 ? 'Precio guardado: L ' + esc(p.ValorCobroCliente) + '. Como administrador podés corregirlo.' : ''}">${cambiado && parseFloat(p.ValorCobroCliente) > 0 ? `<span class="antes">antes L ${esc(p.ValorCobroCliente)}</span>` : ''}`}</td>
+                   title="${parseFloat(p.ValorCobroCliente) > 0 ? 'Precio guardado: L ' + esc(p.ValorCobroCliente) + '. Como administrador podés corregirlo.' : ''}${cant > 1 ? (parseFloat(p.ValorCobroCliente) > 0 ? ' ' : '') + 'Escribí el total de las ' + cant + ' unidades.' : ''}">${cant > 1 ? `<span class="cu" data-cu="${id}">${textoCU(p, val) || 'Total de ' + cant + ' unidades'}</span>` : ''}${cambiado && parseFloat(p.ValorCobroCliente) > 0 ? `<span class="antes">antes L ${esc(p.ValorCobroCliente)}</span>` : ''}`}</td>
             <td class="estado">${icono}</td>
         </tr>`;
     }
@@ -517,6 +525,7 @@
         const inp = document.querySelector(`.precio[data-id="${id}"]`);
         const tr = inp.closest('tr');
         tr.classList.toggle('dirty', cambios.has(id));
+        const cu = tr.querySelector(`[data-cu="${id}"]`); if (cu) cu.textContent = textoCU(orig, v) || 'Total de ' + cantDe(orig) + ' unidades';
         inp.classList.toggle('cambio', cambios.has(id));
         tr.querySelector('.estado').innerHTML = cambios.has(id) ? '<span style="color:#fbbf24" title="Sin guardar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></span>' : '';
         actualizarBarra(true);
