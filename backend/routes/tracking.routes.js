@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+    getDetalleArticulo,
     // Pestaña 1
     getArticulosSinSeguimiento,
     crearSeguimiento,
@@ -34,6 +35,7 @@ router.post('/entrada-casillero', registrarEntradaCasillero);
 /* PESTAÑA 3 — Orden de pago de casillero (multi-tracking) */
 router.get('/entradas-casillero', getEntradasCasillero);
 router.get('/articulos/:idSeguimiento', getArticulosPorSeguimiento);
+router.get('/detalle-articulo/:id', getDetalleArticulo);
 router.get('/cuentas', getCuentasBanco);
 router.post('/ordenes-entrega', crearOrdenEntrega);
 router.put('/ordenes-entrega/asignar', asignarOrdenAEntradas);

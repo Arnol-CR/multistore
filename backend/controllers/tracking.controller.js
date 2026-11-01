@@ -149,8 +149,13 @@ const getArticulosPorSeguimiento = async (req, res) => {
 
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('IdSeguimiento', sql.Int, idSeguimiento)
-            .execute('Se_Pedidos_Seguimiento');
+            .input('IdSeguimiento', sql.Int, parseInt(idSeguimiento))
+            .query(`SELECT CT.IdDetallePedido, CT.NombreCliente, CT.NombreArticulo, CT.TallaColor, CT.DescripcionArticulo,
+                           V.CodigoVendedor, CT.CantidadArticulos
+                    FROM ListadoPedidoCostoTodos CT
+                    LEFT JOIN A_Vendedores V ON CT.IdVendedor = V.IdVendedor
+                    WHERE CT.IdSeguimiento = @IdSeguimiento
+                    ORDER BY CT.NombreCliente, CT.IdDetallePedido`);
 
         res.json({ ok: true, data: result.recordset });
     } catch (err) {
@@ -280,7 +285,36 @@ const marcarEntregado = async (req, res) => {
     }
 };
 
+// Datos completos de un artículo para la ventana "Ver artículo"
+const getDetalleArticulo = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!id) return res.status(400).json({ ok: false, error: 'Falta el artículo' });
+        const pool = await poolPromise;
+        const r = await pool.request().input('Id', sql.Int, id).query(`
+            SELECT D.IdDetallePedido, RTRIM(P.NumeroPedido) AS NumeroPedido, P.FechaPedido, P.TasaCambio,
+                   A.NombreArticulo, D.DescripcionArticulo, D.TallaColor, D.CodigoArticulo, D.Fotografia, D.Link,
+                   D.NoPedidoAplicacion, E.NombreEmpresa, D.ValorCompra, D.CantidadArticulos, D.ValorCobroCliente,
+                   D.IdCliente, ISNULL(C.Nombre + ' ' + C.Apellido, 'Sin cliente') AS NombreCliente,
+                   D.IdVendedor, V.Nombres + ' ' + V.Apellidos AS NombreVendedor, V.CodigoVendedor,
+                   D.IdSeguimiento, S.Seguimiento, D.Peso, ISNULL(D.EstaEntregado, 0) AS EstaEntregado
+            FROM C_DetallePedido D
+            JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
+            LEFT JOIN A_Articulos A ON A.IdArticulo = D.IdArticulo
+            LEFT JOIN A_Empresas E ON E.IdEmpresa = P.IdEmpresa
+            LEFT JOIN C_Clientes C ON C.IdCliente = D.IdCliente
+            LEFT JOIN A_Vendedores V ON V.IdVendedor = D.IdVendedor
+            LEFT JOIN C_Seguimientos S ON S.IdSeguimiento = D.IdSeguimiento
+            WHERE D.IdDetallePedido = @Id`);
+        if (!r.recordset.length) return res.status(404).json({ ok: false, error: 'No encontré el artículo' });
+        res.json({ ok: true, data: r.recordset[0] });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 module.exports = {
+    getDetalleArticulo,
     // Pestaña 1
     getArticulosSinSeguimiento,
     crearSeguimiento,
