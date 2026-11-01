@@ -11,92 +11,35 @@
 
   const links = [
     {
-      label: 'Principal',
+      label: '',
       items: [
-        {
-          href: '/dashboard.html',
-          texto: 'Inicio',
-          solo: false,
-          badge: null,
-          svg: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'
-        },
-        {
-          href: '/pedidos.html',
-          texto: 'Pedidos',
-          solo: false,
-          badge: { id: 'badge-pedidos', cls: '' },
-          svg: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>'
-        },
-        {
-          href: '/crear-pedidos.html',
-          texto: 'Crear Pedido',
-          solo: false,
-          badge: null,
-          svg: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'
-        },
-        {
-          href: '/listado-pedidos.html',
-          texto: 'Listado Pedidos',
-          solo: true,
-          badge: null,
-          svg: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>'
-        },
-        {
-          href: '/tracking.html',
-          texto: 'Tracking',
-          solo: false,
-          badge: null,
-          svg: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'
-        },
-        {
-          href: '/cotizaciones.html',
-          texto: 'Cotización',
-          solo: false,
-          badge: null,
-          svg: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>'
-        },
-        {
-          href: '/asignar-precios.html',
-          texto: 'Mis Precios',
-          solo: false,
-          badge: null,
-          svg: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'
-        },
-        {
-          href: '/asignar-vendedor.html',
-          texto: 'Asignar Vendedor',
-          solo: true,
-          badge: null,
-          svg: '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>'
-        },
-        {
-          href: '/clientes.html',
-          texto: 'Clientes',
-          solo: false,
-          badge: null,
-          svg: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>'
-        },
-        {
-          href: '/pagos.html',
-          texto: 'Pagos Clientes',
-          solo: true,
-          badge: null,
-          svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>'
-        },
-        {
-            href: '/cuentas.html',
-            texto: 'Estado Cuentas',
-            solo: false,
-            badge: null,
-            svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>'
-        },
-        {
-            href: '/catalogo.html',
-            texto: 'Catálogo',
-            solo: false,
-            badge: null,
-            svg: '<path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>'
-        }
+        { href: '/dashboard.html', texto: 'Inicio', solo: false, badge: null, svg: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' }
+      ]
+    },
+    {
+      label: 'Compras',
+      items: [
+        { href: '/crear-pedidos.html', texto: 'Nuevo pedido', solo: false, badge: null, svg: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>' },
+        { href: '/pedidos.html', texto: 'Pedidos', solo: false, badge: { id: 'badge-pedidos', cls: '' }, svg: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>' },
+        { href: '/listado-pedidos.html', texto: 'Administrar pedidos', solo: true, badge: null, svg: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>' },
+        { href: '/tracking.html', texto: 'Envíos y casillero', solo: false, badge: null, svg: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>' }
+      ]
+    },
+    {
+      label: 'Ventas',
+      items: [
+        { href: '/cotizaciones.html', texto: 'Cotizaciones', solo: false, badge: null, svg: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>' },
+        { href: '/asignar-precios.html', texto: 'Precios de venta', solo: false, badge: null, svg: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>' },
+        { href: '/clientes.html', texto: 'Clientes', solo: false, badge: null, svg: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>' },
+        { href: '/pagos.html', texto: 'Cobros a clientes', solo: true, badge: null, svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>' }
+      ]
+    },
+    {
+      label: 'Administración',
+      items: [
+        { href: '/asignar-vendedor.html', texto: 'Asignar vendedores', solo: true, badge: null, svg: '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>' },
+        { href: '/catalogo.html', texto: 'Catálogo de artículos', solo: false, badge: null, svg: '<path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>' },
+        { href: '/cuentas.html', texto: 'Cuentas bancarias', solo: false, badge: null, svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>' }
       ]
     }
   ];
@@ -112,7 +55,9 @@
     let navHtml = '';
     links.forEach(grupo => {
       if (grupo.soloGrupo && !esAdmin) return;
-      navHtml += `<div class="nav-label${grupo.soloGrupo ? ' solo-admin' : ''}">${grupo.label}</div>`;
+      const visibles = grupo.items.filter(it => !it.solo || esAdmin);
+      if (!visibles.length) return;
+      if (grupo.label) navHtml += `<div class="nav-label${grupo.soloGrupo ? ' solo-admin' : ''}">${grupo.label}</div>`;
       grupo.items.forEach(item => {
         if (item.solo && !esAdmin) return;
         const activo = pagina === item.href.replace('/', '') ? ' active' : '';

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MultiStore — Mis Precios</title>
+    <title>MultiStore — Precios de venta</title>
     <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -95,6 +95,22 @@
         .grupo th:nth-child(5) { width:100px; } .grupo th:nth-child(6) { width:140px; } .grupo th:nth-child(7) { width:34px; }
         .art, .meta { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         @media (max-width:900px) { .grupo th:nth-child(6) { width:100px; } .grupo th:nth-child(5) { width:70px; } }
+        .cli-in { display:flex; align-items:center; gap:6px; margin-top:6px; max-width:420px; }
+        .cli-in .lbl { font-size:10.5px; color:#f87171; font-weight:700; white-space:nowrap; display:flex; align-items:center; gap:4px; }
+        .cli-in input { flex:1; min-width:0; padding:6px 9px !important; font-size:12px !important; border-color:#7f1d1d !important; }
+        .btn-nuevo { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:transparent; border:1px solid #14532d; color:#4ade80; border-radius:6px; padding:5px 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-nuevo:hover { background:#052e16; }
+        .asig-todos { display:flex; align-items:center; gap:6px; }
+        .asig-todos input { width:230px; padding:7px 10px !important; font-size:12px !important; }
+        .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:16px; }
+        .modal-bg.open { display:flex; }
+        .modal { background:#0d1017; border:1px solid #1e2530; border-radius:14px; width:100%; max-width:520px; }
+        .modal-h { padding:16px 20px; border-bottom:1px solid #1e2530; display:flex; justify-content:space-between; align-items:center; font-weight:800; }
+        .modal-b { padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .modal-b .full { grid-column:1 / -1; }
+        .modal-f { padding:14px 20px; border-top:1px solid #1e2530; display:flex; justify-content:flex-end; gap:8px; }
+        .fl { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; font-weight:700; display:block; margin-bottom:5px; }
+        .x { background:none; border:none; color:#4b5563; font-size:22px; cursor:pointer; }
         .vacio { text-align:center; padding:60px 20px; color:#374151; font-size:14px; }
         .vacio b { display:block; font-size:34px; margin-bottom:8px; }
 
@@ -133,7 +149,7 @@
             <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
         </button>
         <div>
-            <div class="topbar-title">Mis Precios</div>
+            <div class="topbar-title">Precios de venta</div>
             <div class="topbar-sub">Pon el precio de venta (L) a cada artículo · Enter pasa al siguiente</div>
         </div>
     </div>
@@ -153,6 +169,7 @@
             <label class="chk"><input type="checkbox" id="f-agrupar" checked onchange="render()"> Agrupar por cliente</label>
             <label class="chk" id="wrap-mios" style="display:none"><input type="checkbox" id="f-mios" onchange="render()"> Solo mis artículos</label>
             <button class="btn btn-amber btn-sm" onclick="usarSugeridoTodos()" title="Pone el precio sugerido en todas las casillas vacías visibles"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Sugerido en vacíos</button>
+            <button class="btn-nuevo" style="padding:8px 12px" onclick="abrirNuevoCliente([])"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo cliente</button>
             <button class="btn btn-ghost btn-sm" onclick="cargar()" title="Actualizar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         </div>
 
@@ -165,6 +182,25 @@
     <button class="btn btn-ghost" onclick="descartar()">Descartar</button>
     <button class="btn btn-green" id="btn-guardar" onclick="guardar()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Guardar</button>
 </div>
+<datalist id="dl-cli"></datalist>
+<div class="modal-bg" id="m-cli">
+    <div class="modal">
+        <div class="modal-h"><span style="display:flex;align-items:center;gap:8px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Nuevo cliente</span><button class="x" onclick="cerrarNuevoCliente()">×</button></div>
+        <div class="modal-b">
+            <div><label class="fl">Nombre *</label><input class="inp" id="nc-nombre" style="width:100%"></div>
+            <div><label class="fl">Apellido *</label><input class="inp" id="nc-apellido" style="width:100%"></div>
+            <div><label class="fl">Teléfono</label><input class="inp" id="nc-tel" maxlength="8" placeholder="8 dígitos" style="width:100%"></div>
+            <div><label class="fl">Correo</label><input class="inp" id="nc-correo" type="email" style="width:100%"></div>
+            <div class="full"><label class="fl">Dirección</label><input class="inp" id="nc-dir" style="width:100%"></div>
+            <div class="full" id="nc-vend-wrap"><label class="fl">Vendedor *</label><select class="inp" id="nc-vend" style="width:100%"></select></div>
+            <div class="full" id="nc-para" style="font-size:11.5px;color:#6b7280"></div>
+        </div>
+        <div class="modal-f">
+            <button class="btn btn-ghost" onclick="cerrarNuevoCliente()">Cancelar</button>
+            <button class="btn btn-green" id="nc-btn" onclick="crearCliente()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Crear cliente</button>
+        </div>
+    </div>
+</div>
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom" onclick="this.style.display='none'"><img id="zoom-img"></div>
 
@@ -174,6 +210,7 @@
     if (usuario && usuario.esAdmin) document.getElementById('wrap-mios').style.display = 'flex';
 
     let datos = [];             // artículos del servidor
+    let clientes = [], vendedores = [];
     const cambios = new Map();  // IdDetallePedido -> precio escrito (número o '')
     const estados = new Map();  // IdDetallePedido -> 'ok' | 'err:mensaje'
 
@@ -189,7 +226,23 @@
         clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 3500);
     }
 
+    async function cargarClientes() {
+        try {
+            const d = await fetch('/api/clientes/todos').then(r => r.json());
+            clientes = d.ok ? d.data : [];
+            // Un vendedor solo ve y asigna sus propios clientes
+            if (!usuario.esAdmin) clientes = clientes.filter(c => c.IdVendedor === usuario.id);
+        } catch (e) { clientes = []; }
+        document.getElementById('dl-cli').innerHTML = clientes.map(c => `<option value="${esc(etiqCli(c))}">`).join('');
+    }
+    const etiqCli = c => (c.NombreCompleto || '').trim() + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : '');
+    function clientePorTexto(t) {
+        const n = norm(t).trim(); if (!n) return null;
+        return clientes.find(c => norm(etiqCli(c)) === n) || clientes.find(c => norm(c.NombreCompleto).trim() === n) || clientes.find(c => c.CodigoCliente && norm(c.CodigoCliente) === n) || null;
+    }
+
     async function cargar() {
+        if (!clientes.length) cargarClientes();
         try {
             const d = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`).then(r => r.json());
             datos = d.ok ? d.data : [];
@@ -239,6 +292,12 @@
             <td>
                 <div class="art">${esc(p.NombreArticulo || '—')}${p.TallaColor ? ` <span style="color:#6b7280;font-weight:400">· ${esc(p.TallaColor)}</span>` : ''}</div>
                 <div class="meta">${p.DescripcionArticulo ? esc(String(p.DescripcionArticulo).substring(0, 70)) + ' · ' : ''}<code>${esc(p.CodigoArticulo || '')}</code></div>
+                ${p.IdCliente ? (document.getElementById('f-agrupar').checked ? '' : `<div class="meta" style="color:#93c5fd">${esc(p.NombreCliente || '')}</div>`) : `
+                <div class="cli-in">
+                    <span class="lbl"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Sin cliente</span>
+                    <input class="inp" list="dl-cli" placeholder="Buscar cliente…" autocomplete="off" onchange="asignarDesdeTexto([${id}], this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                    <button class="btn-nuevo" type="button" onclick="abrirNuevoCliente([${id}])"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo</button>
+                </div>`}
             </td>
             <td class="col-pedido" style="font-size:11px;white-space:nowrap">${esc(p.NoPedidoAplicacion || p.NumeroPedido || '')}<div class="meta">${fecha(p.FechaPedido)} · ${esc(p.NombreEmpresa || '')}</div></td>
             <td class="num col-costo">${costo}</td>
@@ -290,6 +349,8 @@
                             <div class="grupo-nom">${esc(nom)}</div>
                             <div class="grupo-sub">${items.length} artículo${items.length === 1 ? '' : 's'}${faltan ? ` · <span style="color:#f87171">${faltan} sin precio</span>` : ' · <span style="color:#4ade80">todos con precio</span>'}${items[0].NombreVendedor && k ? ' · ' + esc(items[0].NombreVendedor) : ''}</div>
                         </div>
+                        ${k ? '' : `<div class="asig-todos"><input class="inp" list="dl-cli" placeholder="Asignar todos a un cliente…" autocomplete="off"
+                              onchange="asignarDesdeTexto(filtrados().filter(p => !p.IdCliente).map(p => p.IdDetallePedido), this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>`}
                         ${faltan ? `<button class="btn btn-amber btn-sm" onclick="usarSugeridoGrupo(${k})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Sugerido en vacíos</button>` : ''}
                         <div class="grupo-tot"><div class="l">Total</div><div class="v">${L(total)}</div></div>
                     </div>
@@ -298,6 +359,70 @@
             }).join('');
         }
         actualizarBarra();
+    }
+
+    /* ── Clientes: asignar y crear ── */
+    async function asignarCliente(ids, c) {
+        if (!c) return false;
+        ids = ids.filter(id => { const p = datos.find(x => x.IdDetallePedido === id); return p && p.IdCliente !== c.IdCliente; });   // evita repetir
+        if (!ids.length) return false;
+        try {
+            const d = ids.length === 1
+                ? await fetch('/api/clientes/asignar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idCliente: c.IdCliente, idDetallePedido: ids[0] }) }).then(r => r.json())
+                : await fetch('/api/clientes/asignar-multiple', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idCliente: c.IdCliente, idDetalles: ids.join(',') }) }).then(r => r.json());
+            if (!d.ok) { toast('err', 'Error: ' + d.error); return false; }
+            datos.forEach(p => { if (ids.includes(p.IdDetallePedido)) { p.IdCliente = c.IdCliente; p.NombreCliente = c.NombreCompleto; } });
+            render();
+            toast('ok', `Cliente ${c.NombreCompleto} asignado a ${ids.length} artículo${ids.length === 1 ? '' : 's'}`);
+            return true;
+        } catch (e) { toast('err', 'Error de conexión'); return false; }
+    }
+    function asignarDesdeTexto(ids, input) {
+        const t = input.value.trim(); if (!t) return;
+        const c = clientePorTexto(t);
+        if (!c) { abrirNuevoCliente(ids, t); return; }
+        asignarCliente(ids, c);
+    }
+    let ncIds = [];
+    async function abrirNuevoCliente(ids, texto) {
+        ncIds = ids || [];
+        const partes = (texto || '').replace(/\s*\([^)]*\)$/, '').trim().split(/\s+/);
+        document.getElementById('nc-nombre').value = partes.length > 1 ? partes.slice(0, Math.ceil(partes.length / 2)).join(' ') : (partes[0] || '');
+        document.getElementById('nc-apellido').value = partes.length > 1 ? partes.slice(Math.ceil(partes.length / 2)).join(' ') : '';
+        ['nc-tel', 'nc-correo', 'nc-dir'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('nc-para').textContent = ncIds.length ? `Se asignará a ${ncIds.length} artículo${ncIds.length === 1 ? '' : 's'} al crearlo.` : '';
+        const sel = document.getElementById('nc-vend');
+        if (usuario.esAdmin) {
+            if (!vendedores.length) { try { const d = await fetch('/api/vendedores').then(r => r.json()); vendedores = d.ok ? d.data : []; } catch (e) {} }
+            sel.innerHTML = vendedores.map(v => `<option value="${v.IdVendedor}">${esc(`${v.Nombres} ${v.Apellidos || ''}`.trim())} (${esc(v.CodigoVendedor || '')})</option>`).join('');
+            sel.value = usuario.id;
+            document.getElementById('nc-vend-wrap').style.display = '';
+        } else {
+            sel.innerHTML = `<option value="${usuario.id}">Yo</option>`;
+            document.getElementById('nc-vend-wrap').style.display = 'none';
+        }
+        document.getElementById('m-cli').classList.add('open');
+        setTimeout(() => document.getElementById(document.getElementById('nc-nombre').value ? 'nc-tel' : 'nc-nombre').focus(), 50);
+    }
+    function cerrarNuevoCliente() { document.getElementById('m-cli').classList.remove('open'); }
+    async function crearCliente() {
+        const g = id => document.getElementById(id).value.trim();
+        const nombre = g('nc-nombre'), apellido = g('nc-apellido'), tel = g('nc-tel'), idV = parseInt(document.getElementById('nc-vend').value);
+        if (!nombre || !apellido) { toast('err', 'Nombre y apellido son obligatorios'); return; }
+        if (tel && !/^\d{8}$/.test(tel)) { toast('err', 'El teléfono debe tener 8 dígitos'); return; }
+        const b = document.getElementById('nc-btn'); b.disabled = true;
+        try {
+            const d = await fetch('/api/clientes/nuevo', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ nombre, apellido, telefono: tel, correo: g('nc-correo'), direccion: g('nc-dir'), idVendedor: idV }) }).then(r => r.json());
+            if (!d.ok) { toast('err', 'Error: ' + d.error); return; }
+            await cargarClientes();
+            const completo = norm(nombre + ' ' + apellido).trim();
+            const nuevo = clientes.filter(c => norm(c.NombreCompleto).trim() === completo).sort((a, b) => b.IdCliente - a.IdCliente)[0];
+            cerrarNuevoCliente();
+            if (nuevo && ncIds.length) await asignarCliente(ncIds, nuevo);
+            else toast('ok', `Cliente ${nombre} ${apellido} creado`);
+        } catch (e) { toast('err', 'Error de conexión'); }
+        finally { b.disabled = false; }
     }
 
     function escribir(id, v) {
