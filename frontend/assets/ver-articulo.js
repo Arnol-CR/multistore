@@ -592,64 +592,71 @@
     btn.disabled = false; btn.innerHTML = txt;
   }
 
-  // ══════════ Listado de varios artículos (estilo cotización) ══════════
-  // Devuelve un canvas con: logo, para quién es, tabla numerada (foto, artículo,
-  // tienda / pedido / fecha, cantidad, precio) y total.
+  // ══════════ Listado de varios artículos (para vendedores) ══════════
+  // Imagen interna de MultiStore: tabla numerada con foto, artículo, descripción y talla,
+  // tienda / pedido / fecha, cantidad y precio de la app. Pie con "Generado por".
   window.generarTarjetasMultiples = async function (articulos) {
     if (!articulos || !articulos.length) throw new Error('No hay artículos');
     const F = "'Segoe UI', Arial, sans-serif";
-    const ROSA = '#E8327A', NAR = '#EF7A30', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
-    const W = 1080, M = 48, IN = W - 2 * M;
+    const AZUL = '#2563eb', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
+    const W = 1280, M = 48, IN = W - 2 * M;
     const ds = articulos.map(datos);
-    const clientes = [...new Set(articulos.map(a => (a.NombreCliente || '').trim()).filter(Boolean))];
-    const unCliente = clientes.length === 1 && articulos.every(a => (a.NombreCliente || '').trim() === clientes[0]);
-    const FILA = 116, CAB = 150, BLOQUE = 118, THEAD = 46, TOT = 120, PIE = 76;
+    const vend = a => (a.NombreVendedor || a.CodigoVendedor || '').trim();
+    const vends = [...new Set(articulos.map(vend))];
+    const sinVend = articulos.every(a => !a.IdVendedor && !vend(a));
+    const unVend = !sinVend && vends.length === 1;
+    let u = {}; try { u = JSON.parse(localStorage.getItem('ms_usuario') || '{}') || {}; } catch (e) {}
+    const autor = `${u.nombres || u.nombre || ''} ${u.apellidos || ''}`.trim() || 'MultiStore';
+    const FILA = 120, CAB = 140, BLOQUE = 112, THEAD = 46, TOT = 112, PIE = 64;
     const H = CAB + BLOQUE + THEAD + FILA * articulos.length + TOT + PIE;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
     ctx.textBaseline = 'top';
-    const g = ctx.createLinearGradient(0, 0, W, 0); g.addColorStop(0, ROSA); g.addColorStop(1, NAR);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 10);
+    ctx.fillStyle = AZUL; ctx.fillRect(0, 0, W, 8);
 
-    const [logo, ...fotos] = await Promise.all([cargarImg('/assets/shopaholic-logo.png'), ...articulos.map(a => cargarImg(a.Fotografia))]);
+    const [logo, ...fotos] = await Promise.all([cargarImg('/assets/Recurso 3.png'), ...articulos.map(a => cargarImg(a.Fotografia))]);
 
-    // Encabezado
-    let y = 40;
-    if (logo) { const lh = 72, lw = logo.width * lh / logo.height; ctx.drawImage(logo, M, y, lw, lh); }
-    else { ctx.fillStyle = ROSA; ctx.font = `800 40px ${F}`; ctx.fillText('ShopAholic', M, y + 14); }
+    // Encabezado: ícono pequeño + MultiStore
+    let y = 36;
+    let lx = M;
+    if (logo) { const lh = 52, lw = logo.width * lh / logo.height; ctx.drawImage(logo, M, y, lw, lh); lx = M + lw + 14; }
+    ctx.font = `800 34px ${F}`; ctx.fillStyle = TINTA; ctx.fillText('Multi', lx, y + 8);
+    ctx.fillStyle = AZUL; ctx.fillText('Store', lx + ctx.measureText('Multi').width, y + 8);
     ctx.textAlign = 'right';
-    ctx.fillStyle = ROSA; ctx.font = `700 28px ${F}`; ctx.fillText('DETALLE DE ARTÍCULOS', W - M, y + 6);
-    ctx.fillStyle = GRIS; ctx.font = `400 19px ${F}`;
-    ctx.fillText(new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }), W - M, y + 46);
+    ctx.fillStyle = TINTA; ctx.font = `700 26px ${F}`;
+    ctx.fillText(sinVend ? 'DETALLE DE ARTÍCULOS SIN VENDEDOR' : 'DETALLE DE ARTÍCULOS', W - M, y + 2);
+    ctx.fillStyle = GRIS; ctx.font = `400 18px ${F}`;
+    ctx.fillText(new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }), W - M, y + 40);
     ctx.textAlign = 'left';
-    y = CAB - 18;
-    ctx.fillStyle = ROSA; ctx.fillRect(M, y, IN, 3);
+    y = CAB - 20;
+    ctx.fillStyle = TINTA; ctx.fillRect(M, y, IN, 2);
 
-    // Para quién
-    y += 22;
+    // Bloque: vendedor
+    y += 20;
     const unidades = ds.reduce((s, d) => s + d.cant, 0);
-    ctx.fillStyle = '#fdf2f7'; rr(ctx, M, y, IN, 76, 8); ctx.fill();
-    ctx.fillStyle = ROSA; ctx.fillRect(M, y, 5, 76);
-    ctx.font = `700 15px ${F}`; ctx.fillStyle = ROSA; ctx.fillText(unCliente ? 'PEDIDO PARA' : 'ARTÍCULOS', M + 24, y + 13);
-    ctx.font = `700 26px ${F}`; ctx.fillStyle = TINTA;
-    ctx.fillText(lineas(ctx, unCliente ? clientes[0] : (clientes.length ? 'Varios clientes' : 'Sin cliente asignado'), IN - 330, 1)[0] || '', M + 24, y + 36);
+    ctx.fillStyle = '#f1f5f9'; rr(ctx, M, y, IN, 72, 8); ctx.fill();
+    ctx.fillStyle = sinVend ? '#dc2626' : AZUL; ctx.fillRect(M, y, 5, 72);
+    ctx.font = `700 14px ${F}`; ctx.fillStyle = sinVend ? '#dc2626' : AZUL; ctx.fillText('VENDEDOR', M + 24, y + 12);
+    ctx.font = `700 25px ${F}`; ctx.fillStyle = TINTA;
+    ctx.fillText(sinVend ? 'Sin vendedor asignado' : unVend ? vends[0] : 'Varios vendedores', M + 24, y + 34);
     ctx.textAlign = 'right'; ctx.font = `400 19px ${F}`; ctx.fillStyle = GRIS;
-    ctx.fillText(`${articulos.length} artículo${articulos.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}`, W - M - 20, y + 28);
+    ctx.fillText(`${articulos.length} artículo${articulos.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}`, W - M - 20, y + 26);
     ctx.textAlign = 'left';
     y = CAB + BLOQUE;
 
     // Columnas
-    const X = { n: M, foto: M + 46, art: M + 150, tienda: M + 540, cant: M + 770, precio: W - M };
+    const X = { n: M, foto: M + 46, art: M + 150, desc: M + 450, tienda: M + 790, cant: M + 990, precio: W - M };
+    const ancho = { art: X.desc - X.art - 20, desc: X.tienda - X.desc - 24, tienda: X.cant - X.tienda - 10 };
     ctx.font = `700 14px ${F}`; ctx.fillStyle = TINTA;
     ctx.textAlign = 'center'; ctx.fillText('#', X.n + 16, y + 14); ctx.fillText('CANT.', X.cant + 30, y + 14);
-    ctx.textAlign = 'left'; ctx.fillText('ARTÍCULO', X.art, y + 14); ctx.fillText('TIENDA / PEDIDO', X.tienda, y + 14);
-    ctx.textAlign = 'right'; ctx.fillText('PRECIO', X.precio, y + 14); ctx.textAlign = 'left';
+    ctx.textAlign = 'left'; ctx.fillText('ARTÍCULO', X.art, y + 14); ctx.fillText('DESCRIPCIÓN / TALLA', X.desc, y + 14); ctx.fillText('TIENDA / PEDIDO', X.tienda, y + 14);
+    ctx.textAlign = 'right'; ctx.fillText('PRECIO APP', X.precio, y + 14); ctx.textAlign = 'left';
     ctx.fillStyle = TINTA; ctx.fillRect(M, y + THEAD - 3, IN, 2);
     y += THEAD;
 
     // Filas
-    let total = 0, sinPrecio = 0;
+    let total = 0, sinCosto = 0;
     articulos.forEach((a, i) => {
       const d = ds[i], f = fotos[i], cy = y + FILA / 2;
       ctx.fillStyle = GRIS; ctx.font = `700 20px ${F}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -659,47 +666,69 @@
       ctx.save(); rr(ctx, fx, fy, fs, fs, 10); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.clip();
       if (f) { const s = Math.max(fs / f.width, fs / f.height); ctx.drawImage(f, fx + (fs - f.width * s) / 2, fy + (fs - f.height * s) / 2, f.width * s, f.height * s); }
       ctx.restore(); rr(ctx, fx, fy, fs, fs, 10); ctx.strokeStyle = LINEA; ctx.lineWidth = 1.5; ctx.stroke();
-      // artículo
       ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      const sub = [a.TallaColor, !unCliente && a.NombreCliente ? 'Para ' + a.NombreCliente : ''].filter(Boolean).join(' · ');
-      ctx.font = `700 22px ${F}`; const ln = lineas(ctx, a.NombreArticulo || 'Artículo', X.tienda - X.art - 20, sub ? 1 : 2);
-      const altoArt = ln.length * 28 + (sub ? 26 : 0);
-      let ty = cy - altoArt / 2;
+      // artículo (+ vendedor si hay varios)
+      const subArt = !sinVend && !unVend ? (vend(a) || 'Sin vendedor') : '';
+      ctx.font = `700 22px ${F}`; const ln = lineas(ctx, a.NombreArticulo || 'Artículo', ancho.art, 2);
+      let ty = cy - (ln.length * 28 + (subArt ? 24 : 0)) / 2;
       ctx.fillStyle = TINTA; ln.forEach(l => { ctx.fillText(l, X.art, ty); ty += 28; });
-      if (sub) { ctx.font = `400 18px ${F}`; ctx.fillStyle = GRIS; ctx.fillText(lineas(ctx, sub, X.tienda - X.art - 20, 1)[0] || '', X.art, ty + 2); }
+      if (subArt) { ctx.font = `600 16px ${F}`; ctx.fillStyle = vend(a) ? AZUL : '#dc2626'; ctx.fillText(lineas(ctx, subArt, ancho.art, 1)[0] || '', X.art, ty + 2); }
+      // descripción + talla
+      ctx.font = `400 17px ${F}`;
+      const dl = a.DescripcionArticulo ? lineas(ctx, a.DescripcionArticulo, ancho.desc, a.TallaColor ? 2 : 3) : [];
+      const altoD = dl.length * 22 + (a.TallaColor ? 32 : 0);
+      ty = cy - altoD / 2;
+      ctx.fillStyle = GRIS; dl.forEach(l => { ctx.fillText(l, X.desc, ty); ty += 22; });
+      if (a.TallaColor) {
+        ctx.font = `700 16px ${F}`; const t = lineas(ctx, a.TallaColor, ancho.desc - 24, 1)[0] || '';
+        const tw = ctx.measureText(t).width + 22;
+        rr(ctx, X.desc, ty + 4, tw, 26, 13); ctx.fillStyle = '#eff6ff'; ctx.fill(); ctx.strokeStyle = '#bfdbfe'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = '#1d4ed8'; ctx.fillText(t, X.desc + 11, ty + 9);
+      }
+      if (!dl.length && !a.TallaColor) { ctx.fillStyle = '#9ca3af'; ctx.font = `400 17px ${F}`; ctx.fillText('—', X.desc, cy - 10); }
       // tienda / pedido / fecha
-      ctx.font = `700 19px ${F}`; ctx.fillStyle = TINTA; ctx.fillText(lineas(ctx, d.tienda || '—', X.cant - X.tienda - 16, 1)[0] || '—', X.tienda, cy - 36);
-      ctx.font = `400 17px ${F}`; ctx.fillStyle = GRIS;
-      ctx.fillText(d.pedido ? 'N° ' + d.pedido : '', X.tienda, cy - 10);
+      ctx.font = `700 19px ${F}`; ctx.fillStyle = TINTA; ctx.fillText(lineas(ctx, d.tienda || '—', ancho.tienda, 1)[0] || '—', X.tienda, cy - 36);
+      ctx.font = `400 16px ${F}`; ctx.fillStyle = GRIS;
+      ctx.fillText(d.pedido ? lineas(ctx, 'N° ' + d.pedido, ancho.tienda, 1)[0] : '', X.tienda, cy - 10);
       ctx.fillText(fecha(a.FechaPedido), X.tienda, cy + 14);
       // cantidad
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 22px ${F}`; ctx.fillStyle = TINTA;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 22px ${F}`; ctx.fillStyle = d.cant > 1 ? '#b45309' : TINTA;
       ctx.fillText(String(d.cant), X.cant + 30, cy);
-      // precio
+      // precio de la app
       ctx.textAlign = 'right';
-      if (d.venta) { total += d.venta; ctx.font = `800 24px ${F}`; ctx.fillStyle = TINTA; ctx.fillText(fmtL(d.venta), X.precio, cy);
-        if (d.cant > 1) { ctx.font = `400 16px ${F}`; ctx.fillStyle = GRIS; ctx.fillText(fmtL(d.venta / d.cant) + ' c/u', X.precio, cy + 26); } }
-      else { sinPrecio++; ctx.font = `600 18px ${F}`; ctx.fillStyle = '#9ca3af'; ctx.fillText('Por confirmar', X.precio, cy); }
+      if (d.compra != null) {
+        const lt = d.compra * d.cant; total += lt;
+        ctx.font = `800 23px ${F}`; ctx.fillStyle = TINTA; ctx.fillText('$' + lt.toFixed(2), X.precio, cy);
+        if (d.cant > 1) { ctx.font = `400 15px ${F}`; ctx.fillStyle = GRIS; ctx.fillText('$' + d.compra.toFixed(2) + ' c/u', X.precio, cy + 25); }
+      } else { sinCosto++; ctx.font = `600 18px ${F}`; ctx.fillStyle = '#9ca3af'; ctx.fillText('—', X.precio, cy); }
       ctx.textAlign = 'left'; ctx.textBaseline = 'top';
       y += FILA;
       ctx.fillStyle = LINEA; ctx.fillRect(M, y - 1, IN, 1);
     });
 
     // Total
-    y += 22;
+    y += 20;
     const tw = 380, tx = W - M - tw;
-    ctx.fillStyle = TINTA; ctx.fillRect(tx, y, tw, 2); ctx.fillRect(tx, y + 74, tw, 2);
-    ctx.font = `700 20px ${F}`; ctx.fillText('TOTAL', tx + 6, y + 16);
+    ctx.fillStyle = TINTA; ctx.fillRect(tx, y, tw, 2); ctx.fillRect(tx, y + 70, tw, 2);
+    ctx.font = `700 19px ${F}`; ctx.fillText('TOTAL APP', tx + 6, y + 14);
     ctx.font = `400 15px ${F}`; ctx.fillStyle = GRIS;
-    ctx.fillText(sinPrecio ? `${sinPrecio} sin precio todavía` : `${unidades} unidad${unidades === 1 ? '' : 'es'}`, tx + 6, y + 44);
-    ctx.textAlign = 'right'; ctx.font = `800 34px ${F}`; ctx.fillStyle = ROSA; ctx.fillText(fmtL(total), W - M - 6, y + 20);
+    ctx.fillText(sinCosto ? `${sinCosto} sin precio registrado` : `${unidades} unidad${unidades === 1 ? '' : 'es'}`, tx + 6, y + 42);
+    ctx.textAlign = 'right'; ctx.font = `800 32px ${F}`; ctx.fillStyle = AZUL; ctx.fillText('$' + total.toFixed(2), W - M - 6, y + 18);
     ctx.textAlign = 'left';
 
-    // Pie
-    const gp = ctx.createLinearGradient(0, 0, W, 0); gp.addColorStop(0, ROSA); gp.addColorStop(1, NAR);
-    ctx.fillStyle = gp; ctx.fillRect(0, H - 56, W, 56);
-    ctx.fillStyle = '#ffffff'; ctx.font = `700 20px ${F}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('¡Gracias por comprar con nosotros!', W / 2, H - 28);
+    // Pie: generado por
+    ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, H - PIE, W, PIE);
+    ctx.fillStyle = LINEA; ctx.fillRect(0, H - PIE, W, 1);
+    let px = M;
+    if (logo) { const lh = 28, lw = logo.width * lh / logo.height; ctx.drawImage(logo, M, H - PIE / 2 - lh / 2, lw, lh); px = M + lw + 10; }
+    ctx.textBaseline = 'middle'; ctx.font = `400 17px ${F}`; ctx.fillStyle = GRIS;
+    const hora = new Date().toLocaleString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    ctx.fillText('Generado por ', px, H - PIE / 2);
+    let w1 = ctx.measureText('Generado por ').width;
+    ctx.font = `700 17px ${F}`; ctx.fillStyle = TINTA; ctx.fillText(autor, px + w1, H - PIE / 2);
+    w1 += ctx.measureText(autor).width;
+    ctx.font = `400 17px ${F}`; ctx.fillStyle = GRIS; ctx.fillText(' en MultiStore', px + w1, H - PIE / 2);
+    ctx.textAlign = 'right'; ctx.fillText(hora, W - M, H - PIE / 2);
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
     return c;
   };
