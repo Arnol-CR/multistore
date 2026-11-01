@@ -131,15 +131,23 @@
     if (d.ok && d.data && d.data.foto) return d.data.foto;
     throw new Error(d.bloqueado ? 'la tienda no dejó leer la página. Copiá la imagen (clic derecho → Copiar imagen) y pegala con Ctrl+V' : (d.error || 'no encontré la foto en esa página'));
   }
+  // Texto copiado por el marcador: MULTISTORE_IMPORT{...}
+  function leerMarcador(t) {
+    t = String(t || '');
+    const i = t.indexOf('MULTISTORE_IMPORT'); if (i < 0) return null;
+    const a = t.indexOf('{', i), b = t.lastIndexOf('}'); if (a < 0 || b < a) return null;
+    try { return JSON.parse(t.slice(a, b + 1)); } catch (e) { return null; }
+  }
+  const abs = u => { u = String(u || '').trim(); if (u.indexOf('//') === 0) u = 'https:' + u; return /^https?:/i.test(u) ? u : ''; };
   function fotoDeMarcador(t) {
-    if (!/^MULTISTORE_IMPORT\s*\{/.test(t || '')) return '';
-    try {
-      const d = JSON.parse(t.replace(/^MULTISTORE_IMPORT\s*/, ''));
-      const it = (d.items || []).find(x => x.foto);
-      let f = it ? it.foto : '';
-      if (f.indexOf('//') === 0) f = 'https:' + f;
-      return /^https?:/i.test(f) ? f : '';
-    } catch (e) { return ''; }
+    const d = leerMarcador(t); if (!d) return '';
+    const it = (d.items || []).find(x => abs(x.foto));
+    return it ? abs(it.foto) : '';
+  }
+  function linkDeMarcador(t) {
+    const d = leerMarcador(t); if (!d) return '';
+    const it = (d.items || []).find(x => abs(x.link));
+    return it ? abs(it.link) : '';
   }
   window.fotoDeMarcadorMS = fotoDeMarcador;
   window.fotoDesdeLinkMS = async u => esImagen(u) ? u : await fotoDesdePagina(u);
@@ -183,6 +191,11 @@
     const usarLink = async (v) => {
       v = (typeof v === 'string' ? v : fondo.querySelector('.va-url').value).trim();
       const fmk = fotoDeMarcador(v); if (fmk) { guardarFoto(a, { url: fmk }); return; }
+      if (leerMarcador(v)) {   // el marcador no trajo la foto: buscarla en la página del producto
+        const lk = linkDeMarcador(v);
+        if (!lk) { toast('El texto copiado no trae foto ni link del producto. Copialo de nuevo desde la página del producto.', true); return; }
+        v = lk;
+      }
       if (!/^https?:\/\/\S+$/i.test(v)) { toast('Pegá un link válido (https://…)', true); return; }
       if (esImagen(v)) { guardarFoto(a, { url: v }); return; }
       const f = fondo.querySelector('.va-foto'); f.classList.add('va-sub'); toast('Buscando la foto en la página…');
@@ -196,6 +209,7 @@
       const txt = (e.clipboardData?.getData('text') || '').trim();
       const fm = fotoDeMarcador(txt);
       if (fm) { e.preventDefault(); guardarFoto(a, { url: fm }); return; }
+      if (leerMarcador(txt)) { e.preventDefault(); usarLink(txt); return; }
       if (/^https?:\/\/\S+$/i.test(txt)) { e.preventDefault(); usarLink(txt); }
     };
     fondo._usarLink = usarLink;
