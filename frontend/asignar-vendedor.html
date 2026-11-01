@@ -129,6 +129,7 @@
         .vend-cod { font-size:11px; color:#6b7280; }
         .vend-n { margin-left:auto; font-size:11px; font-weight:700; color:#c084fc; background:#1f1025; border:1px solid #3b1f5e; border-radius:99px; padding:2px 8px; }
         .items { background:#0d1017; border:1px solid #1e2530; border-radius:12px; overflow:hidden; }
+        .foto-g { width:68px !important; height:68px !important; border-radius:8px !important; }
         .chk-row { width:17px; height:17px; accent-color:#c084fc; cursor:pointer; }
         tr.sel td { background:#160d1f !important; }
         .pill { font-size:10.5px; padding:2px 8px; border-radius:99px; font-weight:700; white-space:nowrap; }
@@ -180,9 +181,9 @@
                     <table>
                         <thead><tr>
                             <th style="width:36px"><input type="checkbox" class="chk-row" id="chk-todos" title="Marcar todos los visibles" onchange="marcarTodos(this.checked)"></th>
-                            <th style="width:54px"></th><th>Artículo</th><th class="col-pedido">Pedido</th><th>Cliente</th><th>Vendedor</th>
+                            <th style="width:84px"></th><th>Artículo</th><th>Talla / color</th><th class="num">Precio app</th><th class="col-pedido">Pedido</th><th>Vendedor</th>
                         </tr></thead>
-                        <tbody id="tbody"><tr><td colspan="6" class="vacio">Cargando…</td></tr></tbody>
+                        <tbody id="tbody"><tr><td colspan="7" class="vacio">Cargando…</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -220,11 +221,14 @@
 
     async function cargar() {
         try {
-            const [p, v] = await Promise.all([
+            const [p, v, c] = await Promise.all([
                 fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=1`).then(r => r.json()),
-                fetch('/api/vendedores').then(r => r.json())
+                fetch('/api/vendedores').then(r => r.json()),
+                fetch('/api/pedidos/costos').then(r => r.json()).catch(() => ({}))
             ]);
             datos = p.ok ? p.data : []; vendedores = v.ok ? v.data : [];
+            // precio de la app (precio de compra) y cantidad de cada artículo
+            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(d => { const x = m.get(d.IdDetallePedido); if (x) { d.ValorCompra = x.ValorCompra; d.CantidadArticulos = x.CantidadArticulos; } }); }
         } catch (e) { toast('err', 'No se pudieron cargar los datos'); }
         // pedidos para el filtro
         const sel = document.getElementById('f-pedido'), actual = sel.value;
@@ -277,14 +281,15 @@
             const m = marcados.has(p.IdDetallePedido);
             return `<tr class="${m ? 'sel' : ''}" onclick="if(event.target.tagName!=='INPUT' && event.target.tagName!=='IMG') toggle(${p.IdDetallePedido})" style="cursor:pointer">
                 <td><input type="checkbox" class="chk-row" ${m ? 'checked' : ''} onchange="toggle(${p.IdDetallePedido})"></td>
-                <td>${p.Fotografia ? `<img class="foto" src="${esc(p.Fotografia)}" loading="lazy" onclick="verFoto(this.src)" onerror="this.style.visibility='hidden'">` : '<div class="foto"></div>'}</td>
-                <td><div class="art">${esc(p.NombreArticulo || '—')}${p.TallaColor ? ` <span style="color:#6b7280;font-weight:400">· ${esc(p.TallaColor)}</span>` : ''}</div>
-                    <div class="meta">${p.DescripcionArticulo ? esc(String(p.DescripcionArticulo).substring(0, 70)) : ''}</div></td>
+                <td>${p.Fotografia ? `<img class="foto foto-g" src="${esc(p.Fotografia)}" loading="lazy" onclick="verFoto(this.src)" onerror="this.style.visibility='hidden'">` : '<div class="foto foto-g"></div>'}</td>
+                <td><div class="art">${esc(p.NombreArticulo || '—')}</div>
+                    <div class="meta">${p.DescripcionArticulo ? esc(String(p.DescripcionArticulo).substring(0, 80)) : ''}</div></td>
+                <td style="font-size:12.5px;color:#d1d5db">${p.TallaColor ? esc(p.TallaColor) : '<span style="color:#374151">—</span>'}</td>
+                <td class="num" style="font-weight:700;color:#e2e8f0;white-space:nowrap">${p.ValorCompra != null ? ((p.CantidadArticulos || 1) > 1 ? `<span style="color:#6b7280;font-weight:400">${p.CantidadArticulos} × </span>` : '') + '$' + Number(p.ValorCompra).toFixed(2) : '<span style="color:#374151">—</span>'}</td>
                 <td class="col-pedido" style="font-size:11px;white-space:nowrap">${esc(p.NoPedidoAplicacion || p.NumeroPedido || '')}<div class="meta">${fecha(p.FechaPedido)} · ${esc(p.NombreEmpresa || '')}</div></td>
-                <td style="font-size:12px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${esc(p.NombreCliente || 'Sin cliente')}</td>
                 <td>${p.IdVendedor ? `<span class="pill con">${esc(p.CodigoVendedor || p.NombreVendedor || 'Asignado')}</span>` : '<span class="pill sin">Sin vendedor</span>'}</td>
             </tr>`;
-        }).join('') : `<tr><td colspan="6" class="vacio"><b></b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</td></tr>`;
+        }).join('') : `<tr><td colspan="7" class="vacio"><b></b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</td></tr>`;
         const chk = document.getElementById('chk-todos');
         const n = lista.filter(p => marcados.has(p.IdDetallePedido)).length;
         chk.checked = lista.length > 0 && n === lista.length; chk.indeterminate = n > 0 && n < lista.length;

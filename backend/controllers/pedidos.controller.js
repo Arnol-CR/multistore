@@ -44,4 +44,17 @@ const getTodosPedidos = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { getDashboardStats, getPedidosRecientes, getPedidos, getTodosPedidos };
+// Precio de compra (precio de la app) y cantidad de los artículos aún no entregados
+const getCostos = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT D.IdDetallePedido, D.ValorCompra, D.CantidadArticulos, D.Link, P.TasaCambio
+      FROM C_DetallePedido D
+      JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
+      WHERE ISNULL(D.EstaEntregado, 0) = 0`);
+    res.json({ ok: true, data: result.recordset });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+module.exports = { getDashboardStats, getPedidosRecientes, getPedidos, getTodosPedidos, getCostos };

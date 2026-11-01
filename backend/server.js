@@ -33,6 +33,7 @@ app.use('/api/crear-pedidos', crearPedidosRoutes);
 app.use('/api/listado-pedidos', listadoPedidosRoutes);
 app.use('/api/catalogo', catalogoRoutes);
 app.use('/api/cotizaciones', cotizacionesRoutes);
+app.use('/api/inicio', require('./routes/inicio.routes'));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/login.html'));

@@ -1,10 +1,12 @@
 const express = require('express');
 const router  = express.Router();
-const { buscarClientes, asignarCliente, asignarClienteMultiple, asignarPrecio, desbloquearPrecio, getTodosClientes, getHistorialCliente, crearCliente } = require('../controllers/clientes.controller');
+const { buscarClientes, asignarCliente, asignarClienteMultiple, quitarCliente, getBitacora, asignarPrecio, desbloquearPrecio, getTodosClientes, getHistorialCliente, crearCliente } = require('../controllers/clientes.controller');
 
 router.get('/buscar',            buscarClientes);
 router.post('/asignar',          asignarCliente);
 router.post('/asignar-multiple', asignarClienteMultiple);
+router.post('/quitar',           quitarCliente);
+router.get('/bitacora',          getBitacora);
 router.post('/precio',           asignarPrecio);
 router.post('/desbloquear-precio', desbloquearPrecio);
 router.get('/todos',             getTodosClientes);

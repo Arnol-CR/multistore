@@ -80,7 +80,9 @@
         tr:hover td { background:#0a0f18; }
         tr.dirty td { background:#151005; }
         .num { text-align:right; white-space:nowrap; }
-        .foto { width:42px; height:42px; border-radius:6px; object-fit:cover; background:#13181f; display:block; cursor:zoom-in; }
+        .btn-ver { background:#13181f; border:1px solid #1e2530; color:#9ca3af; border-radius:6px; width:24px; height:22px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; margin-right:7px; vertical-align:-5px; padding:0; }
+        .btn-ver:hover { color:#f9a8d4; border-color:#5b1d3a; }
+        .foto { width:42px; height:42px; border-radius:6px; object-fit:cover; background:#13181f; display:block; cursor:pointer; }
         .art { font-weight:600; color:#d1d5db; font-size:12.5px; }
         .meta { font-size:10.5px; color:#6b7280; margin-top:2px; }
         .meta code { font-family:monospace; color:#4b5563; }
@@ -100,6 +102,17 @@
         .cli-in input { flex:1; min-width:0; padding:6px 9px !important; font-size:12px !important; border-color:#7f1d1d !important; }
         .btn-nuevo { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:transparent; border:1px solid #14532d; color:#4ade80; border-radius:6px; padding:5px 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
         .btn-nuevo:hover { background:#052e16; }
+        .cli-act { display:flex; align-items:center; gap:8px; margin-top:3px; font-size:10.5px; }
+        .lnk { background:none; border:none; color:#6b7280; font-size:10.5px; cursor:pointer; padding:0; font-family:inherit; text-decoration:underline; text-underline-offset:2px; }
+        .lnk:hover { color:#f9a8d4; }
+        .cli-in.editar input { border-color:#1e3a5f !important; }
+        .cli-in.editar .lbl { color:#60a5fa; }
+        .btn-quitar { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:transparent; border:1px solid #7f1d1d; color:#f87171; border-radius:6px; padding:5px 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-quitar:hover { background:#1f0707; }
+        .precio-bloq { display:inline-flex; align-items:center; justify-content:flex-end; gap:6px; width:110px; padding:8px 10px; border:1px dashed #1e2530; border-radius:8px; color:#4ade80; font-weight:800; font-size:14px; cursor:not-allowed; }
+        .precio-bloq svg { color:#4b5563; flex-shrink:0; }
+        .precio.correccion { border-color:#7c3aed; color:#c4b5fd; background:#140d24; }
+        .antes { display:block; font-size:10px; color:#7c3aed; margin-top:3px; text-align:right; }
         .asig-todos { display:flex; align-items:center; gap:6px; }
         .asig-todos input { width:230px; padding:7px 10px !important; font-size:12px !important; }
         .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:16px; }
@@ -150,7 +163,7 @@
         </button>
         <div>
             <div class="topbar-title">Precios de venta</div>
-            <div class="topbar-sub">Pon el precio de venta (L) a cada artículo · Enter pasa al siguiente</div>
+            <div class="topbar-sub" id="sub-precios">Pon el precio de venta (L) a cada artículo · Enter pasa al siguiente</div>
         </div>
     </div>
 
@@ -208,6 +221,7 @@
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
     if (usuario && usuario.esAdmin) document.getElementById('wrap-mios').style.display = 'flex';
+    if (usuario && !usuario.esAdmin) document.getElementById('sub-precios').textContent += ' · Un precio ya guardado solo lo cambia el administrador';
 
     let datos = [];             // artículos del servidor
     let clientes = [], vendedores = [];
@@ -244,8 +258,12 @@
     async function cargar() {
         if (!clientes.length) cargarClientes();
         try {
-            const d = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`).then(r => r.json());
+            const [d, c] = await Promise.all([
+                fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`).then(r => r.json()),
+                fetch('/api/pedidos/costos').then(r => r.json()).catch(() => ({}))
+            ]);
             datos = d.ok ? d.data : [];
+            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; } }); }
         } catch (e) { datos = []; toast('err', 'No se pudieron cargar los artículos'); }
         const sel = document.getElementById('f-pedido'), actual = sel.value;
         const peds = [...new Set(datos.map(p => p.NoPedidoAplicacion || p.NumeroPedido).filter(Boolean))];
@@ -255,6 +273,25 @@
         }).join('');
         sel.value = peds.includes(actual) ? actual : '';
         render();
+    }
+
+    // Un precio ya guardado solo lo cambia el administrador
+    const editCli = new Set(), editGrupo = new Set();
+    function bloqueado(p) { return !usuario.esAdmin && parseFloat(p.ValorCobroCliente) > 0; }
+    function editarCli(ids) { ids.forEach(i => editCli.add(i)); render(); setTimeout(() => { const el = document.querySelector('.cli-in.editar input'); if (el) el.focus(); }, 30); }
+    function cancelarCli(ids) { ids.forEach(i => editCli.delete(i)); render(); }
+    async function quitarCliente(ids) {
+        ids = ids.filter(id => { const p = datos.find(x => x.IdDetallePedido === id); return p && p.IdCliente; });
+        if (!ids.length) return;
+        if (!confirm(ids.length === 1 ? '¿Dejar este artículo sin cliente?' : `¿Dejar estos ${ids.length} artículos sin cliente?`)) return;
+        try {
+            const d = await fetch('/api/clientes/quitar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids, idUsuario: usuario.id }) }).then(r => r.json());
+            if (!d.ok) { toast('err', 'Error: ' + d.error); return; }
+            datos.forEach(p => { if (ids.includes(p.IdDetallePedido)) { p.IdCliente = null; p.NombreCliente = null; } });
+            ids.forEach(i => editCli.delete(i)); editGrupo.clear();
+            render();
+            toast('ok', ids.length === 1 ? 'El artículo quedó sin cliente' : `${ids.length} artículos quedaron sin cliente`);
+        } catch (e) { toast('err', 'Error de conexión'); }
     }
 
     function precioActual(p) {
@@ -277,6 +314,8 @@
         });
     }
 
+    function verArt(id) { const a = datos.find(x => x.IdDetallePedido === id); if (a) verArticuloModal(a); }
+
     function fila(p) {
         const id = p.IdDetallePedido;
         const val = precioActual(p);
@@ -288,11 +327,17 @@
                     : cambiado ? '<span style="color:#fbbf24" title="Sin guardar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></span>' : '';
         const costo = p.ValorCompra != null ? `$${Number(p.ValorCompra).toFixed(2)}` : '—';
         return `<tr class="${cambiado ? 'dirty' : ''}">
-            <td style="width:54px">${p.Fotografia ? `<img class="foto" src="${esc(p.Fotografia)}" loading="lazy" onclick="verFoto(this.src)" onerror="this.style.visibility='hidden'">` : '<div class="foto"></div>'}</td>
+            <td style="width:54px">${p.Fotografia ? `<img class="foto" src="${esc(p.Fotografia)}" loading="lazy" onclick="verArt(${id})" title="Ver artículo" onerror="this.style.visibility='hidden'">` : `<div class="foto" onclick="verArt(${id})" title="Ver artículo"></div>`}</td>
             <td>
-                <div class="art">${esc(p.NombreArticulo || '—')}${p.TallaColor ? ` <span style="color:#6b7280;font-weight:400">· ${esc(p.TallaColor)}</span>` : ''}</div>
+                <div class="art"><button class="btn-ver" type="button" onclick="verArt(${id})" title="Ver artículo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>${esc(p.NombreArticulo || '—')}${p.TallaColor ? ` <span style="color:#6b7280;font-weight:400">· ${esc(p.TallaColor)}</span>` : ''}</div>
                 <div class="meta">${p.DescripcionArticulo ? esc(String(p.DescripcionArticulo).substring(0, 70)) + ' · ' : ''}<code>${esc(p.CodigoArticulo || '')}</code></div>
-                ${p.IdCliente ? (document.getElementById('f-agrupar').checked ? '' : `<div class="meta" style="color:#93c5fd">${esc(p.NombreCliente || '')}</div>`) : `
+                ${p.IdCliente && !editCli.has(id) ? `<div class="cli-act">${document.getElementById('f-agrupar').checked ? '' : `<span style="color:#93c5fd">${esc(p.NombreCliente || '')}</span>`}<button class="lnk" type="button" onclick="editarCli([${id}])">Cambiar cliente</button></div>` : p.IdCliente ? `
+                <div class="cli-in editar">
+                    <span class="lbl"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Cambiar a</span>
+                    <input class="inp" list="dl-cli" placeholder="Buscar cliente…" autocomplete="off" onchange="asignarDesdeTexto([${id}], this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();} if(event.key==='Escape'){cancelarCli([${id}]);}">
+                    <button class="btn-quitar" type="button" onclick="quitarCliente([${id}])" title="Dejar el artículo sin cliente">Quitar</button>
+                    <button class="lnk" type="button" onclick="cancelarCli([${id}])">Cancelar</button>
+                </div>` : `
                 <div class="cli-in">
                     <span class="lbl"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Sin cliente</span>
                     <input class="inp" list="dl-cli" placeholder="Buscar cliente…" autocomplete="off" onchange="asignarDesdeTexto([${id}], this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
@@ -302,8 +347,10 @@
             <td class="col-pedido" style="font-size:11px;white-space:nowrap">${esc(p.NoPedidoAplicacion || p.NumeroPedido || '')}<div class="meta">${fecha(p.FechaPedido)} · ${esc(p.NombreEmpresa || '')}</div></td>
             <td class="num col-costo">${costo}</td>
             <td class="num">${sug ? `<span class="sug" title="Usar sugerido" onclick="ponerSugerido(${id}, ${sug})">L ${sug}</span>` : '<span style="color:#374151">—</span>'}</td>
-            <td class="num"><input class="inp precio ${cambiado ? 'cambio' : (val ? 'tiene' : '')}" type="number" min="0" step="5" inputmode="decimal"
-                   data-id="${id}" value="${val}" placeholder="0" oninput="escribir(${id}, this.value)" onkeydown="teclaPrecio(event, this)" onfocus="this.select()"></td>
+            <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>`
+                : `<input class="inp precio ${cambiado ? (parseFloat(p.ValorCobroCliente) > 0 ? 'correccion' : 'cambio') : (val ? 'tiene' : '')}" type="number" min="0" step="5" inputmode="decimal"
+                   data-id="${id}" value="${val}" placeholder="0" oninput="escribir(${id}, this.value)" onkeydown="teclaPrecio(event, this)" onfocus="this.select()"
+                   title="${parseFloat(p.ValorCobroCliente) > 0 ? 'Precio guardado: L ' + esc(p.ValorCobroCliente) + '. Como administrador podés corregirlo.' : ''}">${cambiado && parseFloat(p.ValorCobroCliente) > 0 ? `<span class="antes">antes L ${esc(p.ValorCobroCliente)}</span>` : ''}`}</td>
             <td class="estado">${icono}</td>
         </tr>`;
     }
@@ -349,7 +396,11 @@
                             <div class="grupo-nom">${esc(nom)}</div>
                             <div class="grupo-sub">${items.length} artículo${items.length === 1 ? '' : 's'}${faltan ? ` · <span style="color:#f87171">${faltan} sin precio</span>` : ' · <span style="color:#4ade80">todos con precio</span>'}${items[0].NombreVendedor && k ? ' · ' + esc(items[0].NombreVendedor) : ''}</div>
                         </div>
-                        ${k ? '' : `<div class="asig-todos"><input class="inp" list="dl-cli" placeholder="Asignar todos a un cliente…" autocomplete="off"
+                        ${k ? (editGrupo.has(k) ? `<div class="asig-todos"><input class="inp" list="dl-cli" placeholder="Pasar los ${items.length} a otro cliente…" autocomplete="off"
+                              onchange="asignarDesdeTexto(filtrados().filter(p => p.IdCliente === ${k}).map(p => p.IdDetallePedido), this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();} if(event.key==='Escape'){editGrupo.delete(${k});render();}">
+                              <button class="btn-quitar" type="button" onclick="quitarCliente(filtrados().filter(p => p.IdCliente === ${k}).map(p => p.IdDetallePedido))">Quitar cliente</button>
+                              <button class="lnk" type="button" onclick="editGrupo.delete(${k});render()">Cancelar</button></div>`
+                            : `<button class="lnk" type="button" onclick="editGrupo.add(${k});render()" title="Pasar estos artículos a otro cliente">Cambiar cliente</button>`) : `<div class="asig-todos"><input class="inp" list="dl-cli" placeholder="Asignar todos a un cliente…" autocomplete="off"
                               onchange="asignarDesdeTexto(filtrados().filter(p => !p.IdCliente).map(p => p.IdDetallePedido), this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>`}
                         ${faltan ? `<button class="btn btn-amber btn-sm" onclick="usarSugeridoGrupo(${k})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Sugerido en vacíos</button>` : ''}
                         <div class="grupo-tot"><div class="l">Total</div><div class="v">${L(total)}</div></div>
@@ -368,12 +419,14 @@
         if (!ids.length) return false;
         try {
             const d = ids.length === 1
-                ? await fetch('/api/clientes/asignar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idCliente: c.IdCliente, idDetallePedido: ids[0] }) }).then(r => r.json())
-                : await fetch('/api/clientes/asignar-multiple', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idCliente: c.IdCliente, idDetalles: ids.join(',') }) }).then(r => r.json());
+                ? await fetch('/api/clientes/asignar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idCliente: c.IdCliente, idDetallePedido: ids[0], idUsuario: usuario.id }) }).then(r => r.json())
+                : await fetch('/api/clientes/asignar-multiple', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idCliente: c.IdCliente, idDetalles: ids.join(','), idUsuario: usuario.id }) }).then(r => r.json());
             if (!d.ok) { toast('err', 'Error: ' + d.error); return false; }
+            const cambio = datos.some(p => ids.includes(p.IdDetallePedido) && p.IdCliente);
             datos.forEach(p => { if (ids.includes(p.IdDetallePedido)) { p.IdCliente = c.IdCliente; p.NombreCliente = c.NombreCompleto; } });
+            ids.forEach(i => editCli.delete(i)); editGrupo.clear();
             render();
-            toast('ok', `Cliente ${c.NombreCompleto} asignado a ${ids.length} artículo${ids.length === 1 ? '' : 's'}`);
+            toast('ok', `${cambio ? 'Cliente cambiado a' : 'Cliente'} ${c.NombreCompleto}${cambio ? '' : ' asignado'} en ${ids.length} artículo${ids.length === 1 ? '' : 's'}`);
             return true;
         } catch (e) { toast('err', 'Error de conexión'); return false; }
     }
@@ -493,12 +546,15 @@
             await Promise.all(ids.slice(i, i + 8).map(async id => {
                 try {
                     const d = await fetch('/api/clientes/precio', { method:'POST', headers:{'Content-Type':'application/json'},
-                        body: JSON.stringify({ idDetallePedido: id, valorCobro: cambios.get(id) }) }).then(r => r.json());
+                        body: JSON.stringify({ idDetallePedido: id, valorCobro: cambios.get(id), idUsuario: usuario.id }) }).then(r => r.json());
                     if (d.ok) {
                         ok++; estados.set(id, 'ok');
                         const p = datos.find(x => x.IdDetallePedido === id); if (p) p.ValorCobroCliente = cambios.get(id);
                         cambios.delete(id);
-                    } else { err++; estados.set(id, 'err:' + d.error); primerError = primerError || d.error; }
+                    } else {
+                        err++; estados.set(id, 'err:' + d.error); primerError = primerError || d.error;
+                        if (d.bloqueado) { const p = datos.find(x => x.IdDetallePedido === id); if (p) p.ValorCobroCliente = d.anterior; cambios.delete(id); }
+                    }
                 } catch (e) { err++; estados.set(id, 'err:Error de conexión'); primerError = primerError || 'Error de conexión'; }
             }));
         }
@@ -513,6 +569,7 @@
 
     cargar();
 </script>
+<script src="/assets/ver-articulo.js"></script>
 <script src="/assets/sidebar.js"></script>
 </body>
 </html>

@@ -7,1456 +7,581 @@
     <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
-
-        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99; }
+        :root {
+            --fondo:#070910; --panel:#0d1017; --panel2:#13181f; --borde:#1e2530; --borde2:#2a3342;
+            --texto:#e2e8f0; --suave:#9ca3af; --tenue:#6b7280; --mudo:#4b5563;
+            --rosa:#E8327A; --naranja:#EF7A30; --verde:#4ade80; --rojo:#f87171; --ambar:#fbbf24; --azul:#60a5fa; --morado:#c084fc;
+        }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:var(--texto); display:flex; height:100vh; overflow:hidden; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
         .overlay.active { display:block; }
 
-        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        /* ── Sidebar (lo arma sidebar.js) ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; }
         .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
-        .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
-        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
         .sidebar-logo-text span { color:#3b82f6; }
-
         .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
         .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
-        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
-
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
         .nav { flex:1; padding:12px 0; overflow-y:auto; }
         .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
-        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; user-select:none; text-decoration:none; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; text-decoration:none; }
         .nav-item:hover { color:#e2e8f0; background:#13181f; }
         .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
         .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
-        .nav-item.active svg { opacity:1; }
-        .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
-        .nav-badge.warn { background:#2d1f0a; color:#f59e0b; }
-
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
         .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
-        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; transition:.15s; background:none; border:none; width:100%; }
-        .btn-salir:hover { color:#fca5a5; }
-        .btn-salir svg { width:16px; height:16px; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
 
+        /* ── Main ── */
         .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
-        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
-        .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
-        .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
-        .btn-menu svg { width:22px; height:22px; }
-        .topbar-title { font-size:16px; font-weight:700; color:#fff; white-space:nowrap; }
-        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .topbar-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
-        .search { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:8px 14px; font-size:13px; color:#9ca3af; width:200px; outline:none; font-family:'Segoe UI',sans-serif; }
-        .search:focus { border-color:#3b82f6; color:#e2e8f0; }
+        .topbar { background:var(--panel); border-bottom:1px solid var(--borde); padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+        .btn-menu { background:none; border:none; cursor:pointer; padding:4px; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-sub { font-size:11px; color:var(--mudo); margin-top:1px; }
+        .topbar-der { margin-left:auto; display:flex; align-items:center; gap:10px; }
+        .actualizado { font-size:11px; color:var(--mudo); white-space:nowrap; }
+        .btn-ico { background:var(--panel2); border:1px solid var(--borde); color:var(--suave); border-radius:8px; height:34px; padding:0 12px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-family:inherit; }
+        .btn-ico:hover { color:#fff; border-color:var(--borde2); }
+        .btn-ico.girando svg { animation:gira 1s linear infinite; }
+        @keyframes gira { to { transform:rotate(360deg); } }
+        .content { flex:1; overflow-y:auto; padding:20px 22px 40px; background:var(--fondo); }
+        .ico { width:16px; height:16px; flex-shrink:0; }
 
-        .content { flex:1; overflow-y:auto; padding:16px; }
+        .saludo { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+        .saludo h1 { font-size:22px; font-weight:800; color:#fff; letter-spacing:-.4px; }
+        .saludo p { font-size:13px; color:var(--tenue); margin-top:3px; }
+        .leyenda-mio { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--suave); background:var(--panel); border:1px solid var(--borde); border-radius:99px; padding:6px 12px; }
+        .punto-mio { width:8px; height:8px; border-radius:50%; background:var(--rosa); }
 
-        .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
-        .stat { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; cursor:pointer; transition:.2s; }
-        .stat:hover { border-color:#2d3f5e; transform:translateY(-1px); }
-        .stat-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-        .stat-val { font-size:24px; font-weight:800; color:#fff; }
-        .stat-delta { font-size:11px; margin-top:4px; color:#34d399; }
-        .stat-delta.warn { color:#f59e0b; }
+        .seccion { font-size:10.5px; font-weight:700; color:var(--tenue); text-transform:uppercase; letter-spacing:1.6px; margin:22px 0 10px; display:flex; align-items:center; gap:8px; }
+        .seccion small { text-transform:none; letter-spacing:0; font-weight:400; color:var(--mudo); font-size:11px; }
 
-        .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:16px; }
-        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
-        .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
+        /* KPIs */
+        .kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:12px; }
+        .kpi { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:15px 16px 14px; position:relative; overflow:hidden; min-width:0; }
+        .kpi::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acento, var(--borde2)); }
+        .kpi-tit { font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:1px; font-weight:600; display:flex; align-items:center; gap:6px; }
+        .kpi-val { font-size:25px; font-weight:800; color:#fff; margin-top:8px; letter-spacing:-.6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+        .kpi-val .mon { font-size:14px; color:var(--tenue); font-weight:600; margin-right:3px; }
+        .kpi-pie { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; font-size:11.5px; color:var(--tenue); min-height:16px; }
+        .delta { font-weight:700; font-size:11px; padding:2px 6px; border-radius:6px; white-space:nowrap; }
+        .delta.sube { color:var(--verde); background:rgba(74,222,128,.08); }
+        .delta.baja { color:var(--rojo); background:rgba(248,113,113,.08); }
+        .delta.igual { color:var(--tenue); background:var(--panel2); }
+        .mio { display:inline-flex; align-items:center; gap:5px; color:var(--suave); white-space:nowrap; }
+        .mio::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--rosa); }
 
-        .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-        .tbl { width:100%; border-collapse:collapse; font-size:12px; min-width:500px; }
-        .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:8px 8px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
-        .tbl td { padding:9px 8px; border-bottom:1px solid #111827; color:#d1d5db; }
-        .tbl tr:last-child td { border-bottom:none; }
-        .tbl tr:hover td { background:#0a0f18; }
+        /* Rejillas */
+        .fila2 { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:14px; }
+        .fila3 { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; }
+        .card { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:16px 18px; min-width:0; }
+        .card-cab { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+        .card-tit { font-size:13px; font-weight:700; color:#fff; }
+        .card-sub { font-size:11px; color:var(--mudo); margin-top:2px; }
+        .card-link { font-size:11.5px; color:var(--suave); text-decoration:none; display:flex; align-items:center; gap:4px; white-space:nowrap; }
+        .card-link:hover { color:#f9a8d4; }
 
-        .status { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
-        .status.pendiente { background:#2d1f0a; color:#f59e0b; }
-        .status.en-camino { background:#0f2318; color:#34d399; }
-        .status.entregado { background:#0c1f3d; color:#60a5fa; }
-        .status.nuevo     { background:#1f1025; color:#c084fc; }
+        /* Gráfica */
+        .graf-ley { display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--suave); }
+        .graf-ley span { display:flex; align-items:center; gap:6px; }
+        .graf-ley i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+        .graf-ley i.linea { height:3px; border-radius:2px; }
+        #grafica { width:100%; height:240px; display:block; }
+        #grafica text { font-family:'Segoe UI',sans-serif; }
+        .tip { position:fixed; pointer-events:none; background:#0a0c10; border:1px solid var(--borde2); border-radius:8px; padding:9px 11px; font-size:12px; z-index:50; display:none; box-shadow:0 10px 30px rgba(0,0,0,.6); min-width:180px; }
+        .tip b { display:block; color:#fff; margin-bottom:5px; }
+        .tip div { display:flex; justify-content:space-between; gap:14px; color:var(--suave); }
+        .tip div span:last-child { color:#fff; font-variant-numeric:tabular-nums; }
 
-        .modulos { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-        .modulo { display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; border:1px solid #1e2530; cursor:pointer; transition:.18s; background:#0a0c10; text-decoration:none; }
-        .modulo:hover { background:#13181f; border-color:#2d3f5e; }
-        .modulo-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .modulo-icon svg { width:16px; height:16px; }
-        .modulo-name { font-size:12px; font-weight:600; color:#d1d5db; }
-        .modulo-desc { font-size:10px; color:#4b5563; margin-top:1px; }
+        /* Alertas */
+        .alertas { display:flex; flex-direction:column; gap:7px; }
+        .alerta { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; background:var(--panel2); border:1px solid var(--borde); text-decoration:none; color:inherit; transition:.15s; }
+        .alerta:hover { border-color:var(--borde2); background:#161c25; }
+        .alerta-ico { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .alerta.alta .alerta-ico { background:rgba(248,113,113,.1); color:var(--rojo); }
+        .alerta.media .alerta-ico { background:rgba(251,191,36,.1); color:var(--ambar); }
+        .alerta.info .alerta-ico { background:rgba(74,222,128,.1); color:var(--verde); }
+        .alerta.azul .alerta-ico { background:rgba(96,165,250,.1); color:var(--azul); }
+        .alerta-txt { flex:1; min-width:0; }
+        .alerta-txt b { font-size:12.5px; color:#f1f5f9; font-weight:600; display:block; }
+        .alerta-txt small { font-size:11px; color:var(--tenue); }
+        .alerta-num { font-size:18px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+        .alerta .flecha { color:var(--mudo); display:flex; }
+        .todo-bien { text-align:center; padding:26px 10px; color:var(--tenue); font-size:12.5px; }
 
-        .solo-admin { display:none; }
+        /* Barras horizontales */
+        .etapas-barra { display:flex; height:12px; border-radius:99px; overflow:hidden; background:var(--panel2); margin-bottom:14px; gap:2px; }
+        .etapas-barra div { height:100%; min-width:3px; }
+        .lista-barras { display:flex; flex-direction:column; gap:9px; }
+        .lb { display:grid; grid-template-columns:110px minmax(0,1fr) 54px; align-items:center; gap:10px; font-size:12px; }
+        .lista-barras.ancha .lb { grid-template-columns:160px minmax(0,1fr) 84px; }
+        .lb-nom { color:var(--suave); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px; }
+        .lb-nom i { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+        .lb-pista { height:8px; background:var(--panel2); border-radius:99px; overflow:hidden; }
+        .lb-pista div { height:100%; border-radius:99px; }
+        .lb-val { text-align:right; color:#fff; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .lb.yo .lb-nom { color:#f9a8d4; font-weight:600; }
 
-        /* Buscador de pedidos */
-        .search-pedidos-wrap { margin-bottom:12px; display:flex; gap:8px; align-items:center; }
-        .search-pedidos { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:8px 14px; font-size:12px; color:#9ca3af; width:100%; outline:none; font-family:'Segoe UI',sans-serif; transition:.15s; }
-        .search-pedidos:focus { border-color:#3b82f6; color:#e2e8f0; }
-        .search-pedidos::placeholder { color:#374151; }
-        .search-count { font-size:11px; color:#4b5563; white-space:nowrap; }
+        /* Mini datos */
+        .mini { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .mini > div { background:var(--panel2); border:1px solid var(--borde); border-radius:9px; padding:11px 12px; min-width:0; }
+        .mini b { display:block; font-size:10px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .mini span { display:block; font-size:18px; font-weight:800; color:#fff; margin-top:4px; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .mini small { font-size:11px; color:var(--tenue); }
 
-        /* Controles de filtro admin */
-        .filtros-admin { display:none; align-items:center; gap:10px; flex-wrap:wrap; }
-        .filtros-admin.visible { display:flex; }
-        .chk-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
-        .chk-wrap input[type=checkbox] { width:14px; height:14px; accent-color:#3b82f6; cursor:pointer; }
-        .chk-wrap span { font-size:12px; color:#9ca3af; white-space:nowrap; }
-        .btn-limpiar { background:none; border:1px solid #1e2530; border-radius:6px; padding:6px 12px; font-size:11px; color:#6b7280; cursor:pointer; transition:.15s; white-space:nowrap; }
-        .btn-limpiar:hover { border-color:#3b82f6; color:#60a5fa; }
+        /* Urgentes */
+        .tabs { display:flex; gap:4px; background:var(--panel2); border:1px solid var(--borde); border-radius:8px; padding:3px; }
+        .tab { background:none; border:none; color:var(--tenue); font-size:12px; padding:5px 11px; border-radius:6px; cursor:pointer; font-family:inherit; }
+        .tab.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .urg { width:100%; border-collapse:collapse; font-size:12.5px; }
+        .urg th { text-align:left; font-size:10px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:600; padding:0 10px 9px; border-bottom:1px solid var(--borde); white-space:nowrap; }
+        .urg td { padding:9px 10px; border-bottom:1px solid #111722; vertical-align:middle; }
+        .urg tr:last-child td { border-bottom:none; }
+        .urg tbody tr:hover td { background:#0f141c; }
+        .urg tr.mia td:first-child { box-shadow:inset 3px 0 0 var(--rosa); }
+        .th-foto { width:66px; }
+        .u-foto { width:46px; height:46px; border-radius:8px; object-fit:contain; background:#fff; display:block; cursor:pointer; border:1px solid var(--borde); }
+        .u-foto.vacia { background:var(--panel2); }
+        .u-nom { color:#f1f5f9; font-weight:600; max-width:280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .u-meta { font-size:11px; color:var(--tenue); margin-top:2px; }
+        .motivo { font-size:11px; font-weight:600; padding:3px 9px; border-radius:99px; white-space:nowrap; display:inline-block; }
+        .m1 { background:rgba(74,222,128,.1); color:var(--verde); }
+        .m2, .m3 { background:rgba(248,113,113,.1); color:var(--rojo); }
+        .m4, .m5, .m6 { background:rgba(251,191,36,.1); color:var(--ambar); }
+        .u-sin { color:var(--mudo); }
+        .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .btn-ver { background:var(--panel2); border:1px solid var(--borde); color:var(--suave); border-radius:7px; height:30px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-family:inherit; white-space:nowrap; }
+        .btn-ver:hover { color:#f9a8d4; border-color:#5b1d3a; background:#1f0c16; }
+        .ver-mas { display:block; width:100%; margin-top:10px; background:none; border:1px dashed var(--borde2); color:var(--suave); border-radius:8px; padding:9px; font-size:12px; cursor:pointer; font-family:inherit; }
+        .ver-mas:hover { color:#fff; }
 
-        /* Filas de otros vendedores (solo admin ve) */
-        .fila-otro-vendedor td { background:#14100a !important; }
-        .fila-otro-vendedor:hover td { background:#1a140c !important; }
-        .fila-otro-vendedor td { border-left:2px solid #854d0e; }
-        .badge-otro-vendedor { font-size:9px; background:#2d1f0a; color:#f59e0b; border-radius:4px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
+        .esqueleto { background:linear-gradient(90deg,#11161e 25%,#171d27 50%,#11161e 75%); background-size:200% 100%; animation:brillo 1.2s infinite; border-radius:6px; color:transparent !important; }
+        @keyframes brillo { to { background-position:-200% 0; } }
+        .aviso { background:#1a1206; border:1px solid #3d2a0a; color:#fbbf24; border-radius:10px; padding:10px 14px; font-size:12px; margin-bottom:14px; display:none; }
+        .error-carga { background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; border-radius:10px; padding:14px; font-size:13px; display:none; margin-bottom:14px; }
 
-        /* ── Selección múltiple ── */
-        .sel-chk { width:16px; height:16px; cursor:pointer; accent-color:#3b82f6; vertical-align:middle; }
-        tr.fila-sel td { background:#0c1a30 !important; }
-        .celda-asig { cursor:pointer; border-radius:6px; padding:2px 4px; margin:-2px -4px; }
-        .celda-asig:hover { background:#13181f; outline:1px dashed #1e3a5f; }
-        .bulk-bar { position:fixed; left:50%; bottom:18px; transform:translate(-50%, 140%); transition:transform .25s ease; z-index:200;
-                    background:#0d1017; border:1px solid #1e3a5f; border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.7);
-                    padding:12px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:min(1100px, calc(100vw - 32px)); }
-        .bulk-bar.visible { transform:translate(-50%, 0); }
-        body.con-seleccion .content { padding-bottom:110px !important; }
-        .bulk-count { background:#1d4ed8; color:#fff; font-weight:800; border-radius:8px; padding:7px 12px; font-size:13px; white-space:nowrap; }
-        .bulk-link { font-size:11px; color:#60a5fa; cursor:pointer; text-decoration:underline; white-space:nowrap; }
-        .bulk-in { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:13px; outline:none; flex:1; min-width:180px; font-family:inherit; }
-        .bulk-in:focus { border-color:#3b82f6; background:#0c1525; }
-        .bulk-btn { border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
-        .bulk-ok { background:#065f46; color:#34d399; border:1px solid #14532d; }
-        .bulk-ok:hover { background:#047857; }
-        .bulk-ok:disabled { opacity:.5; cursor:wait; }
-        .bulk-x { background:transparent; color:#6b7280; border:1px solid #1e2530; }
-        .bulk-x:hover { color:#e2e8f0; border-color:#374151; }
-        .toast-ms { position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:400; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:600;
-                    box-shadow:0 8px 30px rgba(0,0,0,.6); display:none; }
-        .toast-ms.ok  { background:#052e16; border:1px solid #14532d; color:#4ade80; }
-        .toast-ms.err { background:#1f0707; border:1px solid #7f1d1d; color:#f87171; }
-        .tarjeta-pedido.fila-sel { border-color:#3b82f6 !important; background:#0c1a30 !important; }
-        @media (max-width:768px) { .bulk-bar { bottom:10px; padding:10px; } .bulk-in { min-width:100%; } }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:3px; }
 
-        ::-webkit-scrollbar { width:4px; height:4px; }
-        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
-
-        @media (max-width: 768px) {
+        @media (max-width:1280px) { .kpis { grid-template-columns:repeat(3, minmax(0,1fr)); } .fila3 { grid-template-columns:1fr 1fr; } }
+        @media (max-width:980px) { .fila2 { grid-template-columns:1fr; } }
+        @media (max-width:768px) {
             .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
-            .btn-menu { display:flex; }
-            .search { display:none; }
-            .stats { grid-template-columns:1fr 1fr; gap:10px; }
-            .stat-val { font-size:20px; }
-            .grid2 { grid-template-columns:1fr; }
-            .content { padding:12px; }
-            .topbar { padding:10px 14px; }
-            .topbar-title { font-size:15px; }
+            .content { padding:14px 16px 30px; }
+            .kpis { grid-template-columns:1fr 1fr; gap:10px; }
+            .kpi-val { font-size:20px; }
+            .fila3 { grid-template-columns:1fr; }
+            .actualizado { display:none; }
+            .col-movil-no { display:none; }
+            .u-nom { max-width:150px; }
+            .saludo h1 { font-size:19px; }
+            .lista-barras.ancha .lb { grid-template-columns:110px minmax(0,1fr) 76px; }
         }
-
-        @media (max-width: 400px) {
-            .stats { grid-template-columns:1fr 1fr; gap:8px; }
-            .stat { padding:12px; }
-            .stat-label { font-size:9px; }
-            .stat-val { font-size:18px; }
-            .modulos { grid-template-columns:1fr; }
-        }
-
-        .tarjetas-mobile { display:none; }
-
-        @media (max-width: 768px) {
-            .tbl-wrap { display:none; }
-            .tarjetas-mobile { display:flex; flex-direction:column; gap:10px; }
-            .tarjeta-pedido { background:#13181f; border:1px solid #1e2530; border-radius:10px; padding:12px 14px; }
-            .tarjeta-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-            .tarjeta-num { color:#4b5563; font-size:11px; }
-            .tarjeta-fecha { color:#6b7280; font-size:11px; }
-            .tarjeta-articulo { color:#e2e8f0; font-size:13px; font-weight:600; margin-bottom:6px; }
-            .tarjeta-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-            .tarjeta-tag { font-size:11px; color:#9ca3af; background:#0d1017; padding:3px 8px; border-radius:6px; }
-            .tarjeta-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-            .tarjeta-precio { font-size:13px; font-weight:600; }
-            .tarjeta-btns { display:flex; gap:8px; }
-            .tarjeta-btns button { flex:1; padding:8px; border-radius:8px; font-size:12px; cursor:pointer; border:none; font-weight:600; }
-            .btn-cliente { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f !important; }
-            .btn-precio { background:#2d1f0a; color:#f59e0b; border:1px solid #3d2a0a !important; }
-        }
+        @media (max-width:420px) { .kpis { grid-template-columns:1fr; } .btn-ver span { display:none; } .btn-ico span { display:none; } }
     </style>
 </head>
 <body>
 
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
-
 <aside class="sidebar" id="sidebar"></aside>
 
 <main class="main">
     <div class="topbar">
-        <div class="topbar-left">
-            <button class="btn-menu" id="btn-menu" onclick="abrirMenu()">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <line x1="3" y1="12" x2="21" y2="12"/>
-                    <line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-            </button>
-            <div>
-                <div class="topbar-title" id="topbar-title">Inicio</div>
-                <div class="topbar-fecha" id="topbar-fecha"></div>
-            </div>
+        <button class="btn-menu" onclick="abrirMenu()" aria-label="Menú">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        </button>
+        <div>
+            <div class="topbar-title">Inicio</div>
+            <div class="topbar-sub" id="fecha-hoy"></div>
         </div>
-        <div class="topbar-right">
-            <input class="search" placeholder="Buscar pedido o tracking..." />
+        <div class="topbar-der">
+            <span class="actualizado" id="actualizado"></span>
+            <button class="btn-ico" id="btn-recargar" onclick="cargar()" title="Actualizar">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                <span>Actualizar</span>
+            </button>
         </div>
     </div>
 
     <div class="content">
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-label">Paquetes activos</div>
-                <div class="stat-val" id="stat-pedidos">--</div>
-                <div class="stat-delta">Sin entregar</div>
+        <div class="saludo">
+            <div>
+                <h1 id="saludo">Hola</h1>
+                <p id="resumen-frase">Cargando el resumen del negocio…</p>
             </div>
-            <div class="stat">
-                <div class="stat-label">Sin tracking</div>
-                <div class="stat-val" id="stat-sin-tracking">--</div>
-                <div class="stat-delta warn">Requieren atención</div>
+            <div class="leyenda-mio"><span class="punto-mio"></span> Lo marcado así es tuyo</div>
+        </div>
+
+        <div class="error-carga" id="error-carga"></div>
+        <div class="aviso" id="aviso"></div>
+
+        <!-- DINERO -->
+        <div class="seccion" style="margin-top:0">Dinero <small id="mes-nombre"></small></div>
+        <div class="kpis" id="kpis-dinero"></div>
+
+        <!-- TENDENCIA + ALERTAS -->
+        <div class="fila2" style="margin-top:14px">
+            <div class="card">
+                <div class="card-cab">
+                    <div>
+                        <div class="card-tit">Últimos 6 meses</div>
+                        <div class="card-sub">Ventas y costo por fecha del pedido · cobrado por fecha del pago</div>
+                    </div>
+                    <div class="graf-ley">
+                        <span><i style="background:var(--rosa)"></i>Ventas</span>
+                        <span><i style="background:#3b4a63"></i>Costo</span>
+                        <span><i style="background:var(--naranja)"></i>Cobrado</span>
+                        <span><i class="linea" style="background:var(--verde)"></i>Ganancia</span>
+                    </div>
+                </div>
+                <svg id="grafica" role="img" aria-label="Ventas, costo, cobrado y ganancia de los últimos 6 meses"></svg>
             </div>
-            <div class="stat">
-                <div class="stat-label">Sin precio</div>
-                <div class="stat-val" id="stat-sin-precio">--</div>
-                <div class="stat-delta warn">Pendientes</div>
-            </div>
-            <div class="stat">
-                <div class="stat-label">Entregados año</div>
-                <div class="stat-val" id="stat-entregados">--</div>
-                <div class="stat-delta">Completados</div>
+            <div class="card">
+                <div class="card-cab">
+                    <div>
+                        <div class="card-tit">Alertas</div>
+                        <div class="card-sub">Lo que hay que resolver hoy</div>
+                    </div>
+                </div>
+                <div class="alertas" id="alertas"></div>
             </div>
         </div>
 
-        <div class="grid2" style="grid-template-columns:1fr">
+        <!-- OPERACIÓN -->
+        <div class="seccion">Operación <small>artículos sin entregar</small></div>
+        <div class="kpis" id="kpis-oper"></div>
+
+        <div class="fila3" style="margin-top:14px">
             <div class="card">
-                <div class="card-title"><span class="dot"></span>Pedidos pendientes</div>
-                <div class="search-pedidos-wrap">
-                    <input class="search-pedidos" id="search-pedidos" type="text" placeholder=" Buscar por artículo, cliente o descripción..." oninput="filtrarPedidos(this.value)" />
-                    <button class="btn-limpiar" onclick="limpiarFiltro()" title="Limpiar búsqueda"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Limpiar</button>
-                    <span class="search-count" id="search-count"></span>
-                </div>
-                <div class="filtros-admin solo-admin" id="filtros-admin" style="margin-bottom:10px;">
-                    <label class="chk-wrap">
-                        <input type="checkbox" id="chk-solo-mis" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
-                        <span>Solo mis pedidos</span>
-                    </label>
-                    <label class="chk-wrap">
-                        <input type="checkbox" id="chk-sin-vendedor" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
-                        <span>Sin vendedor</span>
-                    </label>
-                    <label class="chk-wrap">
-                        <input type="checkbox" id="chk-sin-precio" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
-                        <span>Sin precio</span>
-                    </label>
-                    <label class="chk-wrap">
-                        <input type="checkbox" id="chk-sin-cliente" onchange="filtrarPedidos(document.getElementById('search-pedidos').value)" />
-                        <span>Sin cliente</span>
-                    </label>
-                </div>
-                <div class="tbl-wrap">
-                    <table class="tbl">
-                        <thead>
-                            <tr>
-                                <th style="width:28px"><input type="checkbox" class="sel-chk" id="chk-pagina" title="Seleccionar toda la página" onchange="toggleSelPagina(this.checked)"></th>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Artículo</th>
-                                <th>Tienda</th>
-                                <th>Cliente</th>
-                                <th>Precio (L)</th>
-                                <th>Tracking</th>
-                                <th>Estado</th>
-                                <th class="solo-admin">Vendedor</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-pedidos">
-                            <tr><td colspan="11" style="color:#374151;text-align:center;padding:20px">Cargando...</td></tr>
-                        </tbody>
-                    </table>
-                    </div>
-                    <div id="paginacion"></div>
-                    <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
-                </div>
-                <div class="tarjetas-mobile" id="tarjetas-mobile"></div>
+                <div class="card-cab"><div><div class="card-tit">¿Dónde están los paquetes?</div><div class="card-sub">Etapa del envío</div></div>
+                    <a class="card-link" href="/tracking.html">Envíos <svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a></div>
+                <div class="etapas-barra" id="etapas-barra"></div>
+                <div class="lista-barras" id="etapas"></div>
             </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Antigüedad</div><div class="card-sub">Días desde que se pidió · promesa 30 a 40 días</div></div></div>
+                <div class="lista-barras" id="antiguedad"></div>
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Cotizaciones</div><div class="card-sub">Abiertas y cierre del mes</div></div>
+                    <a class="card-link" href="/cotizaciones.html">Abrir <svg class="ico" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a></div>
+                <div class="mini" id="cotizaciones"></div>
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div class="seccion">Resultados del mes</div>
+        <div class="fila2">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Vendedores</div><div class="card-sub">Ventas con precio asignado, pedidos de este mes</div></div></div>
+                <div class="lista-barras ancha" id="vendedores"></div>
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Compras por tienda</div><div class="card-sub">Costo en lempiras de lo pedido este mes</div></div></div>
+                <div class="lista-barras ancha" id="tiendas"></div>
+            </div>
+        </div>
+
+        <!-- URGENTES -->
+        <div class="seccion">Requieren atención</div>
+        <div class="card">
+            <div class="card-cab">
+                <div><div class="card-tit">Artículos por resolver</div><div class="card-sub">Ordenados por prioridad</div></div>
+                <div class="tabs"><button class="tab on" data-f="todos" onclick="filtroUrg(this)">Todos</button><button class="tab" data-f="mios" onclick="filtroUrg(this)">Míos</button></div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="urg">
+                    <thead><tr><th class="th-foto"></th><th>Artículo</th><th>Motivo</th><th class="col-movil-no">Cliente</th><th class="col-movil-no">Vendedor</th><th class="num col-movil-no">Días</th><th></th></tr></thead>
+                    <tbody id="urgentes"></tbody>
+                </table>
+            </div>
+            <button class="ver-mas" id="ver-mas" onclick="verMas()" style="display:none"></button>
         </div>
     </div>
 </main>
 
-<script src="/assets/sidebar.js"></script>
-    <!-- ══ BARRA DE ASIGNACIÓN MÚLTIPLE ══ -->
-    <div class="bulk-bar" id="bulk-bar">
-        <span class="bulk-count" id="bulk-count">0 seleccionados</span>
-        <span class="bulk-link" id="bulk-todos" onclick="seleccionarFiltrados()"></span>
-        <input class="bulk-in" id="bulk-cliente" list="dl-bulk-clientes" placeholder="Cliente…" autocomplete="off"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();aplicarBulk();}">
-        <datalist id="dl-bulk-clientes"></datalist>
-        <input class="bulk-in solo-admin-bulk" id="bulk-vendedor" list="dl-bulk-vendedores" placeholder="Vendedor…" autocomplete="off"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();aplicarBulk();}">
-        <datalist id="dl-bulk-vendedores"></datalist>
-        <button class="bulk-btn bulk-ok" id="bulk-aplicar" onclick="aplicarBulk()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Asignar</button>
-        <button class="bulk-btn bulk-x" onclick="limpiarSeleccion()" title="Quitar selección (Esc)"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-    </div>
+<div class="tip" id="tip"></div>
 
-    <script>
+<script src="/assets/ver-articulo.js"></script>
+<script>
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
 
-    // sidebar.js maneja avatar, user-name, user-rol y solo-admin
-    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {
-        weekday:'long', year:'numeric', month:'long', day:'numeric'
-    });
+    const hoy = new Date();
+    const fh = hoy.toLocaleDateString('es-HN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('fecha-hoy').textContent = fh.charAt(0).toUpperCase() + fh.slice(1);
+    const hora = hoy.getHours();
+    document.getElementById('saludo').textContent = (hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches') + ', ' + ((usuario && usuario.nombres) || '').split(' ')[0];
+    document.getElementById('mes-nombre').textContent = hoy.toLocaleDateString('es-HN', { month:'long', year:'numeric' });
 
-    if (!usuario.esAdmin) { const bv = document.getElementById('bulk-vendedor'); if (bv) bv.remove(); }
-    if (usuario.esAdmin) {
-        document.querySelectorAll('.solo-admin').forEach(el => {
-            el.style.display = el.tagName === 'TD' || el.tagName === 'TH' ? 'table-cell' : 'flex';
-        });
-        if (document.getElementById('filtros-admin'))
-            document.getElementById('filtros-admin').classList.add('visible');
+    // ── Íconos de trazo ──
+    const I = {
+        venta:'<path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+        gan:'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+        cobro:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
+        transito:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+        reloj:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+        caja:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/>',
+        usuario:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+        etiqueta:'<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
+        ruta:'<circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/>',
+        check:'<path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>',
+        doc:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+        equipo:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        abajo:'<path d="M16 17h6v-6"/><path d="m22 17-8.5-8.5-5 5L2 7"/>',
+        ojo:'<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+        flecha:'<path d="m9 18 6-6-6-6"/>'
+    };
+    const ico = (n, st = '') => `<svg class="ico" style="${st}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+
+    const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const entero = n => Math.round(n || 0).toLocaleString('es-HN');
+    const L = n => `<span class="mon">L</span>${entero(n)}`;
+    const Lt = n => 'L ' + entero(n);
+    const compacto = n => { n = Math.round(n || 0); const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : a >= 1e4 ? Math.round(n / 1e3) + 'k' : a >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n); };
+    const nombreMes = k => { const [y, m] = k.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('es-HN', { month:'short' }).replace('.', ''); };
+    const nombreMesLargo = k => { const [y, m] = k.split('-'); const t = new Date(+y, +m - 1, 1).toLocaleDateString('es-HN', { month:'long', year:'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); };
+
+    function delta(act, ant) {
+        if (!ant) return act ? '<span class="delta igual">sin mes anterior</span>' : '<span></span>';
+        const p = Math.round((act - ant) * 100 / Math.abs(ant));
+        if (p === 0) return '<span class="delta igual">igual al mes ant.</span>';
+        return `<span class="delta ${p > 0 ? 'sube' : 'baja'}" title="Contra el mes anterior">${p > 0 ? '+' : ''}${p}% vs mes ant.</span>`;
+    }
+    const kpi = (acento, icono, tit, val, pie) => `<div class="kpi" style="--acento:${acento}">
+        <div class="kpi-tit">${ico(icono, 'width:14px;height:14px')}${tit}</div>
+        <div class="kpi-val">${val}</div><div class="kpi-pie">${pie || ''}</div></div>`;
+
+    let D = null, urgFiltro = 'todos', urgLimite = 8;
+
+    function esqueleto() {
+        const sk = '<div class="kpi"><div class="kpi-tit esqueleto" style="width:60%">.</div><div class="kpi-val esqueleto" style="width:70%">.</div><div class="kpi-pie esqueleto" style="width:40%">.</div></div>';
+        document.getElementById('kpis-dinero').innerHTML = sk.repeat(5);
+        document.getElementById('kpis-oper').innerHTML = sk.repeat(5);
     }
 
-    
-    
-    
-
-    async function cargarStats() {
+    async function cargar() {
+        const btn = document.getElementById('btn-recargar');
+        btn.classList.add('girando');
+        if (!D) esqueleto();
         try {
-            const res = await fetch(`/api/pedidos/stats?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
-            const json = await res.json();
-            if (json.ok) {
-                const d = json.data;
-                document.getElementById('stat-pedidos').textContent      = d.PaquetesActivos ?? 0;
-                document.getElementById('stat-sin-tracking').textContent = d.SinTracking ?? 0;
-                document.getElementById('stat-sin-precio').textContent   = d.SinPrecio ?? 0;
-                document.getElementById('stat-entregados').textContent   = d.EntregadosAnio ?? 0;
-            }
-        } catch (e) { console.error('Error cargando stats:', e); }
+            const r = await fetch(`/api/inicio/resumen?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
+            if (!r.ok) throw new Error(r.status === 404 ? 'el servidor todavía no tiene la ruta /api/inicio. Reiniciá el backend (node server.js).' : 'error ' + r.status);
+            const d = await r.json();
+            if (!d.ok) throw new Error(d.error || 'error al cargar');
+            D = d;
+            document.getElementById('error-carga').style.display = 'none';
+            pintar();
+            document.getElementById('actualizado').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-HN', { hour:'2-digit', minute:'2-digit' });
+        } catch (e) {
+            const el = document.getElementById('error-carga');
+            el.textContent = 'No se pudo cargar el resumen: ' + e.message;
+            el.style.display = 'block';
+        } finally { btn.classList.remove('girando'); }
     }
 
-    let articulosDisponibles = [];   // todos los datos del servidor
-    let articulosFiltrados   = [];   // subset según búsqueda activa
-    let paginaActual = 1;
-    const registrosPorPagina = 20;
+    function pintar() {
+        const m = D.mes || {}, ma = D.mesAnterior || {}, a = D.activos || {}, mi = D.mios || {};
+        const margen = m.ventas ? Math.round(m.ganancia * 100 / m.ventas) : null;
 
-    // ── Buscador ──────────────────────────────────────────────
-    function limpiarFiltro() {
-        document.getElementById('search-pedidos').value = '';
-        const chk = document.getElementById('chk-solo-mis');
-        if (chk) chk.checked = false;
-        const chkSin = document.getElementById('chk-sin-vendedor');
-        if (chkSin) chkSin.checked = false;
-        const chkSinPrecio = document.getElementById('chk-sin-precio');
-        if (chkSinPrecio) chkSinPrecio.checked = false;
-        const chkSinCli = document.getElementById('chk-sin-cliente');
-        if (chkSinCli) chkSinCli.checked = false;
-        articulosFiltrados = articulosDisponibles;
-        paginaActual = 1;
-        renderizarPagina();
+        const partes = [];
+        if (a.total) partes.push(`${entero(a.total)} artículos en camino`);
+        if (a.listos) partes.push(`${a.listos} listos para entregar`);
+        const nAlertas = (a.bajoCosto || 0) + (a.atrasados || 0) + (a.sinPrecio || 0) + (a.sinCliente || 0);
+        partes.push(nAlertas ? `${entero(nAlertas)} pendientes por resolver` : 'sin pendientes urgentes');
+        document.getElementById('resumen-frase').textContent = partes.join(' · ') + '.';
+
+        const av = document.getElementById('aviso');
+        if (D.avisos && D.avisos.length) { av.textContent = 'Algunos datos no se pudieron calcular: ' + D.avisos.join(' · '); av.style.display = 'block'; }
+        else av.style.display = 'none';
+
+        // ── Dinero ──
+        const sinVenta = !D.tieneVenta;
+        let html = '';
+        html += kpi('var(--rosa)', 'venta', 'Ventas del mes', sinVenta ? '—' : L(m.ventas),
+            `${delta(m.ventas, ma.ventas)}<span class="mio" title="Tus ventas este mes">${Lt(mi.mes?.ventas)}</span>`);
+        html += kpi('var(--verde)', 'gan', 'Ganancia estimada', sinVenta ? '—' : L(m.ganancia),
+            `${margen != null ? `<span>Margen ${margen}%</span>` : '<span></span>'}<span class="mio" title="Tu ganancia este mes">${Lt(mi.mes?.ganancia)}</span>`);
+        html += kpi('var(--naranja)', 'cobro', 'Cobrado', L(m.cobrado), `${delta(m.cobrado, ma.cobrado)}`);
+        if (D.porCobrar) html += kpi('var(--ambar)', 'reloj', 'Por cobrar', L(D.porCobrar.total), `<span>${entero(D.porCobrar.clientes)} clientes con saldo</span>`);
+        else html += kpi('var(--ambar)', 'reloj', 'Venta por entregar', L(a.ventaPendiente), `<span>con precio, en camino</span><span class="mio" title="Tuya">${Lt(mi.ventaPendiente)}</span>`);
+        html += kpi('var(--azul)', 'transito', 'Capital en tránsito', L(a.capital), `<span>costo de lo no entregado</span>`);
+        document.getElementById('kpis-dinero').innerHTML = html;
+
+        // ── Operación ──
+        const mioN = (n, t) => `<span class="mio" title="${t || 'Tuyos'}">${entero(n)} ${n === 1 ? 'tuyo' : 'tuyos'}</span>`;
+        html = '';
+        html += kpi('var(--morado)', 'caja', 'Sin entregar', entero(a.total), `<span>${entero(D.entregadosAnio ?? 0)} entregados este año</span>${mioN(mi.total)}`);
+        html += kpi(a.sinPrecio ? 'var(--ambar)' : 'var(--borde2)', 'etiqueta', 'Sin precio', entero(a.sinPrecio), `<span>${Lt(a.porFacturar)} en costo</span>${mioN(mi.sinPrecio)}`);
+        html += kpi(a.sinCliente ? 'var(--ambar)' : 'var(--borde2)', 'usuario', 'Sin cliente', entero(a.sinCliente), `<span></span>${mioN(mi.sinCliente)}`);
+        html += kpi(a.sinTracking ? 'var(--ambar)' : 'var(--borde2)', 'ruta', 'Sin tracking', entero(a.sinTracking), `<span></span>${mioN(mi.sinTracking)}`);
+        html += kpi(a.atrasados ? 'var(--rojo)' : 'var(--borde2)', 'reloj', 'Atrasados', entero(a.atrasados), `<span>más de 40 días</span>${mioN(mi.atrasados)}`);
+        document.getElementById('kpis-oper').innerHTML = html;
+
+        pintarGrafica();
+        pintarAlertas();
+        pintarEtapas();
+        pintarCotizaciones();
+        pintarRankings();
+        pintarUrgentes();
     }
 
-    // Lógica pura de filtrado (texto + checkboxes), sin tocar la paginación
-    function aplicarFiltros(texto) {
-        const q            = (texto || '').trim().toLowerCase();
-        const soloMios     = document.getElementById('chk-solo-mis')?.checked || false;
-        const sinVendedor  = document.getElementById('chk-sin-vendedor')?.checked || false;
-        const sinPrecio    = document.getElementById('chk-sin-precio')?.checked || false;
-        const sinCliente   = document.getElementById('chk-sin-cliente')?.checked || false;
-
-        articulosFiltrados = articulosDisponibles.filter(p => {
-            if (soloMios   && p.IdVendedor !== usuario.id) return false;
-            if (sinVendedor && p.IdVendedor) return false;
-            if (sinPrecio  && p.ValorCobroCliente) return false;
-            if (sinCliente && p.IdCliente) return false;
-            if (!q) return true;
-            return (
-                (p.NombreArticulo      || '').toLowerCase().includes(q) ||
-                (p.NombreCliente       || '').toLowerCase().includes(q) ||
-                (p.DescripcionArticulo || '').toLowerCase().includes(q) ||
-                (p.NombreEmpresa       || '').toLowerCase().includes(q) ||
-                (p.NoPedidoAplicacion  || '').toLowerCase().includes(q) ||
-                (p.NumeroPedido        || '').toLowerCase().includes(q)
-            );
+    // ── Gráfica (SVG propio, sin librerías) ──
+    function pintarGrafica() {
+        const svg = document.getElementById('grafica');
+        const W = svg.clientWidth || 700, H = 240, padL = 46, padR = 10, padT = 14, padB = 28;
+        const s = D.serie || [];
+        if (!s.length) { svg.innerHTML = ''; return; }
+        const max = Math.max(1, ...s.map(x => Math.max(x.ventas, x.costo, x.cobrado, x.ganancia)));
+        const paso = Math.pow(10, Math.floor(Math.log10(max)));
+        const tope = Math.ceil(max / paso) * paso;
+        const y = v => padT + (H - padT - padB) * (1 - Math.max(0, v) / tope);
+        const ancho = (W - padL - padR) / s.length;
+        const bw = Math.max(4, Math.min(16, (ancho - 18) / 3));
+        let g = '';
+        for (let i = 0; i <= 4; i++) {
+            const v = tope * i / 4, yy = y(v);
+            g += `<line x1="${padL}" x2="${W - padR}" y1="${yy}" y2="${yy}" stroke="#1a2130" stroke-width="1"/>`;
+            g += `<text x="${padL - 8}" y="${yy + 4}" text-anchor="end" font-size="10.5" fill="#4b5563">${compacto(v)}</text>`;
+        }
+        const pts = [];
+        s.forEach((x, i) => {
+            const cx = padL + ancho * i + ancho / 2;
+            const x0 = cx - bw * 1.5 - 2;
+            const barra = (xx, v, c) => `<rect x="${xx}" y="${y(v)}" width="${bw}" height="${Math.max(0, H - padB - y(v))}" rx="3" fill="${c}"/>`;
+            g += barra(x0, x.ventas, '#E8327A') + barra(x0 + bw + 2, x.costo, '#3b4a63') + barra(x0 + 2 * (bw + 2), x.cobrado, '#EF7A30');
+            const actual = i === s.length - 1;
+            g += `<text x="${cx}" y="${H - 9}" text-anchor="middle" font-size="11" fill="${actual ? '#e2e8f0' : '#6b7280'}" font-weight="${actual ? 700 : 400}">${nombreMes(x.mes)}</text>`;
+            pts.push([cx, y(x.ganancia)]);
+        });
+        g += `<polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linejoin="round"/>`;
+        pts.forEach(p => g += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#0d1017" stroke="#4ade80" stroke-width="2"/>`);
+        s.forEach((x, i) => g += `<rect x="${padL + ancho * i}" y="${padT}" width="${ancho}" height="${H - padT - padB}" fill="transparent" data-i="${i}" class="zona"/>`);
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        svg.innerHTML = g;
+        const tip = document.getElementById('tip');
+        svg.querySelectorAll('.zona').forEach(z => {
+            z.addEventListener('mousemove', e => {
+                const x = s[+z.dataset.i];
+                tip.innerHTML = `<b>${nombreMesLargo(x.mes)}</b>
+                    <div><span>Ventas</span><span>${Lt(x.ventas)}</span></div>
+                    <div><span>Costo</span><span>${Lt(x.costo)}</span></div>
+                    <div><span>Ganancia</span><span>${Lt(x.ganancia)}</span></div>
+                    <div><span>Cobrado</span><span>${Lt(x.cobrado)}</span></div>
+                    <div><span>Artículos pedidos</span><span>${entero(x.articulos)}</span></div>`;
+                tip.style.display = 'block';
+                tip.style.left = Math.min(e.clientX + 14, innerWidth - 210) + 'px';
+                tip.style.top = (e.clientY + 14) + 'px';
+            });
+            z.addEventListener('mouseleave', () => tip.style.display = 'none');
         });
     }
 
-    function filtrarPedidos(texto) {
-        aplicarFiltros(texto);
-        paginaActual = 1;
-        renderizarPagina();
+    // ── Alertas ──
+    function pintarAlertas() {
+        const a = D.activos || {}, mi = D.mios || {}, c = D.cotizaciones || {};
+        const lista = [
+            { n:a.listos, cls:'info', ic:'check', t:'Listos para entregar', s:'Recibidos en Honduras', href:'/tracking.html', mio:mi.listos },
+            { n:a.bajoCosto, cls:'alta', ic:'abajo', t:'Vendidos por debajo del costo', s:'Revisá el precio de venta', href:'/asignar-precios.html', mio:mi.bajoCosto },
+            { n:a.atrasados, cls:'alta', ic:'reloj', t:'Atrasados', s:'Más de 40 días sin entregar', href:'/listado-pedidos.html', mio:mi.atrasados },
+            { n:a.sinPrecio, cls:'media', ic:'etiqueta', t:'Sin precio de venta', s:'Asignalos en Precios de venta', href:'/asignar-precios.html', mio:mi.sinPrecio },
+            { n:a.sinCliente, cls:'media', ic:'usuario', t:'Sin cliente asignado', s:'Asignalos en Precios de venta', href:'/asignar-precios.html', mio:mi.sinCliente },
+            { n:a.sinTracking, cls:'media', ic:'ruta', t:'Sin número de tracking', s:'Registralos en Envíos y casillero', href:'/tracking.html', mio:mi.sinTracking },
+            { n:c.sinRespuesta, cls:'azul', ic:'doc', t:'Cotizaciones sin respuesta', s:'Enviadas hace más de 3 días', href:'/cotizaciones.html' },
+            { n:usuario.esAdmin ? a.sinVendedor : 0, cls:'azul', ic:'equipo', t:'Sin vendedor', s:'Asignalos en Asignar vendedores', href:'/asignar-vendedor.html' }
+        ].filter(x => x.n > 0);
+        const el = document.getElementById('alertas');
+        if (!lista.length) { el.innerHTML = `<div class="todo-bien">${ico('check', 'width:28px;height:28px;color:var(--verde);display:block;margin:0 auto 8px')}Todo al día. No hay alertas.</div>`; return; }
+        el.innerHTML = lista.map(x => `<a class="alerta ${x.cls}" href="${x.href}">
+            <div class="alerta-ico">${ico(x.ic)}</div>
+            <div class="alerta-txt"><b>${x.t}</b><small>${x.s}${x.mio ? ` · <span style="color:#f9a8d4">${x.mio} ${x.mio === 1 ? 'tuyo' : 'tuyos'}</span>` : ''}</small></div>
+            <div class="alerta-num">${entero(x.n)}</div>
+            <span class="flecha">${ico('flecha', 'width:14px;height:14px')}</span></a>`).join('');
     }
 
-    // Recarga datos y reaplica los filtros activos
-    async function recargarConFiltros() {
-        await cargarPedidosRecientes();
-        filtrarPedidos(document.getElementById('search-pedidos')?.value || '');
+    function barras(id, filas, fmt) {
+        const max = Math.max(1, ...filas.map(f => f.v));
+        document.getElementById(id).innerHTML = filas.length ? filas.map(f => `<div class="lb ${f.yo ? 'yo' : ''}" title="${esc(f.titulo || '')}">
+            <div class="lb-nom">${f.color ? `<i style="background:${f.color}"></i>` : ''}${esc(f.n)}</div>
+            <div class="lb-pista"><div style="width:${f.v ? Math.max(2, f.v * 100 / max) : 0}%;background:${f.color || 'var(--rosa)'}"></div></div>
+            <div class="lb-val">${fmt ? fmt(f.v) : entero(f.v)}</div></div>`).join('')
+            : '<div class="todo-bien" style="padding:14px">Sin datos este mes.</div>';
     }
 
-    async function cargarPedidosRecientes() {
-        try {
-            const res = await fetch(`/api/pedidos/recientes?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`);
-            const json = await res.json();
-            const tbody = document.getElementById('tabla-pedidos');
-            if (json.ok && json.data.length > 0) {
-                articulosDisponibles = json.data;
-                // Reaplicar TODOS los filtros activos (texto + checkboxes) sin resetear la página
-                const paginaPrevia = paginaActual;
-                aplicarFiltros(document.getElementById('search-pedidos')?.value || '');
-                const totalPaginasNueva = Math.max(1, Math.ceil(articulosFiltrados.length / registrosPorPagina));
-                paginaActual = Math.min(paginaPrevia, totalPaginasNueva);
-                renderizarPagina();
-            } else {
-                tbody.innerHTML = '<tr><td colspan="11" style="color:#374151;text-align:center;padding:20px">Sin pedidos pendientes</td></tr>';
-                document.getElementById('tarjetas-mobile').innerHTML = '<p style="color:#4b5563;text-align:center;padding:20px;">Sin pedidos pendientes</p>';
-                document.getElementById('search-count').textContent = '';
-            }
-        } catch (e) { console.error('Error cargando pedidos:', e); }
+    function pintarEtapas() {
+        const e = (D.activos || {}).etapas || {}, ant = (D.activos || {}).antiguedad || {};
+        const et = [
+            { n:'Sin tracking', v:e.sinTracking || 0, color:'#f59e0b' }, { n:'Creado', v:e.creado || 0, color:'#c084fc' },
+            { n:'En Miami', v:e.miami || 0, color:'#60a5fa' }, { n:'A Honduras', v:e.honduras || 0, color:'#EF7A30' },
+            { n:'Recibido', v:e.recibido || 0, color:'#4ade80' }
+        ];
+        const tot = et.reduce((s, x) => s + x.v, 0) || 1;
+        document.getElementById('etapas-barra').innerHTML = et.filter(x => x.v).map(x => `<div title="${x.n}: ${x.v}" style="width:${x.v * 100 / tot}%;background:${x.color}"></div>`).join('');
+        barras('etapas', et);
+        barras('antiguedad', [
+            { n:'0 a 15 días', v:ant.a15 || 0, color:'#4ade80' }, { n:'16 a 30 días', v:ant.a30 || 0, color:'#60a5fa' },
+            { n:'31 a 45 días', v:ant.a45 || 0, color:'#fbbf24' }, { n:'Más de 45', v:ant.mas || 0, color:'#f87171' }
+        ]);
     }
 
-
-    function renderizarPagina() {
-    const tbody = document.getElementById('tabla-pedidos');
-    const inicio = (paginaActual - 1) * registrosPorPagina;
-    const fin = inicio + registrosPorPagina;
-    const pagina = articulosFiltrados.slice(inicio, fin);
-    const totalPaginas = Math.ceil(articulosFiltrados.length / registrosPorPagina) || 1;
-
-    // Contador de resultados
-    const countEl = document.getElementById('search-count');
-    if (countEl) {
-        const q = (document.getElementById('search-pedidos')?.value || '').trim();
-        countEl.textContent = q
-            ? `${articulosFiltrados.length} resultado${articulosFiltrados.length !== 1 ? 's' : ''}`
-            : `${articulosFiltrados.length} pedidos`;
-    }
-
-    tbody.innerHTML = pagina.map((p, i) => {
-        // Para admin: resaltar si el artículo no es de su vendedor (tiene vendedor asignado distinto al logueado)
-        const esOtroVendedor = usuario.esAdmin && p.IdVendedor && p.IdVendedor !== usuario.id;
-        const claseExtra = esOtroVendedor ? ' class="fila-otro-vendedor"' : '';
-        const badgeVendedor = esOtroVendedor
-            ? `<span class="badge-otro-vendedor" title="Vendedor: ${p.NombreVendedor || 'otro'}"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${p.NombreVendedor || 'otro vend.'}</span>`
-            : '';
-        return `
-        <tr${claseExtra.replace('class="', 'class="' + (seleccion.has(p.IdDetallePedido) ? 'fila-sel ' : '')) || (seleccion.has(p.IdDetallePedido) ? ' class="fila-sel"' : '')}>
-            <td><input type="checkbox" class="sel-chk" ${seleccion.has(p.IdDetallePedido) ? 'checked' : ''} onchange="toggleSel(${p.IdDetallePedido}, this.checked)"></td>
-            <td style="color:#4b5563;font-size:11px">${inicio + i + 1}</td>
-            <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${formatFecha(p.FechaPedido)}</td>
-            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.NombreArticulo}">${p.NombreArticulo}</td>
-            <td style="color:#9ca3af;font-size:11px;white-space:nowrap">${p.NombreEmpresa || '---'}</td>
-            <td style="font-size:11px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'};white-space:nowrap">
-                <span class="celda-asig" title="Clic para seleccionar y asignar cliente" onclick="seleccionarYEnfocar(${p.IdDetallePedido}, 'bulk-cliente')">${p.NombreCliente || 'Sin cliente'}</span>
-            </td>
-            <td style="font-size:12px;color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'};white-space:nowrap">
-                ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
-            </td>
-            <td style="font-size:11px;font-family:monospace;color:#6b7280;white-space:nowrap">
-                ${p.Seguimiento ? p.Seguimiento.substring(0,12)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
-            </td>
-            <td>${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}</td>
-            <td class="solo-admin" style="font-size:11px;white-space:nowrap;">
-                ${p.CodigoVendedor
-                    ? `<span style="color:#c084fc;font-weight:600;">${p.CodigoVendedor}</span><br>
-                       <span style="font-size:10px;color:#6b7280;">${p.NombreVendedor || ''}</span>`
-                    : '<span style="color:#ef4444;" class="celda-asig" title="Clic para seleccionar y asignar vendedor" onclick="seleccionarYEnfocar(' + p.IdDetallePedido + ', \'bulk-vendedor\')">Sin vendedor</span>'
-                }
-            </td>
-            <td style="white-space:nowrap">
-                <button onclick="verArticulo(${p.IdDetallePedido})"
-                    style="background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
-                    title="Ver artículo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"
-                    style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-right:4px"
-                    title="Asignar cliente"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
-                <button onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', ${p.PrecioSugerido || 0})"
-                    style="background:#2d1f0a;color:#f59e0b;border:1px solid #3d2a0a;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer"
-                    title="Asignar precio"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
-                ${usuario.esAdmin ? `
-                <button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')"
-                    style="background:#1f1025;color:#c084fc;border:1px solid #3b1f5e;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;margin-left:4px"
-                    title="Asignar vendedor"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>` : ''}
-            </td>
-        </tr>
-    `}).join('');
-
-    // Paginación
-    document.getElementById('paginacion').innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 8px;border-top:1px solid #1e2530;margin-top:8px;">
-            <span style="font-size:12px;color:#4b5563;">
-                Mostrando ${articulosFiltrados.length === 0 ? 0 : inicio + 1}-${Math.min(fin, articulosFiltrados.length)} de ${articulosFiltrados.length}
-            </span>
-            <div style="display:flex;gap:6px;">
-                <button onclick="cambiarPagina(${paginaActual - 1})" ${paginaActual === 1 ? 'disabled' : ''}
-                    style="background:#13181f;color:${paginaActual === 1 ? '#374151' : '#9ca3af'};border:1px solid #1e2530;border-radius:6px;padding:5px 12px;font-size:12px;cursor:${paginaActual === 1 ? 'not-allowed' : 'pointer'};">
-                    ← Anterior
-                </button>
-                <span style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:5px 12px;font-size:12px;">
-                    ${paginaActual} / ${totalPaginas}
-                </span>
-                <button onclick="cambiarPagina(${paginaActual + 1})" ${paginaActual === totalPaginas ? 'disabled' : ''}
-                    style="background:#13181f;color:${paginaActual === totalPaginas ? '#374151' : '#9ca3af'};border:1px solid #1e2530;border-radius:6px;padding:5px 12px;font-size:12px;cursor:${paginaActual === totalPaginas ? 'not-allowed' : 'pointer'};">
-                    Siguiente →
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Tarjetas móvil
-    document.getElementById('tarjetas-mobile').innerHTML = pagina.map((p, i) => {
-        const esOtroVendedor = usuario.esAdmin && p.IdVendedor && p.IdVendedor !== usuario.id;
-        const borderStyle = esOtroVendedor ? 'border-left:3px solid #854d0e;background:#14100a;' : '';
-        const badgeVendedor = esOtroVendedor
-            ? `<span style="font-size:9px;background:#2d1f0a;color:#f59e0b;border-radius:4px;padding:1px 5px;margin-left:4px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${p.NombreVendedor || 'otro vend.'}</span>`
-            : '';
-        return `
-        <div class="tarjeta-pedido${seleccion.has(p.IdDetallePedido) ? ' fila-sel' : ''}" style="${borderStyle}">
-            <div class="tarjeta-header">
-                <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="sel-chk" ${seleccion.has(p.IdDetallePedido) ? 'checked' : ''} onchange="toggleSel(${p.IdDetallePedido}, this.checked)"><span class="tarjeta-num">#${inicio + i + 1}</span></label>
-                <span class="tarjeta-fecha">${formatFecha(p.FechaPedido)}</span>
-            </div>
-            <div class="tarjeta-articulo">${p.NombreArticulo}</div>
-            <div class="tarjeta-info">
-                <span class="tarjeta-tag">${p.NombreEmpresa || '---'}</span>
-                <span class="tarjeta-tag" style="color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${p.NombreCliente || 'Sin cliente'}${badgeVendedor}</span>
-                ${getEstadoBadge(p.IdSeguimiento, p.IdEstado)}
-            </div>
-            <div class="tarjeta-row">
-                <span class="tarjeta-precio" style="color:${p.ValorCobroCliente ? '#34d399' : '#ef4444'}">
-                    ${p.ValorCobroCliente ? 'L ' + p.ValorCobroCliente.toFixed(2) : 'Sin precio'}
-                </span>
-                <span style="font-size:11px;font-family:monospace;color:#6b7280">
-                    ${p.Seguimiento ? p.Seguimiento.substring(0,14)+'...' : '<span style="color:#f59e0b">Sin tracking</span>'}
-                </span>
-            </div>
-            <div class="tarjeta-btns">
-                <button onclick="verArticulo(${p.IdDetallePedido})" style="background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;" title="Ver artículo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="btn-cliente" onclick="asignarCliente(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.NombreVendedor ? p.NombreVendedor.replace(/'/g,"\\'") : "Sin vendedor"}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Asignar cliente</button>
-                <button class="btn-precio" onclick="ponerPrecio(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${(p.NombreCliente || "").replace(/'/g,"\\'")}', ${p.ValorCobroCliente || 0}, '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', ${p.PrecioSugerido || 0})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Asignar precio</button>
-                ${usuario.esAdmin ? `<button onclick="abrirModalVendedor(${p.IdDetallePedido}, '${p.NombreArticulo.replace(/'/g,"\\'")}', '${p.DescripcionArticulo ? p.DescripcionArticulo.replace(/[\r\n]/g," ").replace(/'/g,"\\'") : ""}', '${p.TallaColor ? p.TallaColor.replace(/'/g,"\\'") : ""}', '${p.CodigoArticulo ? p.CodigoArticulo.replace(/'/g,"\\'") : ""}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #3b1f5e;background:#1f1025;color:#c084fc;font-weight:600;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Vendedor</button>` : ''}
-            </div>
-        </div>
-    `}).join('');
-
-    actualizarBarraSel(pagina);
-
-    // Aplicar display correcto a celdas solo-admin generadas dinámicamente
-    if (usuario.esAdmin) {
-        document.querySelectorAll('#tabla-pedidos td.solo-admin').forEach(td => {
-            td.style.display = 'table-cell';
-        });
-    }
-}
-
-function cambiarPagina(nuevaPagina) {
-    const totalPaginas = Math.ceil(articulosFiltrados.length / registrosPorPagina) || 1;
-    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
-    paginaActual = nuevaPagina;
-    renderizarPagina();
-}
-
-    function getEstadoBadge(idSeguimiento, idEstado) {
-        if (!idSeguimiento) return '<span class="status pendiente">Sin tracking</span>';
-        switch(idEstado) {
-            case 1: return '<span class="status nuevo">Creado</span>';
-            case 2: return '<span class="status pendiente">En Miami</span>';
-            case 3: return '<span class="status en-camino">A Honduras</span>';
-            case 4: return '<span class="status entregado">Recibido</span>';
-            default: return '<span class="status pendiente">Pendiente</span>';
-        }
-    }
-
-    cargarStats();
-    cargarPedidosRecientes().then(() => {
-        // Leer parámetro ?pedido= de la URL y aplicar filtro automático
-        const urlParams = new URLSearchParams(window.location.search);
-        const pedidoParam = urlParams.get('pedido');
-        if (pedidoParam) {
-            const searchInput = document.getElementById('search-pedidos');
-            if (searchInput) {
-                searchInput.value = pedidoParam;
-                filtrarPedidos(pedidoParam);
-                // Limpiar el parámetro de la URL sin recargar
-                window.history.replaceState({}, '', '/dashboard.html');
-            }
-        }
-    });
-    setInterval(() => { cargarStats(); cargarPedidosRecientes(); }, 60000);
-
-    // ===== MODAL VER ARTÍCULO =====
-    function verArticulo(idDetallePedido) {
-        const a = articulosDisponibles.find(x => x.IdDetallePedido === idDetallePedido);
-        if (!a) return;
-
-        document.getElementById('ver-articulo-id').textContent = a.IdDetallePedido;
-        document.getElementById('ver-articulo-nombre').textContent = a.NombreArticulo || 'Sin nombre';
-        document.getElementById('ver-articulo-desc').textContent = a.DescripcionArticulo || '';
-        document.getElementById('ver-articulo-talla').textContent = a.TallaColor ? '' + a.TallaColor : '';
-        document.getElementById('ver-articulo-talla').style.display = a.TallaColor ? 'inline-block' : 'none';
-        document.getElementById('ver-articulo-codigo').textContent = a.CodigoArticulo ? '' + a.CodigoArticulo : '';
-        document.getElementById('ver-articulo-codigo').style.display = a.CodigoArticulo ? 'inline-block' : 'none';
-
-        const img = document.getElementById('ver-articulo-foto');
-        const sinFoto = document.getElementById('ver-articulo-sin-foto');
-        if (a.Fotografia) {
-            img.src = a.Fotografia;
-            img.style.display = 'block';
-            sinFoto.style.display = 'none';
-            img.onerror = () => { img.style.display = 'none'; sinFoto.style.display = 'block'; };
-        } else {
-            img.style.display = 'none';
-            sinFoto.style.display = 'block';
-        }
-
-        document.getElementById('modal-articulo-ver').style.display = 'flex';
-    }
-
-    function cerrarModalVerArticulo() {
-        document.getElementById('modal-articulo-ver').style.display = 'none';
-    }
-
-    // ===== MODAL CLIENTE =====
-    let idDetallePedidoActual = null;
-    let clienteSeleccionadoId = null;
-    let clienteSeleccionadoNombre = null;
-
-function asignarCliente(id, nombreArticulo, nombreVendedor, descripcion, talla) {
-        idDetallePedidoActual = id;
-        clienteSeleccionadoId = null;
-        clienteSeleccionadoNombre = null;
-        document.getElementById('modal-cliente').style.display = 'flex';
-        document.getElementById('buscar-cliente-input').value = '';
-        if (document.getElementById('buscar-extra-input')) document.getElementById('buscar-extra-input').value = '';
-        seleccionadosMap = new Map();
-        document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>';
-        document.getElementById('cliente-seleccionado').style.display = 'none';
-        document.getElementById('modal-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('modal-articulo-desc').textContent = descripcion ? 'Descripción: ' + descripcion : '';
-        document.getElementById('modal-articulo-talla').textContent = talla ? 'Talla: ' + talla : '';
-        document.getElementById('modal-vendedor-nombre').textContent = 'Vendedor: ' + (nombreVendedor || 'Sin vendedor');
-        // Cargar precio actual y sugerido del artículo principal
-        const articuloPrincipal = articulosDisponibles.find(a => a.IdDetallePedido === id);
-        const inputPrincipal = document.getElementById('val-precio-principal');
-        if (inputPrincipal) inputPrincipal.value = articuloPrincipal?.ValorCobroCliente || '';
-        const sugerido = redondearMultiplo5(articuloPrincipal?.PrecioSugerido || 0);
-        const elSugCliente = document.getElementById('precio-sugerido-cliente');
-        if (elSugCliente) {
-            elSugCliente.textContent = sugerido > 0 ? `Sugerido: L ${sugerido.toFixed(2)}` : '';
-            elSugCliente.style.display = sugerido > 0 ? 'inline' : 'none';
-        }
-        cargarArticulosExtra();
-        setTimeout(() => document.getElementById('buscar-cliente-input').focus(), 100);
-    }
-
-    function cerrarModalCliente() {
-        document.getElementById('modal-cliente').style.display = 'none';
-        idDetallePedidoActual = null;
-        clienteSeleccionadoId = null;
-    }
-
-    let buscarTimeout = null;
-    function buscarClientesModal(nombre) {
-        clearTimeout(buscarTimeout);
-        if (nombre.length < 2) {
-            document.getElementById('lista-clientes').innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe al menos 2 letras...</p>';
-            return;
-        }
-        buscarTimeout = setTimeout(async () => {
-            try {
-                const res = await fetch(`/api/clientes/buscar?nombre=${encodeURIComponent(nombre)}`);
-                const json = await res.json();
-                const lista = document.getElementById('lista-clientes');
-                if (json.ok && json.data.length > 0) {
-                    lista.innerHTML = json.data.map(c => `
-                        <div onclick="seleccionarCliente(${c.IdCliente}, '${(c.NombreCompleto || '').trim().replace(/'/g, "\\'")}')"
-                            style="padding:10px 14px;border-bottom:1px solid #1e2530;cursor:pointer;transition:.15s;"
-                            onmouseover="this.style.background='#13181f'" onmouseout="this.style.background='transparent'">
-                            <div style="color:#d1d5db;font-size:13px;font-weight:600">${c.NombreCompleto}</div>
-                            <div style="color:#4b5563;font-size:11px">${c.CodigoCliente || ''} · ${c.CodigoVendedor || ''}</div>
-                        </div>
-                    `).join('');
-                } else {
-                    lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">No se encontraron clientes</p>';
-                }
-            } catch (e) { console.error(e); }
-        }, 400);
-    }
-
-    function seleccionarCliente(idCliente, nombre) {
-        clienteSeleccionadoId = idCliente;
-        clienteSeleccionadoNombre = nombre;
-        document.getElementById('cliente-seleccionado').style.display = 'block';
-        document.getElementById('cliente-seleccionado-nombre').textContent = nombre;
-        document.getElementById('lista-clientes').innerHTML = '';
-        document.getElementById('buscar-cliente-input').value = nombre;
-    }
-
-    function toggleArticulosExtra() {} // panel siempre visible
-
-    let articulosExtraData = [];
-    let seleccionadosMap = new Map(); // idDetalle -> { precio, nombre, talla, sugerido }
-
-    function cargarArticulosExtra() {
-        const soloMios    = document.getElementById('chk-solo-mis')?.checked || false;
-        const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
-        articulosExtraData = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoActual);
-        if (soloMios)    articulosExtraData = articulosExtraData.filter(a => a.IdVendedor === usuario.id);
-        if (sinVendedor) articulosExtraData = articulosExtraData.filter(a => !a.IdVendedor);
-        renderizarArticulosExtra(articulosExtraData);
-    }
-
-    function filtrarArticulosExtra(texto) {
-        const q = (texto || '').trim().toLowerCase();
-        const filtrados = q
-            ? articulosExtraData.filter(a =>
-                (a.NombreArticulo      || '').toLowerCase().includes(q) ||
-                (a.DescripcionArticulo || '').toLowerCase().includes(q) ||
-                (a.TallaColor         || '').toLowerCase().includes(q) ||
-                (a.NombreCliente      || '').toLowerCase().includes(q))
-            : articulosExtraData;
-        renderizarArticulosExtra(filtrados);
-    }
-
-    function renderizarArticulosExtra(lista) {
-        const el = document.getElementById('lista-articulos-extra');
-        const countEl = document.getElementById('extra-count');
-        if (countEl) countEl.textContent = lista.length + ' artículos';
-        if (!el) return;
-        if (lista.length === 0) {
-            el.innerHTML = '<p style="color:#4b5563;text-align:center;padding:24px;font-size:13px;">No hay artículos disponibles</p>';
-            actualizarResumenSeleccionados();
-            return;
-        }
-        el.innerHTML = lista.map(a => {
-            const vendColor   = a.IdVendedor ? '#c084fc' : '#ef4444';
-            const vendNombre  = a.NombreVendedor ? a.NombreVendedor.trim() : 'Sin vendedor';
-            const clienteStr  = a.IdCliente ? `<span style="color:#34d399;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${a.NombreCliente}</span>` : '<span style="color:#ef4444;">Sin cliente</span>';
-            const precioStr   = a.ValorCobroCliente ? `<span style="color:#34d399;">L ${parseFloat(a.ValorCobroCliente).toFixed(2)}</span>` : '<span style="color:#f59e0b;">Sin precio</span>';
-            const sugerido    = redondearMultiplo5(a.PrecioSugerido || 0);
-            const sugeridoStr = sugerido > 0 ? `<span style="color:#34d399;background:#0f2318;border:1px solid #1a3d28;border-radius:4px;padding:1px 6px;font-size:10px;">Sug: L ${sugerido.toFixed(2)}</span>` : '';
-            const desc        = a.DescripcionArticulo ? a.DescripcionArticulo.trim().substring(0,70) + (a.DescripcionArticulo.length > 70 ? '...' : '') : '';
-            // Restaurar estado del Map
-            const yaSeleccionado = seleccionadosMap.has(a.IdDetallePedido);
-            const precioGuardado = yaSeleccionado ? seleccionadosMap.get(a.IdDetallePedido).precio : (a.ValorCobroCliente || '');
-            return `
-            <div style="padding:12px 14px;border-bottom:1px solid #1e2530;transition:.15s;${yaSeleccionado ? 'background:#0d1520;' : ''}"
-                 onmouseover="this.style.background='#0d1117'" onmouseout="this.style.background='${yaSeleccionado ? '#0d1520' : 'transparent'}'">
-                <div style="display:flex;align-items:flex-start;gap:10px;">
-                    <input type="checkbox" id="chk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
-                        ${yaSeleccionado ? 'checked' : ''}
-                        onchange="togglePrecioExtra(${a.IdDetallePedido}, '${(a.NombreArticulo||'').replace(/'/g,"\\'")}', '${(a.TallaColor||'').replace(/'/g,"\\'")}', ${sugerido})"
-                        style="width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;margin-top:3px;flex-shrink:0;">
-                    <div style="flex:1;min-width:0;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-                            <span style="color:#e2e8f0;font-size:13px;font-weight:600;">${a.NombreArticulo}</span>
-                            <span style="font-size:11px;color:${vendColor};white-space:nowrap;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${vendNombre}</span>
-                        </div>
-                        ${desc ? `<div style="color:#6b7280;font-size:11px;margin-top:2px;line-height:1.3;">${desc}</div>` : ''}
-                        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
-                            <span style="color:#4b5563;font-size:11px;">${a.NombreEmpresa}</span>
-                            ${a.TallaColor ? `<span style="color:#4b5563;font-size:11px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg> ${a.TallaColor}</span>` : ''}
-                            <span style="font-size:11px;">${clienteStr}</span>
-                            <span style="font-size:11px;">${precioStr}</span>
-                            ${sugeridoStr}
-                        </div>
-                        <div id="precio-extra-${a.IdDetallePedido}" style="display:${yaSeleccionado ? 'block' : 'none'};margin-top:8px;">
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <span style="color:#f59e0b;font-size:11px;white-space:nowrap;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Precio (L):</span>
-                                <input type="number" id="val-precio-${a.IdDetallePedido}"
-                                    placeholder="0.00" step="0.01" min="0"
-                                    value="${precioGuardado}"
-                                    oninput="actualizarPrecioEnMap(${a.IdDetallePedido}, this.value)"
-                                    onblur="guardarPrecioInline(${a.IdDetallePedido}, this.value)"
-                                    onkeydown="if(event.key==='Enter') guardarPrecioInline(${a.IdDetallePedido}, this.value)"
-                                    style="flex:1;background:#13181f;border:1px solid #3d2a0a;border-radius:6px;padding:5px 8px;color:#f59e0b;font-size:12px;outline:none;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-        actualizarResumenSeleccionados();
-    }
-
-    function togglePrecioExtra(idDetalle, nombre, talla, sugerido) {
-        const chk   = document.getElementById(`chk-${idDetalle}`);
-        const campo = document.getElementById(`precio-extra-${idDetalle}`);
-        if (chk.checked) {
-            seleccionadosMap.set(idDetalle, { precio: '', nombre, talla, sugerido });
-            if (campo) campo.style.display = 'block';
-        } else {
-            seleccionadosMap.delete(idDetalle);
-            if (campo) campo.style.display = 'none';
-        }
-        actualizarResumenSeleccionados();
-    }
-
-    function actualizarPrecioEnMap(idDetalle, valor) {
-        if (seleccionadosMap.has(idDetalle)) {
-            const entry = seleccionadosMap.get(idDetalle);
-            entry.precio = valor;
-            seleccionadosMap.set(idDetalle, entry);
-        }
-        actualizarResumenSeleccionados();
-    }
-
-    function actualizarResumenSeleccionados() {
-        const el = document.getElementById('resumen-seleccionados');
-        if (!el) return;
-        if (seleccionadosMap.size === 0) {
-            el.style.display = 'none';
-            return;
-        }
-        el.style.display = 'block';
+    function pintarCotizaciones() {
+        const c = D.cotizaciones;
+        const el = document.getElementById('cotizaciones');
+        if (!c) { el.innerHTML = '<div style="grid-column:1/-1;color:var(--tenue);font-size:12px">Todavía no hay cotizaciones.</div>'; return; }
         el.innerHTML = `
-            <div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
-                ${seleccionadosMap.size} artículo(s) adicional(es) seleccionado(s)
-            </div>
-            ${Array.from(seleccionadosMap.entries()).map(([id, data]) => `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#0d1017;border:1px solid #1e2530;border-radius:6px;margin-bottom:4px;gap:8px;">
-                    <div style="min-width:0;">
-                        <div style="color:#d1d5db;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${data.nombre}</div>
-                        ${data.talla ? `<div style="color:#4b5563;font-size:10px;">${data.talla}</div>` : ''}
-                    </div>
-                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                        ${data.sugerido > 0 ? `<span style="font-size:10px;color:#6b7280;">Sug: L${data.sugerido}</span>` : ''}
-                        <span style="font-size:12px;color:${data.precio ? '#f59e0b' : '#4b5563'};">${data.precio ? 'L ' + data.precio : 'Sin precio'}</span>
-                        <button onclick="quitarSeleccionado(${id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:0 2px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-                    </div>
-                </div>
-            `).join('')}
-        `;
+            <div><b>Abiertas</b><span>${entero(c.abiertas)}</span><small>${c.mias ? `<span style="color:#f9a8d4">${c.mias} ${c.mias === 1 ? 'tuya' : 'tuyas'}</span>` : 'borrador o enviadas'}</small></div>
+            <div><b>Monto abierto</b><span>${Lt(c.montoAbierto)}</span><small>por cerrar</small></div>
+            <div><b>Del mes</b><span>${entero(c.delMes)}</span><small>${entero(c.cerradasMes)} aceptadas</small></div>
+            <div><b>Conversión</b><span>${c.conversion != null ? c.conversion + '%' : '—'}</span><small>aceptadas / hechas</small></div>`;
     }
 
-    function quitarSeleccionado(idDetalle) {
-        seleccionadosMap.delete(idDetalle);
-        // Desmarcar checkbox si está visible
-        const chk = document.getElementById(`chk-${idDetalle}`);
-        if (chk) { chk.checked = false; }
-        const campo = document.getElementById(`precio-extra-${idDetalle}`);
-        if (campo) campo.style.display = 'none';
-        actualizarResumenSeleccionados();
+    function pintarRankings() {
+        barras('vendedores', (D.vendedores || []).map(v => ({
+            n: (v.id === usuario.id ? 'Tú · ' : '') + (v.nombre || v.codigo || 'Vendedor ' + v.id), v: v.ventas, yo: v.id === usuario.id,
+            color: v.id === usuario.id ? 'var(--rosa)' : '#7c3aed', titulo: `${v.articulos} artículos · ganancia ${Lt(v.ganancia)}`
+        })), Lt);
+        barras('tiendas', (D.tiendas || []).map(t => ({ n:t.nombre, v:t.compras, color:'var(--naranja)', titulo:`${t.articulos} artículos` })), Lt);
     }
 
-    async function guardarPrecioInline(idDetalle, valor) {
-        if (!idDetalle) return;
-        const v = parseFloat(valor);
-        if (!v || isNaN(v) || v <= 0) return;
-        try {
-            await fetch('/api/clientes/precio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idDetallePedido: idDetalle, valorCobro: v })
-            });
-            // Actualizar en memoria para que la tabla lo refleje
-            const art = articulosDisponibles.find(a => a.IdDetallePedido === idDetalle);
-            if (art) art.ValorCobroCliente = v;
-        } catch(e) { console.error('Error guardando precio:', e); }
+    // ── Urgentes con "Ver artículo" ──
+    function urgLista() { return (D.urgentes || []).filter(u => urgFiltro === 'todos' || u.IdVendedor === usuario.id); }
+    function filtroUrg(b) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === b));
+        urgFiltro = b.dataset.f; urgLimite = 8; if (D) pintarUrgentes();
     }
+    function verMas() { urgLimite = urgLimite >= 40 ? 8 : 40; pintarUrgentes(); }
+    function verUrg(id) { const u = (D.urgentes || []).find(x => x.IdDetallePedido === id); if (u) verArticuloModal(u); }
 
-
-    async function confirmarAsignacion() {
-        if (!clienteSeleccionadoId) {
-            alert('Selecciona un cliente primero');
+    function pintarUrgentes() {
+        const lista = urgLista();
+        const tb = document.getElementById('urgentes');
+        const vm = document.getElementById('ver-mas');
+        if (!lista.length) {
+            tb.innerHTML = `<tr><td colspan="7"><div class="todo-bien">${ico('check', 'width:28px;height:28px;color:var(--verde);display:block;margin:0 auto 8px')}${urgFiltro === 'mios' ? 'No tenés artículos pendientes.' : 'No hay artículos pendientes.'}</div></td></tr>`;
+            vm.style.display = 'none';
             return;
         }
-        const idsExtra = Array.from(seleccionadosMap.keys());
-        const todosIds = [idDetallePedidoActual, ...idsExtra].join(',');
-
-        try {
-            // 1. Asignar cliente a todos
-            const res  = await fetch('/api/clientes/asignar-multiple', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idCliente: clienteSeleccionadoId, idDetalles: todosIds })
-            });
-            const json = await res.json();
-            if (!json.ok) { alert('Error: ' + json.error); return; }
-
-            // 2. Guardar precios del Map
-            const promesasPrecios = idsExtra
-                .map(id => {
-                    const entry = seleccionadosMap.get(id);
-                    const valor = parseFloat(entry?.precio);
-                    if (!valor || isNaN(valor) || valor <= 0) return null;
-                    return fetch('/api/clientes/precio', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idDetallePedido: id, valorCobro: valor })
-                    }).then(r => r.json());
-                })
-                .filter(Boolean);
-
-            // 3. Precio artículo principal
-            const inputPrincipal = document.getElementById('val-precio-principal');
-            const valorPrincipal = parseFloat(inputPrincipal?.value);
-            if (valorPrincipal > 0) {
-                promesasPrecios.push(fetch('/api/clientes/precio', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idDetallePedido: idDetallePedidoActual, valorCobro: valorPrincipal })
-                }).then(r => r.json()));
-            }
-
-            if (promesasPrecios.length > 0) await Promise.all(promesasPrecios);
-
-            cerrarModalCliente();
-            recargarConFiltros();
-            alert(`Cliente "${clienteSeleccionadoNombre}" asignado a ${idsExtra.length + 1} artículo(s)${promesasPrecios.length > 0 ? ` y ${promesasPrecios.length} precio(s) guardado(s)` : ''}`);
-        } catch (e) { alert('Error de conexión'); }
+        tb.innerHTML = lista.slice(0, urgLimite).map(u => `<tr class="${u.IdVendedor === usuario.id ? 'mia' : ''}">
+            <td>${u.Fotografia ? `<img class="u-foto" src="${esc(u.Fotografia)}" loading="lazy" alt="" onclick="verUrg(${u.IdDetallePedido})" onerror="this.removeAttribute('src');this.classList.add('vacia')">` : `<div class="u-foto vacia" onclick="verUrg(${u.IdDetallePedido})"></div>`}</td>
+            <td><div class="u-nom" title="${esc(u.NombreArticulo)}">${esc(u.NombreArticulo || '—')}</div>
+                <div class="u-meta">${u.TallaColor ? esc(u.TallaColor) + ' · ' : ''}${esc(u.NoPedidoAplicacion || u.NumeroPedido || '')}${u.Tienda ? ' · ' + esc(u.Tienda) : ''}</div></td>
+            <td><span class="motivo m${u.p}">${esc(u.motivo)}</span></td>
+            <td class="col-movil-no">${u.NombreCliente ? esc(u.NombreCliente) : '<span class="u-sin">Sin cliente</span>'}</td>
+            <td class="col-movil-no">${u.NombreVendedor ? esc(u.NombreVendedor) : '<span class="u-sin">Sin vendedor</span>'}</td>
+            <td class="num col-movil-no">${u.dias}</td>
+            <td class="num"><button class="btn-ver" onclick="verUrg(${u.IdDetallePedido})">${ico('ojo', 'width:14px;height:14px')}<span>Ver artículo</span></button></td>
+        </tr>`).join('');
+        if (lista.length > 8) { vm.style.display = 'block'; vm.textContent = urgLimite >= 40 ? 'Ver menos' : `Ver ${Math.min(lista.length, 40) - 8} más`; }
+        else vm.style.display = 'none';
     }
 
-    // ===== MODAL PRECIO =====
-    let idDetallePrecioActual = null;
-
-    function formatFecha(fechaStr) {
-        if (!fechaStr) return '';
-        // Tomar solo la parte YYYY-MM-DD para evitar conversión de timezone
-        const parte = fechaStr.substring(0, 10);
-        const [y, m, d] = parte.split('-');
-        return `${d}/${m}/${y}`;
-    }
-
-    function redondearMultiplo5(valor) {
-        if (!valor || valor <= 0) return 0;
-        return Math.round(valor / 5) * 5;
-    }
-
-    function ponerPrecio(id, nombreArticulo, nombreCliente, precioActual, descripcion, talla, precioSugerido) {
-        idDetallePrecioActual = id;
-        document.getElementById('modal-precio').style.display = 'flex';
-        document.getElementById('precio-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('precio-articulo-desc').textContent = descripcion ? 'Descripción: ' + descripcion : '';
-        document.getElementById('precio-articulo-talla').textContent = talla ? 'Talla: ' + talla : '';
-        document.getElementById('precio-cliente-nombre').textContent = 'Cliente: ' + (nombreCliente || 'Sin cliente');
-        document.getElementById('precio-input').value = precioActual || '';
-        // Precio sugerido
-        const sugerido = redondearMultiplo5(precioSugerido);
-        const elSugerido = document.getElementById('precio-sugerido-ref');
-        if (elSugerido) {
-            elSugerido.textContent = sugerido > 0 ? `Sugerido: L ${sugerido.toFixed(2)}` : '';
-            elSugerido.style.display = sugerido > 0 ? 'inline' : 'none';
-        }
-        setTimeout(() => document.getElementById('precio-input').focus(), 100);
-    }
-
-    function cerrarModalPrecio() {
-        document.getElementById('modal-precio').style.display = 'none';
-        idDetallePrecioActual = null;
-    }
-
-    async function confirmarPrecio() {
-        const valor = parseFloat(document.getElementById('precio-input').value);
-        if (!valor || valor <= 0) {
-            alert('Ingresa un precio válido');
-            return;
-        }
-        try {
-            const res = await fetch('/api/clientes/precio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idDetallePedido: idDetallePrecioActual, valorCobro: valor })
-            });
-            const json = await res.json();
-            if (json.ok) {
-                cerrarModalPrecio();
-                recargarConFiltros();
-                alert('Precio asignado correctamente');
-            } else {
-                alert('Error: ' + json.error);
-            }
-        } catch (e) { alert('Error de conexión'); }
-    }
-</script>
-
-<!-- MODAL ASIGNAR CLIENTE -->
-<!-- MODAL VER ARTÍCULO -->
-<div id="modal-articulo-ver" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:20px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <h3 style="color:#fff;font-size:15px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg> Ver artículo</h3>
-            <button onclick="cerrarModalVerArticulo()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-        </div>
-
-        <div id="ver-articulo-foto-wrap" style="width:100%;aspect-ratio:1/1;max-height:280px;background:#13181f;border:1px solid #1e2530;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;">
-            <img id="ver-articulo-foto" style="width:100%;height:100%;object-fit:contain;display:none;">
-            <div id="ver-articulo-sin-foto" style="color:#374151;font-size:12px;text-align:center;">
-                <div style="font-size:28px;margin-bottom:6px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg></div>
-                Sin fotografía
-            </div>
-        </div>
-
-        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:#4b5563;">
-                <span>ID Detalle Pedido</span>
-                <span id="ver-articulo-id" style="color:#9ca3af;font-family:monospace;"></span>
-            </div>
-            <div id="ver-articulo-nombre" style="color:#e2e8f0;font-size:14px;font-weight:600;margin-top:4px;"></div>
-            <div id="ver-articulo-desc" style="color:#9ca3af;font-size:12px;line-height:1.4;"></div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
-                <span id="ver-articulo-talla" style="font-size:11px;color:#6b7280;background:#0d1117;border:1px solid #1e2530;border-radius:6px;padding:3px 8px;"></span>
-                <span id="ver-articulo-codigo" style="font-size:11px;color:#6b7280;background:#0d1117;border:1px solid #1e2530;border-radius:6px;padding:3px 8px;font-family:monospace;"></span>
-            </div>
-        </div>
-
-        <button onclick="cerrarModalVerArticulo()"
-            style="width:100%;margin-top:14px;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
-            Cerrar
-        </button>
-    </div>
-</div>
-
-<div id="modal-cliente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;width:100%;max-width:960px;max-height:92vh;display:flex;overflow:hidden;">
-
-        <!-- PANEL IZQUIERDO -->
-        <div style="flex:0 0 400px;padding:24px;border-right:1px solid #1e2530;display:flex;flex-direction:column;overflow-y:auto;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                <h3 style="color:#fff;font-size:15px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Asignar Cliente</h3>
-                <button onclick="cerrarModalCliente()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-            </div>
-
-            <!-- Info artículo -->
-            <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
-                <div style="font-size:10px;color:#4b5563;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Artículo seleccionado</div>
-                <div id="modal-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-                <div id="modal-articulo-desc"   style="color:#9ca3af;font-size:11px;margin-top:3px;line-height:1.4;"></div>
-                <div id="modal-articulo-talla"  style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
-                <div id="modal-vendedor-nombre" style="color:#6b7280;font-size:11px;margin-top:3px;"></div>
-                <!-- Precio del artículo principal -->
-                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #1e2530;flex-wrap:wrap;">
-                    <span style="color:#f59e0b;font-size:11px;white-space:nowrap;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Precio (L):</span>
-                    <input type="number" id="val-precio-principal" placeholder="0.00" step="0.01" min="0"
-                        onblur="guardarPrecioInline(idDetallePedidoActual, this.value)"
-                        onkeydown="if(event.key==='Enter') guardarPrecioInline(idDetallePedidoActual, this.value)"
-                        style="flex:1;min-width:80px;background:#0d1017;border:1px solid #3d2a0a;border-radius:6px;padding:6px 10px;color:#f59e0b;font-size:13px;outline:none;font-family:'Segoe UI',sans-serif;">
-                    <span id="precio-sugerido-cliente" style="display:none;font-size:11px;color:#34d399;background:#0f2318;border:1px solid #1a3d28;border-radius:4px;padding:2px 8px;white-space:nowrap;"></span>
-                </div>
-            </div>
-
-            <!-- Buscador cliente -->
-            <div style="font-size:11px;color:#4b5563;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Buscar cliente</div>
-            <input id="buscar-cliente-input" type="text" placeholder="Escribe el nombre del cliente..."
-                oninput="buscarClientesModal(this.value)"
-                style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px;color:#fff;font-size:13px;outline:none;font-family:'Segoe UI',sans-serif;box-sizing:border-box;margin-bottom:10px;">
-            <div id="lista-clientes" style="max-height:150px;overflow-y:auto;margin-bottom:12px;border:1px solid #1e2530;border-radius:8px;">
-                <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Escribe para buscar clientes...</p>
-            </div>
-            <div id="cliente-seleccionado" style="display:none;background:#0f2318;border:1px solid #1a3d28;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
-                <div style="font-size:10px;color:#34d399;margin-bottom:2px;">CLIENTE SELECCIONADO</div>
-                <div id="cliente-seleccionado-nombre" style="color:#fff;font-size:13px;font-weight:600;"></div>
-            </div>
-            <!-- Resumen artículos seleccionados -->
-            <div id="resumen-seleccionados" style="display:none;background:#0d1117;border:1px solid #1e2530;border-radius:8px;padding:10px;margin-bottom:10px;max-height:200px;overflow-y:auto;"></div>
-
-            <!-- Botones -->
-            <div style="display:flex;gap:10px;margin-top:auto;">
-                <button onclick="cerrarModalCliente()"
-                    style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
-                    Cancelar
-                </button>
-                <button onclick="confirmarAsignacion()"
-                    style="flex:2;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
-                    <svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Asignar Cliente
-                </button>
-            </div>
-        </div>
-
-        <!-- PANEL DERECHO -->
-        <div style="flex:1;padding:24px;display:flex;flex-direction:column;min-width:0;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                <div style="font-size:13px;color:#9ca3af;font-weight:600;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Artículos adicionales</div>
-                <span id="extra-count" style="font-size:11px;color:#4b5563;"></span>
-            </div>
-
-            <!-- Mini buscador -->
-            <input id="buscar-extra-input" type="text" placeholder="Buscar artículo..."
-                oninput="filtrarArticulosExtra(this.value)"
-                style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:8px 12px;color:#9ca3af;font-size:12px;outline:none;font-family:'Segoe UI',sans-serif;box-sizing:border-box;margin-bottom:10px;">
-
-            <!-- Lista artículos -->
-            <div id="lista-articulos-extra" style="flex:1;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;"></div>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL ASIGNAR PRECIO -->
-<div id="modal-precio" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:400px;margin:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <h3 style="color:#fff;font-size:15px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Asignar Precio</h3>
-            <button onclick="cerrarModalPrecio()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-        </div>
-        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:16px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:4px;">ARTÍCULO</div>
-            <div id="precio-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-            <div id="precio-articulo-desc" style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
-            <div id="precio-articulo-talla" style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
-            <div id="precio-cliente-nombre" style="color:#6b7280;font-size:11px;margin-top:4px;"></div>
-        </div>
-        <div style="margin-bottom:16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                <div style="font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Precio de venta (Lempiras)</div>
-                <span id="precio-sugerido-ref" style="display:none;font-size:11px;color:#34d399;background:#0f2318;border:1px solid #1a3d28;border-radius:4px;padding:2px 8px;"></span>
-            </div>
-            <div style="position:relative;">
-                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:14px;">L</span>
-                <input id="precio-input" type="number" min="0" step="0.01" placeholder="0.00"
-                    style="width:100%;background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:10px 14px 10px 28px;color:#fff;font-size:16px;outline:none;font-family:'Segoe UI',sans-serif;">
-            </div>
-        </div>
-        <div style="display:flex;gap:10px;">
-            <button onclick="cerrarModalPrecio()"
-                style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
-                Cancelar
-            </button>
-            <button onclick="confirmarPrecio()"
-                style="flex:2;background:#854d0e;color:#fef08a;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
-                <svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Guardar Precio
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL ASIGNAR VENDEDOR (solo admin) -->
-<div id="modal-vendedor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:#0d1017;border:1px solid #1e2530;border-radius:12px;padding:24px;width:100%;max-width:480px;margin:16px;max-height:90vh;overflow-y:auto;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <h3 style="color:#fff;font-size:15px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Asignar Vendedor</h3>
-            <button onclick="cerrarModalVendedor()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:20px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-        </div>
-
-        <!-- Info artículo -->
-        <div style="background:#13181f;border:1px solid #1e2530;border-radius:8px;padding:12px;margin-bottom:14px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Artículo seleccionado</div>
-            <div id="mv-articulo-nombre" style="color:#e2e8f0;font-size:13px;font-weight:600;"></div>
-            <div id="mv-articulo-desc"   style="color:#9ca3af;font-size:11px;margin-top:2px;"></div>
-            <div id="mv-articulo-talla"  style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
-            <div id="mv-articulo-sku"    style="color:#6b7280;font-size:11px;margin-top:2px;"></div>
-        </div>
-
-        <!-- Lista vendedores -->
-        <div style="margin-bottom:6px;font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;">Selecciona un vendedor</div>
-        <div id="mv-lista" style="border:1px solid #1e2530;border-radius:8px;overflow:hidden;margin-bottom:12px;max-height:220px;overflow-y:auto;">
-            <p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">Cargando vendedores...</p>
-        </div>
-
-        <!-- Agregar más artículos -->
-        <button onclick="toggleArticulosVendedor()"
-            style="width:100%;background:#1f1025;color:#c084fc;border:1px solid #3b1f5e;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
-            <span><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span><span>Agregar más artículos</span>
-        </button>
-        <div id="mv-articulos-extra" style="display:none;margin-bottom:14px;">
-            <div style="font-size:11px;color:#4b5563;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Selecciona artículos adicionales</div>
-            <div id="mv-lista-articulos" style="max-height:180px;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;">
-            <button onclick="cerrarModalVendedor()"
-                style="flex:1;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">
-                Cancelar
-            </button>
-            <button onclick="confirmarVendedor()"
-                style="flex:2;background:#3b1f5e;color:#c084fc;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">
-                <svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Asignar Vendedor
-            </button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ===== MODAL VENDEDOR =====
-    let idDetallePedidoVendedor = null;
-    idVendedorSeleccionado = undefined;
-    let vendedoresCargados      = [];
-
-    async function abrirModalVendedor(idDetalle, nombreArticulo, descripcion, talla, sku) {
-        idDetallePedidoVendedor = idDetalle;
-        idVendedorSeleccionado = undefined;
-        document.getElementById('mv-articulo-nombre').textContent = nombreArticulo || 'Artículo';
-        document.getElementById('mv-articulo-desc').textContent   = descripcion ? 'Descripción: ' + descripcion : '';
-        document.getElementById('mv-articulo-talla').textContent  = talla ? 'Talla: ' + talla : '';
-        document.getElementById('mv-articulo-sku').textContent    = sku   ? 'SKU: ' + sku   : '';
-        document.getElementById('mv-articulos-extra').style.display = 'none';
-        document.getElementById('modal-vendedor').style.display = 'flex';
-
-        if (vendedoresCargados.length === 0) {
-            try {
-                const res  = await fetch('/api/vendedores');
-                const json = await res.json();
-                vendedoresCargados = json.ok ? json.data : [];
-            } catch (e) { vendedoresCargados = []; }
-        }
-        renderizarListaVendedores();
-    }
-
-    function toggleArticulosVendedor() {
-        const div = document.getElementById('mv-articulos-extra');
-        if (div.style.display === 'none') {
-            div.style.display = 'block';
-            cargarArticulosParaVendedor();
-        } else {
-            div.style.display = 'none';
-        }
-    }
-
-    function cargarArticulosParaVendedor() {
-        const lista = document.getElementById('mv-lista-articulos');
-        const sinVendedor = document.getElementById('chk-sin-vendedor')?.checked || false;
-        let disponibles = articulosDisponibles.filter(a => a.IdDetallePedido !== idDetallePedidoVendedor);
-        // Si el filtro sin vendedor está activo, mostrar solo esos
-        if (sinVendedor) disponibles = disponibles.filter(a => !a.IdVendedor);
-        if (disponibles.length === 0) {
-            lista.innerHTML = '<p style="color:#4b5563;text-align:center;padding:16px;font-size:13px;">No hay más artículos disponibles</p>';
-            return;
-        }
-        lista.innerHTML = disponibles.map(a => `
-            <div style="padding:10px 14px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;">
-                <input type="checkbox" id="mvchk-${a.IdDetallePedido}" value="${a.IdDetallePedido}"
-                    style="width:16px;height:16px;cursor:pointer;accent-color:#c084fc;">
-                <label for="mvchk-${a.IdDetallePedido}" style="cursor:pointer;flex:1;">
-                    <div style="color:#d1d5db;font-size:13px;">${a.NombreArticulo}</div>
-                    <div style="color:#4b5563;font-size:11px;">
-                        ${a.NombreEmpresa || '---'} · ${formatFecha(a.FechaPedido)}
-                        ${a.TallaColor ? ' · ' + a.TallaColor : ''}
-                        ${a.CodigoArticulo ? ' · ' + a.CodigoArticulo : ''}
-                        · <span style="color:${a.IdVendedor ? '#c084fc' : '#ef4444'}">${a.CodigoVendedor || 'Sin vendedor'}</span>
-                    </div>
-                </label>
-            </div>
-        `).join('');
-    }
-
-    function renderizarListaVendedores() {
-        const lista = document.getElementById('mv-lista');
-        if (vendedoresCargados.length === 0) {
-            lista.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;font-size:13px;">No se pudieron cargar los vendedores</p>';
-            return;
-        }
-
-        const itemSinVendedor = `
-    <div onclick="seleccionarVendedor(null)"
-        style="padding:11px 14px;border-bottom:1px solid #1e2530;cursor:pointer;display:flex;align-items:center;gap:10px;
-               background:${idVendedorSeleccionado === null ? '#2d0a0a' : 'transparent'};transition:.15s;"
-        onmouseover="if(${idVendedorSeleccionado !== null}) this.style.background='#13181f'"
-        onmouseout="if(${idVendedorSeleccionado !== null}) this.style.background='transparent'">
-        <div style="width:32px;height:32px;border-radius:50%;background:#2d0a0a;border:1px solid #7f1d1d;
-                    display:flex;align-items:center;justify-content:center;font-size:14px;color:#ef4444;flex-shrink:0;">
-            <svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> </div>
-        <div style="flex:1;">
-            <div style="color:#ef4444;font-size:13px;font-weight:600;">Sin vendedor</div>
-            <div style="color:#4b5563;font-size:11px;">Dejar en NULL</div>
-        </div>
-        ${idVendedorSeleccionado === null ? '<span style="color:#ef4444;font-size:16px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg></span>' : ''}
-    </div>`;
-
-lista.innerHTML = itemSinVendedor + vendedoresCargados.map(v => {
-            const nombre = `${v.Nombres} ${v.Apellidos || ''}`.trim();
-            const esYo   = v.IdVendedor === usuario.id;
-            const activo = idVendedorSeleccionado === v.IdVendedor;
-            return `
-            <div onclick="seleccionarVendedor(${v.IdVendedor})"
-                id="mv-item-${v.IdVendedor}"
-                style="padding:11px 14px;border-bottom:1px solid #1e2530;cursor:pointer;display:flex;align-items:center;gap:10px;
-                       background:${activo ? '#1f1025' : 'transparent'};transition:.15s;"
-                onmouseover="if(!${activo}) this.style.background='#13181f'"
-                onmouseout="if(!${activo}) this.style.background='${activo ? '#1f1025' : 'transparent'}'">
-                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b1f5e,#7c3aed);
-                            display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
-                    ${v.Nombres[0]}${v.Apellidos ? v.Apellidos[0] : ''}
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="color:#d1d5db;font-size:13px;font-weight:600;">
-                        ${nombre} ${esYo ? '<span style="font-size:10px;color:#4b5563;">(yo)</span>' : ''}
-                    </div>
-                    <div style="color:#4b5563;font-size:11px;">${v.CodigoVendedor}</div>
-                </div>
-                ${activo ? '<span style="color:#c084fc;font-size:16px;"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg></span>' : ''}
-            </div>`;
-        }).join('');
-    }
-
-    function seleccionarVendedor(idVendedor) {
-        idVendedorSeleccionado = idVendedor;
-        renderizarListaVendedores();
-    }
-
-    function cerrarModalVendedor() {
-        document.getElementById('modal-vendedor').style.display = 'none';
-        idDetallePedidoVendedor = null;
-        idVendedorSeleccionado = undefined;;
-    }
-
-    // ══════════ SELECCIÓN MÚLTIPLE + ASIGNACIÓN RÁPIDA ══════════
-    const seleccion = new Set();
-    let paginaVisible = [];
-    let bulkClientes = [], bulkVendedores = [], bulkListasCargadas = false;
-
-    function escB(t) { return String(t ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
-    function normB(t) { return (t || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
-    function etiqCli(c) { return (c.NombreCompleto || '').trim() + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : ''); }
-    function etiqVen(v) { return `${v.Nombres} ${v.Apellidos || ''}`.trim() + (v.CodigoVendedor ? ' (' + v.CodigoVendedor + ')' : ''); }
-
-    function toastMS(tipo, txt) {
-        let t = document.getElementById('toast-ms');
-        if (!t) { t = document.createElement('div'); t.id = 'toast-ms'; document.body.appendChild(t); }
-        t.className = 'toast-ms ' + tipo; t.textContent = txt; t.style.display = 'block';
-        clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, 3500);
-    }
-
-    async function cargarListasBulk() {
-        if (bulkListasCargadas) return;
-        bulkListasCargadas = true;
-        try { const d = await fetch('/api/clientes/todos').then(r => r.json()); bulkClientes = d.ok ? d.data : []; } catch (e) {}
-        if (usuario.esAdmin) {
-            try {
-                if (typeof vendedoresCargados !== 'undefined' && vendedoresCargados.length) bulkVendedores = vendedoresCargados;
-                else { const d = await fetch('/api/vendedores').then(r => r.json()); bulkVendedores = d.ok ? d.data : []; }
-            } catch (e) {}
-        }
-        document.getElementById('dl-bulk-clientes').innerHTML = bulkClientes.map(c => `<option value="${escB(etiqCli(c))}">`).join('');
-        document.getElementById('dl-bulk-vendedores').innerHTML =
-            '<option value="— Sin vendedor —">' + bulkVendedores.map(v => `<option value="${escB(etiqVen(v))}">`).join('');
-    }
-
-    function toggleSel(id, on) {
-        if (on) seleccion.add(id); else seleccion.delete(id);
-        renderizarPagina();
-    }
-    function toggleSelPagina(on) {
-        paginaVisible.forEach(p => on ? seleccion.add(p.IdDetallePedido) : seleccion.delete(p.IdDetallePedido));
-        renderizarPagina();
-    }
-    function seleccionarFiltrados() {
-        articulosFiltrados.forEach(p => seleccion.add(p.IdDetallePedido));
-        renderizarPagina();
-    }
-    function limpiarSeleccion() {
-        seleccion.clear();
-        document.getElementById('bulk-cliente').value = '';
-        const v = document.getElementById('bulk-vendedor'); if (v) v.value = '';
-        renderizarPagina();
-    }
-    function seleccionarYEnfocar(id, campo) {
-        seleccion.add(id);
-        renderizarPagina();
-        setTimeout(() => { const el = document.getElementById(campo); if (el) el.focus(); }, 60);
-    }
-
-    function actualizarBarraSel(pagina) {
-        paginaVisible = pagina || [];
-        // quitar de la selección lo que ya no existe (p. ej. entregado)
-        const existentes = new Set(articulosDisponibles.map(p => p.IdDetallePedido));
-        [...seleccion].forEach(id => { if (!existentes.has(id)) seleccion.delete(id); });
-
-        const chkP = document.getElementById('chk-pagina');
-        if (chkP) {
-            const enPag = paginaVisible.filter(p => seleccion.has(p.IdDetallePedido)).length;
-            chkP.checked = paginaVisible.length > 0 && enPag === paginaVisible.length;
-            chkP.indeterminate = enPag > 0 && enPag < paginaVisible.length;
-        }
-        const bar = document.getElementById('bulk-bar');
-        const n = seleccion.size;
-        bar.classList.toggle('visible', n > 0);
-        document.body.classList.toggle('con-seleccion', n > 0);
-        document.getElementById('bulk-count').textContent = `${n} seleccionado${n === 1 ? '' : 's'}`;
-        const faltan = articulosFiltrados.filter(p => !seleccion.has(p.IdDetallePedido)).length;
-        const link = document.getElementById('bulk-todos');
-        link.style.display = (n > 0 && faltan > 0) ? 'inline' : 'none';
-        link.textContent = `Seleccionar los ${articulosFiltrados.length} filtrados`;
-        if (n > 0) cargarListasBulk();
-    }
-
-    async function aplicarBulk() {
-        const ids = [...seleccion];
-        if (!ids.length) return;
-        const txtCli = document.getElementById('bulk-cliente').value.trim();
-        const inVen  = document.getElementById('bulk-vendedor');
-        const txtVen = inVen ? inVen.value.trim() : '';
-        if (!txtCli && !txtVen) { toastMS('err', 'Escribe un cliente o un vendedor para asignar'); return; }
-
-        let cli = null, ven, venNombre = '';
-        if (txtCli) {
-            const t = normB(txtCli);
-            cli = bulkClientes.find(c => normB(etiqCli(c)) === t) || bulkClientes.find(c => normB(c.NombreCompleto) === t) || bulkClientes.find(c => normB(c.CodigoCliente) === t);
-            if (!cli) { toastMS('err', `No encontré el cliente "${txtCli}". Elígelo de la lista.`); document.getElementById('bulk-cliente').focus(); return; }
-        }
-        if (txtVen) {
-            if (txtVen === '— Sin vendedor —') { ven = null; venNombre = 'Sin vendedor'; }
-            else {
-                const t = normB(txtVen);
-                const v = bulkVendedores.find(x => normB(etiqVen(x)) === t) || bulkVendedores.find(x => normB(x.CodigoVendedor) === t)
-                       || bulkVendedores.find(x => normB(`${x.Nombres} ${x.Apellidos || ''}`) === t);
-                if (!v) { toastMS('err', `No encontré el vendedor "${txtVen}". Elígelo de la lista.`); inVen.focus(); return; }
-                ven = v.IdVendedor; venNombre = `${v.Nombres} ${v.Apellidos || ''}`.trim();
-            }
-        }
-
-        const btn = document.getElementById('bulk-aplicar'); btn.disabled = true; btn.textContent = 'Guardando…';
-        try {
-            if (txtVen) {
-                // de 8 en 8 para no saturar el servidor
-                for (let i = 0; i < ids.length; i += 8) {
-                    const res = await Promise.all(ids.slice(i, i + 8).map(id => fetch('/api/vendedores/asignar', {
-                        method:'POST', headers:{'Content-Type':'application/json'},
-                        body: JSON.stringify({ idDetalle: id, idVendedor: ven }) }).then(r => r.json())));
-                    const e = res.find(r => !r.ok); if (e) throw new Error(e.error);
-                }
-            }
-            if (cli) {
-                const d = await fetch('/api/clientes/asignar-multiple', { method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ idCliente: cli.IdCliente, idDetalles: ids.join(',') }) }).then(r => r.json());
-                if (!d.ok) throw new Error(d.error);
-            }
-            const partes = [cli ? `cliente "${cli.NombreCompleto}"` : '', txtVen ? `vendedor "${venNombre}"` : ''].filter(Boolean).join(' y ');
-            toastMS('ok', `${partes} asignado a ${ids.length} artículo${ids.length === 1 ? '' : 's'}`);
-            limpiarSeleccion();
-            recargarConFiltros(); cargarStats();
-        } catch (e) { toastMS('err', '' + (e.message || 'Error de conexión')); }
-        finally { btn.disabled = false; btn.textContent = 'Asignar'; }
-    }
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && seleccion.size && !document.querySelector('[id^="modal"][style*="flex"]')) limpiarSeleccion();
-    });
-
-    async function confirmarVendedor() {
-        if (idVendedorSeleccionado === undefined) {
-    alert('Selecciona una opción');
-    return;
-}
-        const checkboxes = document.querySelectorAll('#mv-lista-articulos input[type=checkbox]:checked');
-        const idsExtra   = Array.from(checkboxes).map(c => parseInt(c.value));
-        const todosIds   = [idDetallePedidoVendedor, ...idsExtra];
-
-        try {
-            // Asignar a todos los IDs seleccionados
-            const promesas = todosIds.map(id =>
-                fetch('/api/vendedores/asignar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idDetalle: id, idVendedor: idVendedorSeleccionado })
-                }).then(r => r.json())
-            );
-            const resultados = await Promise.all(promesas);
-            const hayError   = resultados.find(r => !r.ok);
-            if (hayError) {
-                alert('Error: ' + hayError.error);
-                return;
-            }
-            const vend   = vendedoresCargados.find(v => v.IdVendedor === idVendedorSeleccionado);
-            const nombre = vend ? `${vend.Nombres} ${vend.Apellidos || ''}`.trim() : 'Vendedor';
-            cerrarModalVendedor();
-            recargarConFiltros();
-            alert(`Vendedor "${nombre}" asignado a ${todosIds.length} artículo(s)`);
-        } catch (e) { alert('Error de conexión'); }
-    }
+    let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => D && pintarGrafica(), 150); });
+    if (usuario) { cargar(); setInterval(cargar, 120000); }
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>
 </html>
-
