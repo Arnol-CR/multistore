@@ -592,56 +592,116 @@
     btn.disabled = false; btn.innerHTML = txt;
   }
 
-  // ══════════ Tarjetas múltiples numeradas ══════════
+  // ══════════ Listado de varios artículos (estilo cotización) ══════════
+  // Devuelve un canvas con: logo, para quién es, tabla numerada (foto, artículo,
+  // tienda / pedido / fecha, cantidad, precio) y total.
   window.generarTarjetasMultiples = async function (articulos) {
     if (!articulos || !articulos.length) throw new Error('No hay artículos');
+    const F = "'Segoe UI', Arial, sans-serif";
+    const ROSA = '#E8327A', NAR = '#EF7A30', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
+    const W = 1080, M = 48, IN = W - 2 * M;
+    const ds = articulos.map(datos);
+    const clientes = [...new Set(articulos.map(a => (a.NombreCliente || '').trim()).filter(Boolean))];
+    const unCliente = clientes.length === 1 && articulos.every(a => (a.NombreCliente || '').trim() === clientes[0]);
+    const FILA = 116, CAB = 150, BLOQUE = 118, THEAD = 46, TOT = 120, PIE = 76;
+    const H = CAB + BLOQUE + THEAD + FILA * articulos.length + TOT + PIE;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    const g = ctx.createLinearGradient(0, 0, W, 0); g.addColorStop(0, ROSA); g.addColorStop(1, NAR);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 10);
 
-    const CARD_W = 520;
-    const CARD_H = 780;
-    const GAP = 28;
-    const MARGIN = 40;
-    const COLS = 2;
-    const rows = Math.ceil(articulos.length / COLS);
+    const [logo, ...fotos] = await Promise.all([cargarImg('/assets/shopaholic-logo.png'), ...articulos.map(a => cargarImg(a.Fotografia))]);
 
-    const W = MARGIN * 2 + COLS * CARD_W + (COLS - 1) * GAP;
-    const H = MARGIN * 2 + rows * CARD_H + (rows - 1) * GAP + 60;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.fillStyle = '#0f172a';
-    ctx.font = `800 28px 'Segoe UI', Arial, sans-serif`;
+    // Encabezado
+    let y = 40;
+    if (logo) { const lh = 72, lw = logo.width * lh / logo.height; ctx.drawImage(logo, M, y, lw, lh); }
+    else { ctx.fillStyle = ROSA; ctx.font = `800 40px ${F}`; ctx.fillText('ShopAholic', M, y + 14); }
+    ctx.textAlign = 'right';
+    ctx.fillStyle = ROSA; ctx.font = `700 28px ${F}`; ctx.fillText('DETALLE DE ARTÍCULOS', W - M, y + 6);
+    ctx.fillStyle = GRIS; ctx.font = `400 19px ${F}`;
+    ctx.fillText(new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }), W - M, y + 46);
     ctx.textAlign = 'left';
-    ctx.fillText(`Tarjetas de cliente  ·  ${articulos.length} artículo${articulos.length > 1 ? 's' : ''}`, MARGIN, 38);
+    y = CAB - 18;
+    ctx.fillStyle = ROSA; ctx.fillRect(M, y, IN, 3);
 
-    for (let i = 0; i < articulos.length; i++) {
-      const a = articulos[i];
-      const col = i % COLS;
-      const row = Math.floor(i / COLS);
-      const x = MARGIN + col * (CARD_W + GAP);
-      const y = 70 + row * (CARD_H + GAP);
+    // Para quién
+    y += 22;
+    const unidades = ds.reduce((s, d) => s + d.cant, 0);
+    ctx.fillStyle = '#fdf2f7'; rr(ctx, M, y, IN, 76, 8); ctx.fill();
+    ctx.fillStyle = ROSA; ctx.fillRect(M, y, 5, 76);
+    ctx.font = `700 15px ${F}`; ctx.fillStyle = ROSA; ctx.fillText(unCliente ? 'PEDIDO PARA' : 'ARTÍCULOS', M + 24, y + 13);
+    ctx.font = `700 26px ${F}`; ctx.fillStyle = TINTA;
+    ctx.fillText(lineas(ctx, unCliente ? clientes[0] : (clientes.length ? 'Varios clientes' : 'Sin cliente asignado'), IN - 330, 1)[0] || '', M + 24, y + 36);
+    ctx.textAlign = 'right'; ctx.font = `400 19px ${F}`; ctx.fillStyle = GRIS;
+    ctx.fillText(`${articulos.length} artículo${articulos.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}`, W - M - 20, y + 28);
+    ctx.textAlign = 'left';
+    y = CAB + BLOQUE;
 
-      const full = await tarjeta(a);
-      ctx.drawImage(full, x, y, CARD_W, CARD_H);
+    // Columnas
+    const X = { n: M, foto: M + 46, art: M + 150, tienda: M + 540, cant: M + 770, precio: W - M };
+    ctx.font = `700 14px ${F}`; ctx.fillStyle = TINTA;
+    ctx.textAlign = 'center'; ctx.fillText('#', X.n + 16, y + 14); ctx.fillText('CANT.', X.cant + 30, y + 14);
+    ctx.textAlign = 'left'; ctx.fillText('ARTÍCULO', X.art, y + 14); ctx.fillText('TIENDA / PEDIDO', X.tienda, y + 14);
+    ctx.textAlign = 'right'; ctx.fillText('PRECIO', X.precio, y + 14); ctx.textAlign = 'left';
+    ctx.fillStyle = TINTA; ctx.fillRect(M, y + THEAD - 3, IN, 2);
+    y += THEAD;
 
-      // Número
-      ctx.fillStyle = '#E8327A';
-      ctx.beginPath();
-      ctx.arc(x + 28, y + 28, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.font = `800 20px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(i + 1), x + 28, y + 28);
-    }
+    // Filas
+    let total = 0, sinPrecio = 0;
+    articulos.forEach((a, i) => {
+      const d = ds[i], f = fotos[i], cy = y + FILA / 2;
+      ctx.fillStyle = GRIS; ctx.font = `700 20px ${F}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), X.n + 16, cy);
+      // foto
+      const fs = 88, fx = X.foto, fy = cy - fs / 2;
+      ctx.save(); rr(ctx, fx, fy, fs, fs, 10); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.clip();
+      if (f) { const s = Math.max(fs / f.width, fs / f.height); ctx.drawImage(f, fx + (fs - f.width * s) / 2, fy + (fs - f.height * s) / 2, f.width * s, f.height * s); }
+      ctx.restore(); rr(ctx, fx, fy, fs, fs, 10); ctx.strokeStyle = LINEA; ctx.lineWidth = 1.5; ctx.stroke();
+      // artículo
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      const sub = [a.TallaColor, !unCliente && a.NombreCliente ? 'Para ' + a.NombreCliente : ''].filter(Boolean).join(' · ');
+      ctx.font = `700 22px ${F}`; const ln = lineas(ctx, a.NombreArticulo || 'Artículo', X.tienda - X.art - 20, sub ? 1 : 2);
+      const altoArt = ln.length * 28 + (sub ? 26 : 0);
+      let ty = cy - altoArt / 2;
+      ctx.fillStyle = TINTA; ln.forEach(l => { ctx.fillText(l, X.art, ty); ty += 28; });
+      if (sub) { ctx.font = `400 18px ${F}`; ctx.fillStyle = GRIS; ctx.fillText(lineas(ctx, sub, X.tienda - X.art - 20, 1)[0] || '', X.art, ty + 2); }
+      // tienda / pedido / fecha
+      ctx.font = `700 19px ${F}`; ctx.fillStyle = TINTA; ctx.fillText(lineas(ctx, d.tienda || '—', X.cant - X.tienda - 16, 1)[0] || '—', X.tienda, cy - 36);
+      ctx.font = `400 17px ${F}`; ctx.fillStyle = GRIS;
+      ctx.fillText(d.pedido ? 'N° ' + d.pedido : '', X.tienda, cy - 10);
+      ctx.fillText(fecha(a.FechaPedido), X.tienda, cy + 14);
+      // cantidad
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 22px ${F}`; ctx.fillStyle = TINTA;
+      ctx.fillText(String(d.cant), X.cant + 30, cy);
+      // precio
+      ctx.textAlign = 'right';
+      if (d.venta) { total += d.venta; ctx.font = `800 24px ${F}`; ctx.fillStyle = TINTA; ctx.fillText(fmtL(d.venta), X.precio, cy);
+        if (d.cant > 1) { ctx.font = `400 16px ${F}`; ctx.fillStyle = GRIS; ctx.fillText(fmtL(d.venta / d.cant) + ' c/u', X.precio, cy + 26); } }
+      else { sinPrecio++; ctx.font = `600 18px ${F}`; ctx.fillStyle = '#9ca3af'; ctx.fillText('Por confirmar', X.precio, cy); }
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      y += FILA;
+      ctx.fillStyle = LINEA; ctx.fillRect(M, y - 1, IN, 1);
+    });
 
-    return canvas;
+    // Total
+    y += 22;
+    const tw = 380, tx = W - M - tw;
+    ctx.fillStyle = TINTA; ctx.fillRect(tx, y, tw, 2); ctx.fillRect(tx, y + 74, tw, 2);
+    ctx.font = `700 20px ${F}`; ctx.fillText('TOTAL', tx + 6, y + 16);
+    ctx.font = `400 15px ${F}`; ctx.fillStyle = GRIS;
+    ctx.fillText(sinPrecio ? `${sinPrecio} sin precio todavía` : `${unidades} unidad${unidades === 1 ? '' : 'es'}`, tx + 6, y + 44);
+    ctx.textAlign = 'right'; ctx.font = `800 34px ${F}`; ctx.fillStyle = ROSA; ctx.fillText(fmtL(total), W - M - 6, y + 20);
+    ctx.textAlign = 'left';
+
+    // Pie
+    const gp = ctx.createLinearGradient(0, 0, W, 0); gp.addColorStop(0, ROSA); gp.addColorStop(1, NAR);
+    ctx.fillStyle = gp; ctx.fillRect(0, H - 56, W, 56);
+    ctx.fillStyle = '#ffffff'; ctx.font = `700 20px ${F}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('¡Gracias por comprar con nosotros!', W / 2, H - 28);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    return c;
   };
 
 })();
