@@ -341,57 +341,242 @@
   }
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
+    // ══════════ Tarjeta para el cliente (canvas) — diseño mejorado ══════════
+  function cargarImg(src) {
+    return new Promise(res => {
+      if (!src) return res(null);
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = () => res(im);
+      im.onerror = () => res(null);
+      let url = src;
+      try {
+        const u = new URL(src, location.href);
+        if (/^https?:$/.test(u.protocol) && u.origin !== location.origin)
+          url = '/api/cotizaciones/img?url=' + encodeURIComponent(u.href);
+      } catch (e) {}
+      im.src = url;
+    });
+  }
+
+  function lineas(ctx, texto, ancho, max) {
+    const pal = String(texto || '').split(/\s+/).filter(Boolean);
+    const out = [];
+    let l = '';
+    for (const p of pal) {
+      const prueba = l ? l + ' ' + p : p;
+      if (ctx.measureText(prueba).width > ancho && l) {
+        out.push(l);
+        l = p;
+        if (out.length === max) break;
+      } else l = prueba;
+    }
+    if (out.length < max && l) out.push(l);
+    if (out.length === max && pal.join(' ').length > out.join(' ').length) {
+      let u = out[max - 1];
+      while (ctx.measureText(u + '…').width > ancho && u.length) u = u.slice(0, -1);
+      out[max - 1] = u.replace(/\s+$/, '') + '…';
+    }
+    return out;
+  }
+
+  function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
   async function tarjeta(a) {
     const d = datos(a);
-    const W = 1080, H = 1350, M = 64, F = "'Segoe UI', Arial, sans-serif";
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const W = 1080, H = 1520, M = 56, F = "'Segoe UI', Arial, sans-serif";
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-    // franja superior de marca
-    const g = ctx.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#E8327A'); g.addColorStop(1, '#EF7A30');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 10);
 
-    const [foto, logo] = await Promise.all([cargarImg(a.Fotografia), cargarImg('/assets/shopaholic-logo.png')]);
-    // encabezado
-    let y = 44;
-    if (logo) { const lh = 70, lw = logo.width * lh / logo.height; ctx.drawImage(logo, M, y, lw, lh); }
-    else { ctx.fillStyle = '#E8327A'; ctx.font = `800 44px ${F}`; ctx.textBaseline = 'top'; ctx.fillText('ShopAholic', M, y + 10); }
-    // (el nombre de la tienda no va en la tarjeta: es para el cliente)
+    // Fondo blanco
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    // Franja superior de marca (gradiente rosa → naranja)
+    const g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, '#E8327A');
+    g.addColorStop(1, '#EF7A30');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, 12);
+
+    const [foto, logo] = await Promise.all([
+      cargarImg(a.Fotografia),
+      cargarImg('/assets/shopaholic-logo.png')
+    ]);
+
+    // ── Encabezado ──
+    let y = 48;
+    if (logo) {
+      const lh = 68, lw = logo.width * lh / logo.height;
+      ctx.drawImage(logo, M, y, lw, lh);
+    } else {
+      ctx.fillStyle = '#E8327A';
+      ctx.font = `800 42px ${F}`;
+      ctx.textBaseline = 'top';
+      ctx.fillText('ShopAholic', M, y + 12);
+    }
+
+    // Badge de pedido (derecha del logo)
+    if (d.pedido) {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = `600 20px ${F}`;
+      ctx.fillText('PEDIDO', W - M, y + 8);
+      ctx.fillStyle = '#111827';
+      ctx.font = `700 28px ${F}`;
+      ctx.fillText(d.pedido, W - M, y + 34);
+      ctx.textAlign = 'left';
+    }
+
     y = 140;
-    // foto
-    const fh = 720, fw = W - 2 * M;
-    rr(ctx, M, y, fw, fh, 28); ctx.fillStyle = '#f5f5f7'; ctx.fill();
+
+    // ── Foto ──
+    const fh = 680, fw = W - 2 * M;
+    rr(ctx, M, y, fw, fh, 24);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fill();
+
     if (foto) {
-      ctx.save(); rr(ctx, M, y, fw, fh, 28); ctx.clip();
-      const s = Math.min(fw / foto.width, fh / foto.height); const iw = foto.width * s, ih = foto.height * s;
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(M, y, fw, fh);
-      ctx.drawImage(foto, M + (fw - iw) / 2, y + (fh - ih) / 2, iw, ih); ctx.restore();
-    } else { ctx.fillStyle = '#9ca3af'; ctx.font = `500 30px ${F}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Sin fotografía', W / 2, y + fh / 2); ctx.textAlign = 'left'; }
-    y += fh + 40;
-    // nombre
-    ctx.textBaseline = 'top'; ctx.fillStyle = '#111827'; ctx.font = `800 50px ${F}`;
-    for (const l of lineas(ctx, a.NombreArticulo || 'Artículo', W - 2 * M, 1)) { ctx.fillText(l, M, y); y += 60; }
-    // descripción
-    if (a.DescripcionArticulo) {
-      ctx.fillStyle = '#6b7280'; ctx.font = `400 28px ${F}`;
-      for (const l of lineas(ctx, a.DescripcionArticulo, W - 2 * M, 2)) { ctx.fillText(l, M, y); y += 38; }
+      ctx.save();
+      rr(ctx, M, y, fw, fh, 24);
+      ctx.clip();
+      const s = Math.min(fw / foto.width, fh / foto.height);
+      const iw = foto.width * s, ih = foto.height * s;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(M, y, fw, fh);
+      ctx.drawImage(foto, M + (fw - iw) / 2, y + (fh - ih) / 2, iw, ih);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = `500 28px ${F}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Sin fotografía', W / 2, y + fh / 2);
+      ctx.textAlign = 'left';
     }
-    y += 16;
-    // chips
-    let x = M; ctx.font = `600 28px ${F}`;
-    const chips = []; if (a.TallaColor) chips.push(a.TallaColor); if (d.cant > 1) chips.push(d.cant + ' unidades');
-    for (const t of chips) { const w = ctx.measureText(t).width + 40; rr(ctx, x, y, w, 52, 26); ctx.fillStyle = '#fdf2f8'; ctx.fill(); ctx.strokeStyle = '#fbcfe8'; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = '#be185d'; ctx.textBaseline = 'middle'; ctx.fillText(t, x + 20, y + 27); x += w + 14; }
-    // precio y cliente al pie
-    const pieY = H - 150;
-    ctx.strokeStyle = '#eef0f3'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, pieY - 24); ctx.lineTo(W - M, pieY - 24); ctx.stroke();
+
+    y += fh + 36;
+
+    // ── Nombre del artículo ──
     ctx.textBaseline = 'top';
-    if (a.NombreCliente) { ctx.fillStyle = '#9ca3af'; ctx.font = `600 22px ${F}`; ctx.fillText('PEDIDO PARA', M, pieY); ctx.fillStyle = '#111827'; ctx.font = `700 34px ${F}`; ctx.fillText(lineas(ctx, a.NombreCliente, 520, 1)[0] || '', M, pieY + 32); }
-    if (d.venta) {
-      ctx.textAlign = 'right'; ctx.fillStyle = '#9ca3af'; ctx.font = `600 22px ${F}`; ctx.fillText('PRECIO', W - M, pieY);
-      ctx.fillStyle = '#E8327A'; ctx.font = `800 64px ${F}`; ctx.fillText(fmtL(d.venta), W - M, pieY + 26); ctx.textAlign = 'left';
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `800 46px ${F}`;
+    for (const l of lineas(ctx, a.NombreArticulo || 'Artículo', W - 2 * M, 2)) {
+      ctx.fillText(l, M, y);
+      y += 54;
     }
+
+    // ── Descripción ──
+    if (a.DescripcionArticulo) {
+      y += 6;
+      ctx.fillStyle = '#64748b';
+      ctx.font = `400 26px ${F}`;
+      for (const l of lineas(ctx, a.DescripcionArticulo, W - 2 * M, 2)) {
+        ctx.fillText(l, M, y);
+        y += 34;
+      }
+    }
+
+    // ── Chips (talla / cantidad) ──
+    y += 18;
+    let x = M;
+    ctx.font = `600 24px ${F}`;
+    const chips = [];
+    if (a.TallaColor) chips.push(a.TallaColor);
+    if (d.cant > 1) chips.push(d.cant + ' unidades');
+
+    for (const t of chips) {
+      const tw = ctx.measureText(t).width + 36;
+      rr(ctx, x, y, tw, 44, 22);
+      ctx.fillStyle = '#fdf2f8';
+      ctx.fill();
+      ctx.strokeStyle = '#f9a8d4';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#be185d';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(t, x + 18, y + 23);
+      x += tw + 12;
+    }
+    if (chips.length) y += 60;
+
+    // ── Separador ──
+    y += 10;
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(M, y);
+    ctx.lineTo(W - M, y);
+    ctx.stroke();
+    y += 28;
+
+    // ── Bloque de información del pedido ──
+    // Fila 1: Tienda + Fecha
+    const colW = (W - 2 * M - 24) / 2;
+
+    // Tienda
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `600 18px ${F}`;
+    ctx.fillText('TIENDA', M, y);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `700 26px ${F}`;
+    ctx.fillText(lineas(ctx, d.tienda || '—', colW, 1)[0], M, y + 26);
+
+    // Fecha del pedido
+    const fechaTxt = fecha(a.FechaPedido) || '—';
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `600 18px ${F}`;
+    ctx.fillText('FECHA DEL PEDIDO', M + colW + 24, y);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `700 26px ${F}`;
+    ctx.fillText(fechaTxt, M + colW + 24, y + 26);
+
+    y += 72;
+
+    // Fila 2: Pedido para + Precio
+    // Cliente
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `600 18px ${F}`;
+    ctx.fillText('PEDIDO PARA', M, y);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `700 28px ${F}`;
+    ctx.fillText(lineas(ctx, a.NombreCliente || 'Sin cliente', colW + 40, 1)[0], M, y + 28);
+
+    // Precio al cliente (destacado)
+    if (d.venta) {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = `600 18px ${F}`;
+      ctx.fillText('PRECIO', W - M, y);
+      ctx.fillStyle = '#E8327A';
+      ctx.font = `800 52px ${F}`;
+      ctx.fillText(fmtL(d.venta), W - M, y + 22);
+      ctx.textAlign = 'left';
+    }
+
+    // ── Pie inferior sutil ──
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, H - 48, W, 48);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `500 18px ${F}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ShopAholic  ·  Gracias por tu compra', W / 2, H - 24);
+    ctx.textAlign = 'left';
+
     return c;
   }
+  
   const aBlob = c => new Promise(r => c.toBlob(r, 'image/png'));
   const nombreArchivo = a => ('shopaholic-' + (a.NombreArticulo || 'articulo') + '-' + (a.IdDetallePedido || '')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9-]+/g, '-') + '.png';
 
