@@ -598,7 +598,7 @@
   window.generarTarjetasMultiples = async function (articulos) {
     if (!articulos || !articulos.length) throw new Error('No hay artículos');
     const F = "'Segoe UI', Arial, sans-serif";
-    const AZUL = '#2563eb', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
+    const AZUL = '#2563eb', ROSA = '#E8327A', NAR = '#EF7A30', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
     const W = 1280, M = 48, IN = W - 2 * M;
     const ds = articulos.map(datos);
     const vend = a => (a.NombreVendedor || a.CodigoVendedor || '').trim();
@@ -613,31 +613,32 @@
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
     ctx.textBaseline = 'top';
-    ctx.fillStyle = AZUL; ctx.fillRect(0, 0, W, 8);
+    const gb = ctx.createLinearGradient(0, 0, W, 0); gb.addColorStop(0, ROSA); gb.addColorStop(1, NAR);
+    ctx.fillStyle = gb; ctx.fillRect(0, 0, W, 8);
 
-    const [logo, ...fotos] = await Promise.all([cargarImg('/assets/Recurso 3.png'), ...articulos.map(a => cargarImg(a.Fotografia))]);
+    const [marca, logo, ...fotos] = await Promise.all([cargarImg('/assets/shopaholic-logo.png'), cargarImg('/assets/Recurso 3.png'), ...articulos.map(a => cargarImg(a.Fotografia))]);
 
-    // Encabezado: ícono pequeño + MultiStore
-    let y = 36;
-    let lx = M;
-    if (logo) { const lh = 52, lw = logo.width * lh / logo.height; ctx.drawImage(logo, M, y, lw, lh); lx = M + lw + 14; }
-    ctx.font = `800 34px ${F}`; ctx.fillStyle = TINTA; ctx.fillText('Multi', lx, y + 8);
-    ctx.fillStyle = AZUL; ctx.fillText('Store', lx + ctx.measureText('Multi').width, y + 8);
+    // Encabezado: logo de ShopAholic + título
+    let y = 32;
+    if (marca) { const lh = 70, lw = marca.width * lh / marca.height; ctx.drawImage(marca, M, y, lw, lh); }
+    else { ctx.fillStyle = ROSA; ctx.font = `800 38px ${F}`; ctx.fillText('ShopAholic', M, y + 14); }
     ctx.textAlign = 'right';
-    ctx.fillStyle = TINTA; ctx.font = `700 26px ${F}`;
-    ctx.fillText(sinVend ? 'DETALLE DE ARTÍCULOS SIN VENDEDOR' : 'DETALLE DE ARTÍCULOS', W - M, y + 2);
-    ctx.fillStyle = GRIS; ctx.font = `400 18px ${F}`;
-    ctx.fillText(new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }), W - M, y + 40);
+    ctx.fillStyle = ROSA; ctx.font = `700 26px ${F}`;
+    ctx.fillText('ASIGNACIÓN DE ARTÍCULOS A VENDEDOR', W - M, y + 2);
+    ctx.fillStyle = TINTA; ctx.font = `600 18px ${F}`;
+    ctx.fillText(sinVend ? 'Pendientes de asignar' : unVend ? 'Asignados a ' + vends[0] : 'Asignados a varios vendedores', W - M, y + 38);
+    ctx.fillStyle = GRIS; ctx.font = `400 16px ${F}`;
+    ctx.fillText(new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }), W - M, y + 64);
     ctx.textAlign = 'left';
     y = CAB - 20;
-    ctx.fillStyle = TINTA; ctx.fillRect(M, y, IN, 2);
+    ctx.fillStyle = ROSA; ctx.fillRect(M, y, IN, 3);
 
     // Bloque: vendedor
     y += 20;
     const unidades = ds.reduce((s, d) => s + d.cant, 0);
     ctx.fillStyle = '#f1f5f9'; rr(ctx, M, y, IN, 72, 8); ctx.fill();
-    ctx.fillStyle = sinVend ? '#dc2626' : AZUL; ctx.fillRect(M, y, 5, 72);
-    ctx.font = `700 14px ${F}`; ctx.fillStyle = sinVend ? '#dc2626' : AZUL; ctx.fillText('VENDEDOR', M + 24, y + 12);
+    ctx.fillStyle = sinVend ? '#dc2626' : ROSA; ctx.fillRect(M, y, 5, 72);
+    ctx.font = `700 14px ${F}`; ctx.fillStyle = sinVend ? '#dc2626' : ROSA; ctx.fillText('VENDEDOR', M + 24, y + 12);
     ctx.font = `700 25px ${F}`; ctx.fillStyle = TINTA;
     ctx.fillText(sinVend ? 'Sin vendedor asignado' : unVend ? vends[0] : 'Varios vendedores', M + 24, y + 34);
     ctx.textAlign = 'right'; ctx.font = `400 19px ${F}`; ctx.fillStyle = GRIS;
@@ -713,7 +714,7 @@
     ctx.font = `700 19px ${F}`; ctx.fillText('TOTAL APP', tx + 6, y + 14);
     ctx.font = `400 15px ${F}`; ctx.fillStyle = GRIS;
     ctx.fillText(sinCosto ? `${sinCosto} sin precio registrado` : `${unidades} unidad${unidades === 1 ? '' : 'es'}`, tx + 6, y + 42);
-    ctx.textAlign = 'right'; ctx.font = `800 32px ${F}`; ctx.fillStyle = AZUL; ctx.fillText('$' + total.toFixed(2), W - M - 6, y + 18);
+    ctx.textAlign = 'right'; ctx.font = `800 32px ${F}`; ctx.fillStyle = ROSA; ctx.fillText('$' + total.toFixed(2), W - M - 6, y + 18);
     ctx.textAlign = 'left';
 
     // Pie: generado por
