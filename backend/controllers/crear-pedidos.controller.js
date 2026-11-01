@@ -323,4 +323,31 @@ const cambiarFoto = async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
-module.exports = { cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };
+// Cambiar el artículo del catálogo de una línea del pedido.
+// El peso se actualiza al del artículo nuevo solo si la línea tenía el peso del anterior (o ninguno).
+const cambiarArticuloCatalogo = async (req, res) => {
+  try {
+    const id = parseInt(req.body.idDetallePedido), idArt = parseInt(req.body.idArticulo);
+    if (!id || !idArt) return res.status(400).json({ ok: false, error: 'Faltan datos' });
+    const pool = await poolPromise;
+    const r = await pool.request().input('Id', sql.Int, id).input('Art', sql.Int, idArt).query(`
+      IF NOT EXISTS (SELECT 1 FROM A_Articulos WHERE IdArticulo = @Art) BEGIN SELECT CAST(0 AS bit) AS Ok; RETURN; END
+      DECLARE @PesoAntes decimal(18,2) = (SELECT Peso FROM C_DetallePedido WHERE IdDetallePedido = @Id);
+      UPDATE D SET D.IdArticulo = @Art,
+             D.Peso = CASE WHEN ISNULL(N.PesoArticulo, 0) > 0 AND (ISNULL(D.Peso, 0) = 0 OR D.Peso = O.PesoArticulo)
+                           THEN N.PesoArticulo ELSE D.Peso END
+      FROM C_DetallePedido D
+      JOIN A_Articulos N ON N.IdArticulo = @Art
+      LEFT JOIN A_Articulos O ON O.IdArticulo = D.IdArticulo
+      WHERE D.IdDetallePedido = @Id;
+      SELECT CAST(1 AS bit) AS Ok, N.NombreArticulo, C.CategoriaProducto, D.Peso, @PesoAntes AS PesoAntes
+      FROM C_DetallePedido D JOIN A_Articulos N ON N.IdArticulo = D.IdArticulo
+      LEFT JOIN A_Categorias C ON C.IdCategoria = N.IdCategoria
+      WHERE D.IdDetallePedido = @Id;`);
+    const x = r.recordset[0];
+    if (!x || !x.Ok) return res.status(404).json({ ok: false, error: 'No encontré ese artículo en el catálogo' });
+    res.json({ ok: true, nombre: x.NombreArticulo, categoria: x.CategoriaProducto, peso: x.Peso, pesoAntes: x.PesoAntes });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+};
+
+module.exports = { cambiarArticuloCatalogo, cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };

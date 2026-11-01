@@ -60,6 +60,20 @@
   .va-fb:hover{border-color:#3b82f6}
   .va-link{display:none;gap:6px;margin-top:-6px;margin-bottom:6px}
   .va-link.on{display:flex}
+  .va-nom-fila{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .va-cambiar{background:none;border:1px solid #2a3342;color:#93c5fd;border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:600;cursor:pointer;flex-shrink:0;font-family:inherit;margin-top:3px}
+  .va-cambiar:hover{border-color:#3b82f6;color:#fff}
+  .va-cat{border:1px solid #1e2530;background:#0b0f15;border-radius:9px;padding:8px;display:flex;flex-direction:column;gap:6px}
+  .va-cat[hidden],.va-cat-nuevo[hidden]{display:none}
+  .va-cat-fila{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr);gap:6px}
+  .va-cat-lista{max-height:170px;overflow-y:auto;display:flex;flex-direction:column}
+  .va-cat-it{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12.5px;color:#e2e8f0;background:none;border:none;text-align:left;font-family:inherit;width:100%}
+  .va-cat-it:hover,.va-cat-it.sel{background:#1a2540}
+  .va-cat-it small{color:#6b7280;white-space:nowrap;font-size:11px}
+  .va-cat-it.actual{color:#4ade80}
+  .va-cat-add{color:#4ade80;font-weight:600}
+  .va-cat-vacio{font-size:12px;color:#6b7280;padding:6px 8px}
+  .va-cat-nuevo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,130px) 70px auto;gap:6px;border-top:1px solid #1e2530;padding-top:6px}
   .va-in{background:#13181f;border:1px solid #1e2530;border-radius:7px;padding:7px 9px;color:#e2e8f0;font-size:12.5px;outline:none;font-family:inherit;width:100%;min-width:0}
   .va-in:focus{border-color:#3b82f6;background:#0c1525}
   .va-dato select.va-in,.va-dato input.va-in{margin-top:2px;padding:5px 7px;font-size:12.5px;font-weight:600}
@@ -89,7 +103,7 @@
     fondo = document.createElement('div'); fondo.className = 'va-fondo';
     fondo.addEventListener('click', e => { if (e.target === fondo) cerrar(); });
     document.body.appendChild(fondo);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && fondo.classList.contains('abierto')) { e.stopPropagation(); cerrar(); } }, true);
+    document.addEventListener('keydown', e => { const cb = fondo && fondo.querySelector('.va-cat'); if (e.key === 'Escape' && cb && !cb.hidden && fondo.classList.contains('abierto')) { e.stopPropagation(); cb.hidden = true; return; } if (e.key === 'Escape' && fondo.classList.contains('abierto')) { e.stopPropagation(); cerrar(); } }, true);
   }
   function cerrar() { fondo && fondo.classList.remove('abierto'); }
   function toast(txt, err) {
@@ -185,6 +199,86 @@
     const dt = fondo.querySelector('.va-desde-tienda'); if (dt && fondo._usarLink) dt.onclick = e => { e.stopPropagation(); fondo._usarLink(a.Link); };
     const img = fondo.querySelector('.va-foto img'); if (img) img.onerror = () => { img.remove(); fondo.querySelector('.va-foto').classList.add('vacia'); };
   }
+  // ══════════ Cambiar el artículo del catálogo ══════════
+  let ARTS = null, CATS = null;
+  const nrm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  async function catalogoVA(forzar) {
+    if (ARTS && !forzar) return;
+    const [x, y] = await Promise.all([json('/api/catalogo/articulos'), json('/api/catalogo/categorias')]);
+    ARTS = x.data || []; CATS = y.data || [];
+  }
+  function engancharArticulo(a) {
+    const box = fondo.querySelector('.va-cat'), sel = box.querySelector('.va-cat-sel'), q = box.querySelector('.va-cat-q');
+    const lista = box.querySelector('.va-cat-lista'), nuevo = box.querySelector('.va-cat-nuevo');
+    let vis = [], marca = 0;
+    const pintar = () => {
+      const t = nrm(q.value).trim(), c = sel.value, palabras = t.split(/\s+/).filter(Boolean);
+      vis = ARTS.filter(x => (!c || String(x.IdCategoria) === c) && palabras.every(w => nrm(x.NombreArticulo + ' ' + x.CategoriaProducto).includes(w))).slice(0, 80);
+      marca = 0;
+      const exacto = ARTS.some(x => nrm(x.NombreArticulo).trim() === t);
+      lista.innerHTML = vis.map((x, i) => `<button class="va-cat-it${i === 0 && t ? ' sel' : ''}${nrm(x.NombreArticulo) === nrm(a.NombreArticulo) ? ' actual' : ''}" type="button" data-id="${x.IdArticulo}">${esc(x.NombreArticulo)}<small>${esc(x.CategoriaProducto || '')}${parseFloat(x.PesoArticulo) ? ' · ' + parseFloat(x.PesoArticulo) + ' g' : ''}</small></button>`).join('')
+        + (t && !exacto ? `<button class="va-cat-it va-cat-add" type="button">+ Agregar "${esc(q.value.trim())}" al catálogo</button>` : '')
+        + (!vis.length && !t ? '<div class="va-cat-vacio">No hay artículos en esta categoría</div>' : '');
+    };
+    const asignar = async idArt => {
+      try {
+        const r = await json('/api/crear-pedidos/articulo-catalogo', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idDetallePedido: a.IdDetallePedido, idArticulo: idArt }) });
+        a.IdArticulo = idArt; a.NombreArticulo = r.nombre;
+        const cambioPeso = r.peso != null && parseFloat(r.peso) !== parseFloat(r.pesoAntes);
+        if (r.peso != null) a.Peso = r.peso;
+        fondo.querySelector('.va-nom').textContent = r.nombre;
+        box.hidden = true;
+        toast('Artículo cambiado a ' + r.nombre + (cambioPeso ? ` · peso ${parseFloat(r.peso)} g` : ''));
+        avisar(a, ['articulo']);
+      } catch (e) { toast('No se pudo cambiar: ' + e.message, true); }
+    };
+    fondo.querySelector('.va-cambiar').onclick = async () => {
+      if (!box.hidden) { box.hidden = true; return; }
+      box.hidden = false; nuevo.hidden = true;
+      lista.innerHTML = '<div class="va-cat-vacio">Cargando catálogo…</div>';
+      try { await catalogoVA(); } catch (e) { lista.innerHTML = `<div class="va-cat-vacio">No se pudo cargar: ${esc(e.message)}</div>`; return; }
+      const opts = CATS.map(c => `<option value="${c.IdCategoria}">${esc(c.CategoriaProducto)}</option>`).join('');
+      sel.innerHTML = '<option value="">Todas las categorías</option>' + opts;
+      box.querySelector('.va-nv-cat').innerHTML = opts;
+      const act = ARTS.find(x => nrm(x.NombreArticulo) === nrm(a.NombreArticulo));
+      sel.value = act ? String(act.IdCategoria) : '';
+      q.value = ''; pintar(); q.focus();
+    };
+    sel.onchange = () => { pintar(); q.focus(); };
+    q.oninput = pintar;
+    q.onkeydown = e => {
+      const its = [...lista.querySelectorAll('.va-cat-it')];
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); marca = Math.max(0, Math.min(its.length - 1, marca + (e.key === 'ArrowDown' ? 1 : -1))); its.forEach((x, i) => x.classList.toggle('sel', i === marca)); its[marca] && its[marca].scrollIntoView({ block: 'nearest' }); }
+      else if (e.key === 'Enter') { e.preventDefault(); its[marca] && its[marca].click(); }
+    };
+    lista.onclick = e => {
+      const b = e.target.closest('.va-cat-it'); if (!b) return;
+      if (b.classList.contains('va-cat-add')) {
+        nuevo.hidden = false;
+        box.querySelector('.va-nv-nom').value = q.value.trim();
+        if (sel.value) box.querySelector('.va-nv-cat').value = sel.value;
+        box.querySelector('.va-nv-peso').focus();
+        return;
+      }
+      asignar(+b.dataset.id);
+    };
+    box.querySelector('.va-nv-ok').onclick = async () => {
+      const nom = box.querySelector('.va-nv-nom').value.trim(), cat = box.querySelector('.va-nv-cat').value, peso = parseFloat(box.querySelector('.va-nv-peso').value) || 0;
+      if (!nom || !cat) { toast('Poné el nombre y la categoría', true); return; }
+      if (ARTS.some(x => nrm(x.NombreArticulo).trim() === nrm(nom) && String(x.IdCategoria) === cat)) { toast('Ese artículo ya existe en esa categoría', true); return; }
+      const b = box.querySelector('.va-nv-ok'); b.disabled = true;
+      try {
+        await json('/api/catalogo/articulos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Nombre: nom, IdCategoria: +cat, Peso: peso }) });
+        await catalogoVA(true);
+        const n = ARTS.filter(x => nrm(x.NombreArticulo).trim() === nrm(nom) && String(x.IdCategoria) === cat).sort((x, y) => y.IdArticulo - x.IdArticulo)[0];
+        if (!n) throw new Error('Se creó, pero no lo encontré para asignarlo');
+        await asignar(n.IdArticulo);
+      } catch (e) { toast('No se pudo crear: ' + e.message, true); }
+      finally { b.disabled = false; }
+    };
+    box.querySelector('.va-nv-peso').onkeydown = e => { if (e.key === 'Enter') box.querySelector('.va-nv-ok').click(); };
+  }
+
   function engancharEdicion(a) {
     engancharFoto(a);
     fondo.querySelector('.va-file').onchange = e => leerImagen(a, e.target.files[0]);
@@ -292,7 +386,12 @@
         </div>
         <div class="va-der">
           <div class="va-id"><span>ID detalle pedido</span><span>${esc(a.IdDetallePedido)}</span></div>
-          <div class="va-nom">${esc(a.NombreArticulo || 'Sin nombre')}</div>
+          <div class="va-nom-fila"><div class="va-nom">${esc(a.NombreArticulo || 'Sin nombre')}</div><button class="va-cambiar" type="button" title="Cambiar el artículo del catálogo">Cambiar</button></div>
+          <div class="va-cat" hidden>
+            <div class="va-cat-fila"><select class="va-in va-cat-sel"><option value="">Todas las categorías</option></select><input class="va-in va-cat-q" placeholder="Buscar artículo del catálogo…" autocomplete="off"></div>
+            <div class="va-cat-lista"></div>
+            <div class="va-cat-nuevo" hidden><input class="va-in va-nv-nom" placeholder="Nombre del artículo"><select class="va-in va-nv-cat"></select><input class="va-in va-nv-peso" type="number" min="0" step="1" placeholder="Peso g"><button class="va-fb va-nv-ok" type="button" style="background:#15803d;border-color:#15803d">Crear</button></div>
+          </div>
           ${a.DescripcionArticulo ? `<div class="va-desc">${esc(a.DescripcionArticulo)}</div>${a.DescripcionArticulo.length > 160 ? '<button class="va-mas" type="button" onclick="this.previousElementSibling.classList.toggle(\'abierta\');this.textContent=this.previousElementSibling.classList.contains(\'abierta\')?\'Ver menos\':\'Ver más\'">Ver más</button>' : ''}` : ''}
           <div class="va-tags">
             ${a.TallaColor ? `<span class="va-tag">${esc(a.TallaColor)}</span>` : ''}
@@ -328,6 +427,7 @@
     fondo.querySelector('.va-copiar').onclick = e => copiar(e.currentTarget);
     fondo.querySelector('.va-bajar').onclick = e => descargar(e.currentTarget);
     engancharEdicion(a);
+    engancharArticulo(a);
     const img = fondo.querySelector('.va-foto img');
     if (img) img.onerror = () => { img.remove(); img.parentElement && img.parentElement.classList.add('vacia'); };
     fondo.classList.add('abierto');
