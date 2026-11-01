@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Cotización</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
+        .overlay.active { display:block; }
+
+        /* ── Sidebar (lo arma sidebar.js) ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
+
+        /* ── Main ── */
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+        .btn-menu { background:none; border:none; cursor:pointer; padding:4px; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-sub { font-size:11px; color:#4b5563; margin-top:1px; }
+        .content { flex:1; overflow-y:auto; padding:18px 20px 120px; background:#070910; }
+
+        /* ── Controles ── */
+        .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+        .inp { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:10px 13px; color:#e2e8f0; font-size:13px; outline:none; font-family:inherit; }
+        .inp:focus { border-color:#3b82f6; background:#0c1525; }
+        .inp::placeholder { color:#374151; }
+        .chk { display:flex; align-items:center; gap:7px; font-size:12px; color:#9ca3af; cursor:pointer; user-select:none; }
+        .chk input { width:15px; height:15px; accent-color:#3b82f6; cursor:pointer; }
+        .btn { border:none; border-radius:8px; padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-family:inherit; }
+        .btn-green { background:#065f46; color:#34d399; border:1px solid #14532d; }
+        .btn-green:hover { background:#047857; }
+        .btn-green:disabled { opacity:.5; cursor:wait; }
+        .btn-ghost { background:transparent; color:#9ca3af; border:1px solid #1e2530; }
+        .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
+        .btn-amber { background:#2d1f0a; color:#fbbf24; border:1px solid #3d2a0a; }
+        .btn-amber:hover { background:#3d2a0a; }
+        .btn-sm { padding:6px 11px; font-size:11px; border-radius:6px; }
+
+        /* ── Resumen ── */
+        .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+        .stat { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:13px 15px; }
+        .stat-l { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1.2px; font-weight:700; }
+        .stat-v { font-size:22px; font-weight:800; margin-top:4px; }
+
+        /* ── Grupos por cliente ── */
+        .grupo { background:#0d1017; border:1px solid #1e2530; border-radius:12px; margin-bottom:14px; overflow:hidden; }
+        .grupo-head { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #111827; background:#0a0e18; flex-wrap:wrap; }
+        .grupo-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#0891b2); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#fff; flex-shrink:0; }
+        .grupo-av.sin { background:#2d0a0a; color:#f87171; border:1px solid #7f1d1d; }
+        .grupo-nom { font-weight:700; color:#e2e8f0; font-size:14px; }
+        .grupo-sub { font-size:11px; color:#6b7280; margin-top:1px; }
+        .grupo-tot { margin-left:auto; text-align:right; }
+        .grupo-tot .v { font-size:17px; font-weight:800; color:#4ade80; }
+        .grupo-tot .l { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+
+        table { width:100%; border-collapse:collapse; font-size:12px; }
+        th { color:#374151; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:9px 12px; text-align:left; font-weight:700; border-bottom:1px solid #111827; white-space:nowrap; }
+        td { padding:8px 12px; border-bottom:1px solid #0b0f17; color:#9ca3af; vertical-align:middle; }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:#0a0f18; }
+        tr.dirty td { background:#151005; }
+        .num { text-align:right; white-space:nowrap; }
+        .foto { width:42px; height:42px; border-radius:6px; object-fit:cover; background:#13181f; display:block; cursor:zoom-in; }
+        .art { font-weight:600; color:#d1d5db; font-size:12.5px; }
+        .meta { font-size:10.5px; color:#6b7280; margin-top:2px; }
+        .meta code { font-family:monospace; color:#4b5563; }
+        .sug { color:#60a5fa; cursor:pointer; border-bottom:1px dashed #1e3a5f; font-weight:600; }
+        .sug:hover { color:#93c5fd; }
+        .precio { width:110px; text-align:right; font-weight:800; font-size:14px; padding:8px 10px; font-family:inherit; }
+        .precio.tiene { color:#4ade80; }
+        .precio.cambio { border-color:#b45309; color:#fbbf24; background:#1a1205; }
+        .estado { width:26px; text-align:center; font-weight:800; }
+        .grupo table { table-layout:fixed; }
+        .grupo th:nth-child(1) { width:62px; } .grupo th:nth-child(3) { width:190px; } .grupo th:nth-child(4) { width:90px; }
+        .grupo th:nth-child(5) { width:100px; } .grupo th:nth-child(6) { width:140px; } .grupo th:nth-child(7) { width:34px; }
+        .art, .meta { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        @media (max-width:900px) { .grupo th:nth-child(6) { width:100px; } .grupo th:nth-child(5) { width:70px; } }
+        .vacio { text-align:center; padding:60px 20px; color:#374151; font-size:14px; }
+        .vacio b { display:block; font-size:34px; margin-bottom:8px; }
+
+        /* ── Barra inferior ── */
+        .barra { position:fixed; left:50%; bottom:18px; transform:translate(-50%,150%); transition:transform .25s; z-index:90;
+                 width:min(900px, calc(100vw - 32px)); background:#0d1017; border:1px solid #3d2a0a; border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.7);
+                 padding:12px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .barra.visible { transform:translate(-50%,0); }
+        .barra .info { font-size:13px; color:#9ca3af; flex:1; }
+        .barra .info b { color:#fbbf24; }
+        .toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:400; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 8px 30px rgba(0,0,0,.6); display:none; }
+        .toast.ok  { background:#052e16; border:1px solid #14532d; color:#4ade80; }
+        .toast.err { background:#1f0707; border:1px solid #7f1d1d; color:#f87171; }
+        .zoom { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:500; align-items:center; justify-content:center; cursor:zoom-out; }
+        .zoom img { max-width:90vw; max-height:90vh; border-radius:10px; }
+
+        ::-webkit-scrollbar { width:4px; height:4px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
+        @media (max-width:900px) {
+            .stats { grid-template-columns:1fr 1fr; }
+            .col-pedido, .col-costo { display:none; }
+            .content { padding:12px 10px 120px; }
+            td, th { padding:7px 6px; }
+            .precio { width:86px; }
+        }
+    </style>
+    <style>
+        .tabs { display:flex; gap:2px; background:#0d1017; border-bottom:1px solid #1e2530; padding:0 10px; flex-shrink:0; }
+        .tab { padding:12px 18px; font-size:13px; font-weight:700; color:#4b5563; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; font-family:inherit; }
+        .tab.on { color:#60a5fa; border-bottom-color:#3b82f6; }
+        .pane { display:none; } .pane.on { display:block; }
+        .cot { display:grid; grid-template-columns:1fr 340px; gap:16px; align-items:start; }
+        .card { background:#0d1017; border:1px solid #1e2530; border-radius:12px; padding:16px; margin-bottom:14px; }
+        .card-t { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1.5px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .add { display:flex; gap:8px; flex-wrap:wrap; }
+        .add .inp { flex:1; min-width:240px; }
+        .hint { font-size:11px; color:#4b5563; margin-top:10px; line-height:1.7; }
+        .bm { display:inline-flex; align-items:center; gap:6px; background:#1d4ed8; color:#fff; padding:3px 10px; border-radius:6px; font-weight:700; text-decoration:none; font-size:11px; cursor:grab; }
+        .lin { display:grid; grid-template-columns:70px 1fr 92px 64px 92px 110px 30px; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #111827; }
+        .lin:last-child { border-bottom:none; }
+        .lin-h { font-size:10px; color:#374151; text-transform:uppercase; letter-spacing:1px; font-weight:700; padding:0 0 6px; border-bottom:1px solid #111827; }
+        .fbox { width:70px; height:70px; border:2px dashed #1e2530; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; position:relative; font-size:10px; color:#374151; text-align:center; outline:none; background:#0a0e18; }
+        .fbox:hover, .fbox:focus { border-color:#3b82f6; }
+        .fbox img { width:100%; height:100%; object-fit:cover; }
+        .fbox input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+        .mini { padding:7px 9px !important; font-size:12px !important; width:100%; }
+        .nom { font-weight:600; }
+        .sub-in { display:flex; gap:6px; margin-top:5px; }
+        .sub-in > input { flex:1; min-width:0; }
+        .panel .inp, .panel select { width:100%; min-width:0; }
+        .row2 > * { min-width:0; }
+        .lnk { font-size:10.5px; color:#60a5fa; text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; display:block; margin-top:4px; }
+        .final { text-align:right; font-weight:800; color:#4ade80; font-size:15px; }
+        .final small { display:block; font-size:10px; color:#4b5563; font-weight:600; }
+        .del { background:none; border:1px solid transparent; color:#4b5563; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:14px; }
+        .del:hover { color:#f87171; border-color:#7f1d1d; background:#1f0707; }
+        .panel { position:sticky; top:0; }
+        .fg { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+        .fl { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+        .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .chips { display:flex; gap:4px; }
+        .chip { flex:1; padding:7px 0; border-radius:6px; border:1px solid #1e2530; background:#13181f; color:#9ca3af; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .chip.on { border-color:#3b82f6; color:#93c5fd; background:#0c1a30; }
+        .des { font-size:12.5px; }
+        .des div { display:flex; justify-content:space-between; padding:5px 0; color:#9ca3af; }
+        .des div b { color:#e2e8f0; font-weight:600; }
+        .des .tot { border-top:1px solid #1e2530; margin-top:6px; padding-top:10px; }
+        .des .tl { font-size:24px; font-weight:900; color:#4ade80; }
+        .acc { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+        .acc .btn { justify-content:center; }
+        .btn-blue { background:#1d4ed8; color:#fff; }
+        .btn-blue:hover { background:#2563eb; }
+        .btn-purple { background:#3b1080; color:#e9d5ff; border:1px solid #581c87; }
+        .btn-purple:hover { background:#4c1d95; }
+        .estado-b { font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:99px; }
+        .e-Borrador { background:#13181f; color:#9ca3af; } .e-Enviada { background:#0c1f3d; color:#60a5fa; } .e-Aceptada { background:#052e16; color:#4ade80; }
+        .e-Rechazada { background:#2d0a0a; color:#f87171; } .e-Convertida { background:#1f1025; color:#c084fc; }
+        .banner { background:#1f1025; border:1px solid #3b1f5e; color:#d8b4fe; border-radius:10px; padding:10px 14px; font-size:12.5px; margin-bottom:14px; display:none; }
+        .hist td { cursor:pointer; }
+        .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:16px; }
+        .modal-bg.open { display:flex; }
+        .modal { background:#0d1017; border:1px solid #1e2530; border-radius:14px; width:100%; max-width:760px; max-height:90vh; display:flex; flex-direction:column; }
+        .modal-h { padding:16px 20px; border-bottom:1px solid #1e2530; display:flex; justify-content:space-between; align-items:center; font-weight:800; }
+        .modal-b { padding:18px 20px; overflow-y:auto; }
+        .modal-f { padding:14px 20px; border-top:1px solid #1e2530; display:flex; justify-content:flex-end; gap:8px; }
+        .x { background:none; border:none; color:#4b5563; font-size:22px; cursor:pointer; }
+
+        /* ── Documento para el cliente (PDF / imagen) ── */
+        #doc-wrap { position:fixed; left:-10000px; top:0; }
+        #doc { width:760px; background:#fff; color:#111827; font-family:'Segoe UI',Arial,sans-serif; padding:34px 38px; }
+        #doc .d-head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #1d4ed8; padding-bottom:14px; margin-bottom:18px; }
+        #doc .d-logo { display:flex; align-items:center; gap:10px; font-size:24px; font-weight:900; color:#0f172a; }
+        #doc .d-logo span { color:#1d4ed8; }
+        #doc .d-logo img { width:46px; height:46px; object-fit:contain; }
+        #doc .d-num { text-align:right; font-size:12px; color:#475569; }
+        #doc .d-num b { display:block; font-size:18px; color:#0f172a; }
+        #doc .d-cli { font-size:13px; color:#334155; margin-bottom:14px; }
+        #doc table { width:100%; border-collapse:collapse; font-size:12.5px; }
+        #doc th { background:#eff6ff; color:#1e3a8a; text-align:left; padding:8px; font-size:10.5px; text-transform:uppercase; letter-spacing:.8px; border:none; }
+        #doc td { padding:8px; border-bottom:1px solid #e2e8f0; color:#0f172a; vertical-align:middle; }
+        #doc td img { width:54px; height:54px; object-fit:cover; border-radius:6px; display:block; }
+        #doc .r { text-align:right; white-space:nowrap; }
+        #doc .d-tot { margin-top:16px; display:flex; justify-content:flex-end; }
+        #doc .d-tot div { background:#1d4ed8; color:#fff; border-radius:10px; padding:12px 20px; font-size:13px; text-align:right; }
+        #doc .d-tot b { display:block; font-size:24px; }
+        #doc .d-notas { margin-top:18px; font-size:11.5px; color:#475569; white-space:pre-wrap; border-top:1px dashed #cbd5e1; padding-top:12px; }
+        @media print {
+            body > *:not(#doc-wrap) { display:none !important; }
+            #doc-wrap { position:static !important; }
+            #doc { width:auto; padding:0; }
+            @page { margin:14mm; }
+        }
+        @media (max-width:1100px) { .cot { grid-template-columns:1fr; } .panel { position:static; } }
+        @media (max-width:700px) {
+            .lin { grid-template-columns:64px 1fr 30px; }
+            .lin-h { display:none; }
+            .lin > .c-pre, .lin > .c-can, .lin > .c-pes, .lin > .c-fin { grid-column:2 / 3; }
+            .fbox { width:64px; height:64px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+    <div class="topbar">
+        <button class="btn-menu" onclick="abrirMenu()">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        </button>
+        <div style="flex:1">
+            <div class="topbar-title">Cotización</div>
+            <div class="topbar-sub" id="cot-sub">Nueva cotización</div>
+        </div>
+    </div>
+    <div class="tabs">
+        <button class="tab on" id="t-cot" onclick="verTab('cot')">📝 Cotizar</button>
+        <button class="tab" id="t-his" onclick="verTab('his')">📚 Historial <span id="his-n" style="color:#4b5563"></span></button>
+    </div>
+
+    <div class="content">
+        <!-- ═════════ COTIZAR ═════════ -->
+        <div class="pane on" id="p-cot">
+            <div class="banner" id="banner"></div>
+            <div class="cot">
+                <div>
+                    <div class="card">
+                        <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#3b82f6"></span>Agregar productos</div>
+                        <div class="add">
+                            <input class="inp" id="in-link" placeholder="🔗 Pega el link del producto (SHEIN, Amazon…) y Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarLink();}">
+                            <button class="btn btn-blue" onclick="agregarLink()">Agregar link</button>
+                            <button class="btn btn-ghost" onclick="pegarMarcador()" title="Pega lo que copió el marcador 📦">📦 Pegar del marcador</button>
+                            <button class="btn btn-ghost" onclick="nuevaLinea({})">＋ Manual</button>
+                        </div>
+                        <div class="hint">
+                            📦 <b style="color:#9ca3af">Marcador:</b> abre el producto en la tienda y toca
+                            <a class="bm" id="bm" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de marcadores (solo una vez).')">📦 Tienda → MultiStore</a>
+                            (arrástralo a tus marcadores si no lo tienes) · trae nombre, precio, foto y peso.<br>
+                            🖼️ <b style="color:#9ca3af">Imagen:</b> copia la foto de un producto y pulsa <b>Ctrl+V</b> aquí: se crea una línea con esa foto.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="lin lin-h"><div></div><div>Producto</div><div style="text-align:right">Precio $</div><div style="text-align:right">Cant.</div><div style="text-align:right">Peso (lb)</div><div style="text-align:right">Precio cliente</div><div></div></div>
+                        <div id="lineas"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="card">
+                        <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#4ade80"></span>Cliente</div>
+                        <div class="fg">
+                            <input class="inp" id="c-cli" list="dl-cli" placeholder="👤 Buscar cliente o escribir nombre" autocomplete="off" oninput="marcarCambio()">
+                            <datalist id="dl-cli"></datalist>
+                        </div>
+                        <div class="fg" style="margin-bottom:0"><input class="inp" id="c-tel" placeholder="📱 Teléfono (opcional)" oninput="marcarCambio()"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#f59e0b"></span>Cálculo</div>
+                        <div class="row2">
+                            <div class="fg"><label class="fl">Casillero</label><select class="inp" id="c-cas" onchange="cambioCasillero()"><option value="">—</option></select></div>
+                            <div class="fg"><label class="fl">Tarifa $ / lb</label><input class="inp" id="c-tar" type="number" step="0.01" min="0" oninput="calcular()"></div>
+                        </div>
+                        <div class="row2">
+                            <div class="fg"><label class="fl">Impuesto tienda %</label><input class="inp" id="c-imp" type="number" step="0.5" min="0" value="8" oninput="calcular()"></div>
+                            <div class="fg"><label class="fl">Tasa cambio (L)</label><input class="inp" id="c-tasa" type="number" step="0.01" min="0" oninput="calcular()"></div>
+                        </div>
+                        <div class="fg"><label class="fl">Rentabilidad %</label>
+                            <div style="display:flex;gap:6px">
+                                <div class="chips" style="flex:1"><button class="chip" onclick="margen(15)">15</button><button class="chip" onclick="margen(18)">18</button><button class="chip" onclick="margen(20)">20</button></div>
+                                <input class="inp" id="c-mar" type="number" step="0.5" min="0" value="18" style="width:80px;flex-shrink:0" oninput="calcular()">
+                            </div>
+                        </div>
+                        <label class="chk" style="margin-bottom:6px"><input type="checkbox" id="c-redlb" checked onchange="calcular()"> Redondear libras hacia arriba</label>
+                        <label class="chk"><input type="checkbox" id="c-red5" checked onchange="calcular()"> Redondear precios a L 5</label>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#c084fc"></span>Resumen</div>
+                        <div class="des" id="desglose"></div>
+                        <div class="fg" style="margin:12px 0 0"><textarea class="inp" id="c-notas" rows="2" placeholder="Notas para el cliente (ej. válido por 3 días, tiempo de entrega…)" oninput="marcarCambio()"></textarea></div>
+                        <div class="acc">
+                            <button class="btn btn-green" id="b-guardar" onclick="guardar()">💾 Guardar</button>
+                            <button class="btn btn-ghost" onclick="nueva()">＋ Nueva</button>
+                            <button class="btn btn-ghost" onclick="exportar('pdf')">🖨 PDF</button>
+                            <button class="btn btn-ghost" onclick="exportar('img')">🖼 Imagen</button>
+                            <button class="btn btn-purple" style="grid-column:1/-1" onclick="abrirConvertir()">🔁 Convertir en pedido</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═════════ HISTORIAL ═════════ -->
+        <div class="pane" id="p-his">
+            <div class="toolbar">
+                <input class="inp" id="h-buscar" style="flex:1;min-width:220px" placeholder="🔍 Buscar por número o cliente…" oninput="renderHist()">
+                <select class="inp" id="h-estado" onchange="renderHist()">
+                    <option value="">Todos los estados</option><option>Borrador</option><option>Enviada</option><option>Aceptada</option><option>Rechazada</option><option>Convertida</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="cargarHist()">↻</button>
+            </div>
+            <div class="grupo">
+                <table class="hist">
+                    <thead><tr><th style="width:58px"></th><th>Cotización</th><th>Cliente</th><th class="num">Artículos</th><th class="num">Total</th><th>Estado</th><th style="width:40px"></th></tr></thead>
+                    <tbody id="h-body"><tr><td colspan="7" class="vacio">Cargando…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Convertir en pedido -->
+<div class="modal-bg" id="m-conv">
+    <div class="modal">
+        <div class="modal-h">🔁 Convertir en pedido <button class="x" onclick="cerrarModal('m-conv')">×</button></div>
+        <div class="modal-b">
+            <div class="row2" style="margin-bottom:6px">
+                <div class="fg"><label class="fl">Pedido de MultiStore *</label><select class="inp" id="cv-ped"></select></div>
+                <div class="fg"><label class="fl">N° pedido de la tienda</label><input class="inp" id="cv-nop" placeholder="Opcional (ej. GSU…)"></div>
+            </div>
+            <div id="cv-aviso" style="font-size:12px;color:#fbbf24;margin-bottom:10px"></div>
+            <div class="fl" style="margin-bottom:6px">Artículo del catálogo para cada producto *</div>
+            <datalist id="dl-art"></datalist>
+            <div id="cv-lineas"></div>
+            <div style="font-size:11.5px;color:#6b7280;margin-top:10px">Se crean los artículos en el pedido con su foto, link, precio de compra, peso, cliente y <b>precio de venta</b> ya puestos.</div>
+        </div>
+        <div class="modal-f">
+            <button class="btn btn-ghost" onclick="cerrarModal('m-conv')">Cancelar</button>
+            <button class="btn btn-purple" id="cv-btn" onclick="convertir()">🔁 Convertir</button>
+        </div>
+    </div>
+</div>
+
+<div id="doc-wrap"><div id="doc"></div></div>
+<div class="toast" id="toast"></div>
+<div class="zoom" id="zoom" onclick="this.style.display='none'"><img id="zoom-img"></div>
+
+<script src="/assets/marcador.js"></script>
+<script>
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+
+    const $ = id => document.getElementById(id);
+    const esc = t => String(t ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    const norm = t => (t || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    const usd = v => '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    const L = v => 'L ' + Number(v || 0).toLocaleString('es-HN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+    let lineas = [];          // { uid, nombre, link, foto, sku, tallaColor, precioUSD, cantidad, pesoLb, idArticulo, final }
+    let actual = null;        // { id, numero, estado, idPedido }
+    let clientes = [], casilleros = [], articulos = [], historial = [];
+    let defaults = { tarifas: [] };
+    let cambios = false, uid = 1, calc = {};
+
+    function toast(tipo, txt) {
+        const t = $('toast'); t.className = 'toast ' + tipo; t.textContent = txt; t.style.display = 'block';
+        clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 3800);
+    }
+    function marcarCambio() { cambios = true; }
+    function verTab(t) {
+        ['cot','his'].forEach(x => { $('t-' + x).classList.toggle('on', x === t); $('p-' + x).classList.toggle('on', x === t); });
+        if (t === 'his') cargarHist();
+    }
+    function cerrarModal(id) { $(id).classList.remove('open'); }
+    function verFoto(src) { $('zoom-img').src = src; $('zoom').style.display = 'flex'; }
+
+    /* ───── Configuración recordada ───── */
+    function leerCfg() { try { return JSON.parse(localStorage.getItem('ms_cot_cfg') || '{}'); } catch (e) { return {}; } }
+    function guardarCfg() {
+        const c = leerCfg(); c.tarifas = c.tarifas || {};
+        if ($('c-cas').value && $('c-tar').value) c.tarifas[$('c-cas').value] = parseFloat($('c-tar').value);
+        Object.assign(c, { casillero: $('c-cas').value, imp: $('c-imp').value, mar: $('c-mar').value, tasa: $('c-tasa').value, redlb: $('c-redlb').checked, red5: $('c-red5').checked });
+        try { localStorage.setItem('ms_cot_cfg', JSON.stringify(c)); } catch (e) {}
+    }
+    function tarifaDe(idCas) {
+        const c = leerCfg();
+        if (c.tarifas && c.tarifas[idCas]) return c.tarifas[idCas];
+        const d = defaults.tarifas.find(t => t.IdCasillero == idCas); return d ? d.TarifaLibra : '';
+    }
+    function cambioCasillero() { const t = tarifaDe($('c-cas').value); if (t) $('c-tar').value = t; calcular(); }
+    function margen(v) { $('c-mar').value = v; calcular(); }
+
+    async function iniciar() {
+        $('bm').href = marcadorHref();
+        try {
+            const [cl, ca, ar, df] = await Promise.all([
+                fetch('/api/clientes/todos').then(r => r.json()).catch(() => ({})),
+                fetch('/api/crear-pedidos/casilleros').then(r => r.json()).catch(() => ({})),
+                fetch('/api/crear-pedidos/articulos').then(r => r.json()).catch(() => ({})),
+                fetch('/api/cotizaciones/defaults').then(r => r.json()).catch(() => ({}))
+            ]);
+            clientes = cl.ok ? cl.data : []; casilleros = ca.ok ? ca.data : []; articulos = ar.ok ? ar.data : [];
+            if (df.ok) defaults = df.data;
+        } catch (e) {}
+        $('dl-cli').innerHTML = clientes.map(c => `<option value="${esc(etiqCli(c))}">`).join('');
+        $('dl-art').innerHTML = articulos.map(a => `<option value="${esc(a.NombreArticulo)}">`).join('');
+        $('c-cas').innerHTML = '<option value="">— Casillero —</option>' + casilleros.map(c => `<option value="${c.IdEmpresa}">${esc(c.NombreEmpresa)}</option>`).join('');
+        const cfg = leerCfg();
+        if (cfg.casillero) $('c-cas').value = cfg.casillero;
+        $('c-tar').value = $('c-cas').value ? tarifaDe($('c-cas').value) : '';
+        if (cfg.imp) $('c-imp').value = cfg.imp;
+        if (cfg.mar) $('c-mar').value = cfg.mar;
+        $('c-tasa').value = cfg.tasa || defaults.tasaCambio || '';
+        if (cfg.redlb === false) $('c-redlb').checked = false;
+        if (cfg.red5 === false) $('c-red5').checked = false;
+        const abrirId = new URLSearchParams(location.search).get('id');
+        if (abrirId) abrir(+abrirId); else render();
+        cargarHist(true);
+    }
+
+    function etiqCli(c) { return (c.NombreCompleto || '').trim() + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : ''); }
+    function clienteDeTexto(t) {
+        const n = norm(t); if (!n) return null;
+        return clientes.find(c => norm(etiqCli(c)) === n) || clientes.find(c => norm(c.NombreCompleto) === n) || null;
+    }
+
+    /* ───── Líneas ───── */
+    function nuevaLinea(d, sinRender) {
+        lineas.push({ uid: uid++, nombre: d.nombre || '', link: d.link || '', foto: d.foto || '', sku: d.sku || '', tallaColor: d.tallaColor || '',
+                      precioUSD: d.precioUSD || '', cantidad: d.cantidad || 1, pesoLb: d.pesoLb || '', idArticulo: d.idArticulo || null });
+        cambios = true;
+        if (!sinRender) {
+            render();
+            setTimeout(() => { const el = document.querySelector(`.lin[data-u="${uid - 1}"] ${d.nombre ? '.in-pre' : '.in-nom'}`); if (el) el.focus(); }, 30);
+        }
+    }
+    function quitar(u) { lineas = lineas.filter(l => l.uid !== u); cambios = true; render(); }
+    function setL(u, campo, v) {
+        const l = lineas.find(x => x.uid === u); if (!l) return;
+        l[campo] = v; cambios = true; calcular();
+    }
+    // Acepta "1.5", "500g", "12 oz", "0.8kg"
+    function aLibras(t) {
+        t = String(t || '').toLowerCase().replace(/,/g, '.').trim();
+        const m = t.match(/^(\d+(?:\.\d+)?)\s*(lb|lbs|libras?|oz|onzas?|kg|kilos?|g|gr|gramos?)?$/);
+        if (!m) return parseFloat(t) || 0;
+        const v = parseFloat(m[1]), u = m[2] || 'lb';
+        if (/^(oz|onza)/.test(u)) return v / 16;
+        if (/^(kg|kilo)/.test(u)) return v * 2.20462;
+        if (/^(g|gr|gramo)/.test(u)) return v / 453.592;
+        return v;
+    }
+    function pesoBlur(u, el) {
+        const lb = aLibras(el.value);
+        if (el.value && !/^\d+(\.\d+)?$/.test(el.value.trim())) { el.value = lb ? +lb.toFixed(3) : ''; }
+        setL(u, 'pesoLb', lb || '');
+    }
+
+    function render() {
+        const cont = $('lineas');
+        if (!lineas.length) {
+            cont.innerHTML = `<div class="vacio" style="padding:40px 10px"><b>🛍️</b>Pega un link, usa el marcador 📦, pega una imagen con Ctrl+V o agrega una línea manual</div>`;
+        } else {
+            cont.innerHTML = lineas.map(l => `
+            <div class="lin" data-u="${l.uid}">
+                <div class="fbox" tabindex="0" title="Clic para subir foto · o selecciona y Ctrl+V" onpaste="pegarFoto(event, ${l.uid})"
+                     ondragover="event.preventDefault()" ondrop="soltarFoto(event, ${l.uid})">
+                    ${l.foto ? `<img src="${esc(l.foto)}" onerror="this.remove()">` : '🖼️<br>Foto'}
+                    <input type="file" accept="image/*" onchange="archivoFoto(this.files[0], ${l.uid})">
+                </div>
+                <div style="min-width:0">
+                    <input class="inp mini nom in-nom" value="${esc(l.nombre)}" placeholder="Nombre del producto" oninput="setL(${l.uid}, 'nombre', this.value)">
+                    <div class="sub-in">
+                        <input class="inp mini" value="${esc(l.tallaColor)}" placeholder="Talla / color" oninput="setL(${l.uid}, 'tallaColor', this.value)">
+                        <input class="inp mini" value="${esc(l.link)}" placeholder="Link (opcional)" oninput="setL(${l.uid}, 'link', this.value)" style="flex:1.4">
+                    </div>
+                    ${l.link ? `<a class="lnk" href="${esc(l.link)}" target="_blank">↗ ${esc(l.link.replace(/^https?:\/\/(www\.)?/, '').substring(0, 60))}</a>` : ''}
+                </div>
+                <div class="c-pre"><input class="inp mini in-pre" type="number" step="0.01" min="0" style="text-align:right" value="${l.precioUSD}" placeholder="$ 0.00" oninput="setL(${l.uid}, 'precioUSD', this.value)"></div>
+                <div class="c-can"><input class="inp mini" type="number" min="1" style="text-align:right" value="${l.cantidad}" oninput="setL(${l.uid}, 'cantidad', this.value)"></div>
+                <div class="c-pes"><input class="inp mini" style="text-align:right" value="${l.pesoLb}" placeholder="lb · 500g" title="Libras por unidad. También puedes escribir 500g, 12oz o 0.5kg" onblur="pesoBlur(${l.uid}, this)" oninput="if(/^\\d*\\.?\\d*$/.test(this.value)) setL(${l.uid}, 'pesoLb', this.value)"></div>
+                <div class="c-fin final" id="fin-${l.uid}">—</div>
+                <button class="del" title="Quitar" onclick="quitar(${l.uid})">🗑</button>
+            </div>`).join('');
+        }
+        calcular();
+    }
+
+    /* ───── Fórmula ───── */
+    function calcular() {
+        const imp = (parseFloat($('c-imp').value) || 0) / 100;
+        const mar = (parseFloat($('c-mar').value) || 0) / 100;
+        const tar = parseFloat($('c-tar').value) || 0;
+        const tasa = parseFloat($('c-tasa').value) || 0;
+        const redlb = $('c-redlb').checked, red5 = $('c-red5').checked;
+        document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', parseFloat(c.textContent) === parseFloat($('c-mar').value)));
+
+        const prod = lineas.reduce((a, l) => a + (parseFloat(l.precioUSD) || 0) * (parseInt(l.cantidad) || 1), 0);
+        const lb = lineas.reduce((a, l) => a + (parseFloat(l.pesoLb) || 0) * (parseInt(l.cantidad) || 1), 0);
+        const lbCobro = lb > 0 ? (redlb ? Math.max(1, Math.ceil(lb - 1e-9)) : lb) : 0;
+        const impuesto = prod * imp, envio = lbCobro * tar;
+        const base = prod + impuesto + envio, gan = base * mar;
+        const totalUSD = base + gan;
+
+        // Precio por línea: su producto + impuesto + su parte del envío (por peso; si no hay pesos, por precio) + rentabilidad
+        let totalL = 0;
+        lineas.forEach(l => {
+            const p = (parseFloat(l.precioUSD) || 0) * (parseInt(l.cantidad) || 1);
+            const w = (parseFloat(l.pesoLb) || 0) * (parseInt(l.cantidad) || 1);
+            const parteEnvio = lb > 0 ? envio * (w / lb) : (prod > 0 ? envio * (p / prod) : 0);
+            let fin = (p * (1 + imp) + parteEnvio) * (1 + mar) * tasa;
+            if (red5 && fin > 0) fin = Math.ceil(fin / 5) * 5;
+            l.final = Math.round(fin * 100) / 100;
+            totalL += l.final;
+            const el = $('fin-' + l.uid);
+            if (el) el.innerHTML = l.final ? `${L(l.final)}<small>${(parseInt(l.cantidad) || 1) > 1 ? L(l.final / (parseInt(l.cantidad) || 1)) + ' c/u' : usd(l.final / (tasa || 1))}</small>` : '<span style="color:#374151">—</span>';
+        });
+        calc = { prod, impuesto, lb, lbCobro, envio, gan, totalUSD, totalL };
+        const faltaTasa = !tasa ? '<div style="color:#f87171">⚠ Falta la tasa de cambio</div>' : '';
+        const faltaTar = (lb > 0 && !tar) ? '<div style="color:#fbbf24">⚠ Falta la tarifa por libra</div>' : '';
+        const sinPeso = lineas.some(l => !(parseFloat(l.pesoLb) > 0)) && lineas.length ? `<div style="color:#fbbf24">⚠ ${lineas.filter(l => !(parseFloat(l.pesoLb) > 0)).length} producto(s) sin peso</div>` : '';
+        $('desglose').innerHTML = `
+            <div><span>Productos (${lineas.reduce((a, l) => a + (parseInt(l.cantidad) || 1), 0)})</span><b>${usd(prod)}</b></div>
+            <div><span>Impuesto tienda ${$('c-imp').value || 0}%</span><b>${usd(impuesto)}</b></div>
+            <div><span>Envío ${lbCobro ? (+lbCobro.toFixed(2)) + ' lb' : ''} ${lb && redlb && lbCobro !== lb ? `<span style="color:#4b5563">(${lb.toFixed(2)})</span>` : ''} × ${usd(tar)}</span><b>${usd(envio)}</b></div>
+            <div><span>Rentabilidad ${$('c-mar').value || 0}%</span><b>${usd(gan)}</b></div>
+            <div><span>Total en dólares</span><b>${usd(totalUSD)}</b></div>
+            <div class="tot"><span style="color:#e2e8f0;font-weight:700">Total cliente</span><span class="tl">${L(totalL)}</span></div>
+            ${faltaTasa}${faltaTar}${sinPeso}`;
+        guardarCfg();
+    }
+
+    /* ───── Agregar por link ───── */
+    function datosDeLink(url) {
+        let u; try { u = new URL(url.trim()); } catch (e) { return null; }
+        const d = { link: u.origin + u.pathname, nombre: '', sku: '' };
+        const amz = u.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/);
+        const slug = s => decodeURIComponent(s).replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+        if (/amazon\./i.test(u.hostname) && amz) {
+            d.sku = amz[1]; d.link = 'https://www.amazon.com/dp/' + amz[1];
+            const m = u.pathname.match(/\/([^\/]+)\/dp\//); if (m && !/^-$/.test(m[1])) d.nombre = slug(m[1]);
+        } else if (/shein\./i.test(u.hostname)) {
+            const m = u.pathname.match(/\/([^\/]+)-p-(\d+)/);
+            if (m) { d.nombre = slug(m[1]); d.link = u.origin + '/p-' + m[2] + '.html'; }
+        } else {
+            const partes = u.pathname.split('/').filter(Boolean);
+            const p = partes.sort((a, b) => b.length - a.length)[0] || '';
+            d.nombre = slug(p.replace(/\.(html?|php|aspx)$/, '')).substring(0, 120);
+        }
+        d.nombre = d.nombre.charAt(0).toUpperCase() + d.nombre.slice(1);
+        return d;
+    }
+    function agregarLink() {
+        const v = $('in-link').value.trim();
+        if (!v) return;
+        if (v.startsWith('MULTISTORE_')) { importarTexto(v); $('in-link').value = ''; return; }
+        const d = datosDeLink(v);
+        if (!d) { toast('err', 'Ese link no es válido'); return; }
+        nuevaLinea(d);
+        $('in-link').value = '';
+        toast('ok', 'Producto agregado: completa precio y peso' + (d.nombre ? '' : ' y nombre'));
+    }
+
+    /* ───── Marcador ───── */
+    function importarTexto(txt) {
+        const pref = txt.startsWith('MULTISTORE_IMPORT') ? 'MULTISTORE_IMPORT' : txt.startsWith('MULTISTORE_SHEIN') ? 'MULTISTORE_SHEIN' : '';
+        if (!pref) return false;
+        try {
+            const d = JSON.parse(txt.substring(pref.length));
+            (d.items || []).forEach(x => nuevaLinea({ nombre: (x.titulo || '').substring(0, 300), link: x.link, foto: x.foto, sku: x.sku, tallaColor: x.talla,
+                precioUSD: x.precio || '', cantidad: x.cant || 1, pesoLb: x.pesoLb ? +(+x.pesoLb).toFixed(3) : '' }, true));
+            render();
+            toast('ok', `📦 ${d.items.length} producto${d.items.length === 1 ? '' : 's'} de ${d.tienda || 'la tienda'} agregado${d.items.length === 1 ? '' : 's'}`);
+            return true;
+        } catch (e) { toast('err', 'No pude leer lo copiado por el marcador'); return true; }
+    }
+    async function pegarMarcador() {
+        try {
+            const t = await navigator.clipboard.readText();
+            if (!importarTexto(t || '')) toast('err', 'En el portapapeles no hay nada del marcador. Toca 📦 en la página del producto primero.');
+        } catch (e) { toast('err', 'El navegador no dejó leer el portapapeles: pega con Ctrl+V en el cuadro del link'); $('in-link').focus(); }
+    }
+
+    /* ───── Fotos (se comprimen a 500 px) ───── */
+    function comprimir(file) {
+        return new Promise((ok, no) => {
+            const r = new FileReader();
+            r.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    const k = Math.min(1, 500 / Math.max(img.width, img.height));
+                    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+                    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+                    ok(cv.toDataURL('image/jpeg', 0.82));
+                };
+                img.onerror = no; img.src = r.result;
+            };
+            r.onerror = no; r.readAsDataURL(file);
+        });
+    }
+    async function archivoFoto(file, u) {
+        if (!file || !file.type.startsWith('image/')) return;
+        const l = lineas.find(x => x.uid === u); if (!l) return;
+        l.foto = await comprimir(file); cambios = true; render();
+    }
+    function pegarFoto(e, u) {
+        const it = [...((e.clipboardData || {}).items || [])].find(i => i.type.startsWith('image/'));
+        if (it) { e.preventDefault(); e.stopPropagation(); archivoFoto(it.getAsFile(), u); }
+    }
+    function soltarFoto(e, u) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) archivoFoto(f, u); }
+    // Ctrl+V en cualquier parte: imagen → nueva línea con foto; texto del marcador → importar
+    document.addEventListener('paste', async e => {
+        if (!$('p-cot').classList.contains('on') || document.querySelector('.modal-bg.open')) return;
+        const items = [...((e.clipboardData || {}).items || [])];
+        const img = items.find(i => i.type.startsWith('image/'));
+        if (img && !e.target.closest('.fbox')) {
+            e.preventDefault();
+            const foto = await comprimir(img.getAsFile());
+            nuevaLinea({ foto });
+            toast('ok', '🖼️ Línea creada con la imagen: escribe nombre, precio y peso');
+            return;
+        }
+        const txt = (e.clipboardData || window.clipboardData).getData('text') || '';
+        if (txt.startsWith('MULTISTORE_')) { e.preventDefault(); importarTexto(txt); }
+        else if (/^https?:\/\//.test(txt.trim()) && !/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) { e.preventDefault(); $('in-link').value = txt.trim(); agregarLink(); }
+    });
+
+    /* ───── Guardar / abrir ───── */
+    function datosCotizacion() {
+        const txt = $('c-cli').value.trim(), cli = clienteDeTexto(txt);
+        return {
+            idCotizacion: actual ? actual.id : null,
+            idCliente: cli ? cli.IdCliente : null,
+            nombreCliente: cli ? cli.NombreCompleto : txt,
+            telefono: $('c-tel').value.trim(),
+            idVendedor: usuario.id,
+            idCasillero: $('c-cas').value || null,
+            tarifaLibra: $('c-tar').value, impuestoPct: $('c-imp').value, margenPct: $('c-mar').value, tasaCambio: $('c-tasa').value,
+            redondearLibras: $('c-redlb').checked,
+            totalUSD: calc.totalUSD.toFixed(2), totalLempiras: calc.totalL.toFixed(2),
+            notas: $('c-notas').value,
+            lineas: lineas.map(l => ({ nombre: l.nombre || 'Producto', link: l.link, foto: l.foto, sku: l.sku, tallaColor: l.tallaColor,
+                precioUSD: l.precioUSD, cantidad: l.cantidad, pesoLb: l.pesoLb, idArticulo: l.idArticulo, precioFinalL: l.final }))
+        };
+    }
+    async function guardar(silencioso) {
+        if (!lineas.length) { toast('err', 'Agrega al menos un producto'); return false; }
+        if (actual && actual.estado === 'Convertida') { toast('err', 'Esta cotización ya se convirtió en pedido; crea una nueva'); return false; }
+        calcular();
+        const b = $('b-guardar'); b.disabled = true; b.textContent = 'Guardando…';
+        try {
+            const d = await fetch('/api/cotizaciones', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(datosCotizacion()) }).then(r => r.json());
+            if (!d.ok) { toast('err', 'Error: ' + d.error); return false; }
+            actual = { id: d.idCotizacion, numero: d.numero, estado: actual ? actual.estado : 'Borrador' };
+            cambios = false; pintarCabecera();
+            history.replaceState({}, '', '/cotizaciones.html?id=' + d.idCotizacion);
+            if (!silencioso) toast('ok', '💾 Cotización ' + d.numero + ' guardada');
+            cargarHist(true);
+            return true;
+        } catch (e) { toast('err', 'Error de conexión'); return false; }
+        finally { b.disabled = false; b.textContent = '💾 Guardar'; }
+    }
+    function pintarCabecera() {
+        $('cot-sub').innerHTML = actual ? `<b style="color:#93c5fd">${esc(actual.numero)}</b> · <span class="estado-b e-${actual.estado}">${actual.estado}</span>` : 'Nueva cotización';
+        const bn = $('banner');
+        if (actual && actual.estado === 'Convertida') { bn.style.display = 'block'; bn.innerHTML = `🔁 Esta cotización ya se convirtió en pedido${actual.idPedido ? ' (pedido #' + actual.idPedido + ')' : ''}. Puedes verla, exportarla o duplicarla con <b>＋ Nueva</b>, pero no editarla.`; }
+        else bn.style.display = 'none';
+    }
+    async function abrir(id) {
+        if (cambios && lineas.length && !confirm('Hay cambios sin guardar en la cotización actual. ¿Abrir otra de todos modos?')) return;
+        try {
+            const d = await fetch('/api/cotizaciones/' + id).then(r => r.json());
+            if (!d.ok) { toast('err', d.error); return; }
+            const c = d.data;
+            actual = { id: c.IdCotizacion, numero: c.NumeroCotizacion, estado: c.Estado, idPedido: c.IdPedido };
+            const cli = clientes.find(x => x.IdCliente === c.IdCliente);
+            $('c-cli').value = cli ? etiqCli(cli) : (c.NombreCliente || '');
+            $('c-tel').value = c.Telefono || '';
+            $('c-cas').value = c.IdCasillero || '';
+            $('c-tar').value = c.TarifaLibra || ''; $('c-imp').value = c.ImpuestoPct; $('c-mar').value = c.MargenPct; $('c-tasa').value = c.TasaCambio || '';
+            $('c-redlb').checked = !!c.RedondearLibras; $('c-notas').value = c.Notas || '';
+            lineas = c.lineas.map(l => ({ uid: uid++, nombre: l.Nombre, link: l.Link || '', foto: l.Foto || '', sku: l.Sku || '', tallaColor: l.TallaColor || '',
+                precioUSD: l.PrecioUSD, cantidad: l.Cantidad, pesoLb: +l.PesoLb || '', idArticulo: l.IdArticulo }));
+            verTab('cot'); render(); cambios = false; pintarCabecera();
+            history.replaceState({}, '', '/cotizaciones.html?id=' + id);
+        } catch (e) { toast('err', 'Error de conexión'); }
+    }
+    function nueva() {
+        if (cambios && lineas.length && !confirm('Hay cambios sin guardar. ¿Empezar una nueva cotización?')) return;
+        const duplicar = actual && lineas.length && confirm('¿Quieres usar los mismos productos en la nueva cotización? (Aceptar = duplicar, Cancelar = empezar vacía)');
+        actual = null;
+        if (!duplicar) { lineas = []; $('c-cli').value = ''; $('c-tel').value = ''; $('c-notas').value = ''; }
+        cambios = duplicar; pintarCabecera(); render();
+        history.replaceState({}, '', '/cotizaciones.html');
+    }
+    window.addEventListener('beforeunload', e => { if (cambios && lineas.length) { e.preventDefault(); e.returnValue = ''; } });
+
+    /* ───── Historial ───── */
+    async function cargarHist(silencioso) {
+        try {
+            const d = await fetch(`/api/cotizaciones?idVendedor=${usuario.id}&esAdmin=${usuario.esAdmin ? 1 : 0}`).then(r => r.json());
+            historial = d.ok ? d.data : [];
+            if (!d.ok && !silencioso) toast('err', d.error);
+        } catch (e) { historial = []; }
+        $('his-n').textContent = historial.length ? `(${historial.length})` : '';
+        renderHist();
+    }
+    function renderHist() {
+        const q = norm($('h-buscar').value), est = $('h-estado').value;
+        const lista = historial.filter(c => (!est || c.Estado === est) && (!q || norm(c.NumeroCotizacion).includes(q) || norm(c.NombreCliente).includes(q)));
+        $('h-body').innerHTML = lista.length ? lista.map(c => `
+            <tr onclick="abrir(${c.IdCotizacion})">
+                <td>${c.FotoPortada ? `<img class="foto" src="${esc(c.FotoPortada)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="foto"></div>'}</td>
+                <td><div class="art" style="color:#93c5fd">${esc(c.NumeroCotizacion)}</div><div class="meta">${new Date(c.Fecha).toLocaleDateString('es-HN')}</div></td>
+                <td style="color:#d1d5db">${esc(c.NombreCliente)}<div class="meta">${esc(c.Telefono || '')}</div></td>
+                <td class="num">${c.CantLineas}</td>
+                <td class="num" style="color:#4ade80;font-weight:800">${L(c.TotalLempiras)}<div class="meta">${usd(c.TotalUSD)}</div></td>
+                <td onclick="event.stopPropagation()">${c.Estado === 'Convertida'
+                    ? '<span class="estado-b e-Convertida">Convertida</span>'
+                    : `<select class="inp" style="padding:5px 8px;font-size:12px" onchange="cambiarEstado(${c.IdCotizacion}, this.value)">
+                        ${['Borrador','Enviada','Aceptada','Rechazada'].map(e => `<option ${e === c.Estado ? 'selected' : ''}>${e}</option>`).join('')}</select>`}</td>
+                <td onclick="event.stopPropagation()">${c.Estado === 'Convertida' ? '' : `<button class="del" title="Eliminar" onclick="eliminar(${c.IdCotizacion}, '${esc(c.NumeroCotizacion)}')">🗑</button>`}</td>
+            </tr>`).join('') : `<tr><td colspan="7" class="vacio"><b>📄</b>${historial.length ? 'No hay cotizaciones con estos filtros' : 'Todavía no hay cotizaciones guardadas'}</td></tr>`;
+    }
+    async function cambiarEstado(id, estado) {
+        const d = await fetch(`/api/cotizaciones/${id}/estado`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ estado }) }).then(r => r.json()).catch(() => ({ ok:false, error:'Error de conexión' }));
+        if (!d.ok) { toast('err', d.error); return; }
+        const c = historial.find(x => x.IdCotizacion === id); if (c) c.Estado = estado;
+        if (actual && actual.id === id) { actual.estado = estado; pintarCabecera(); }
+        toast('ok', 'Estado: ' + estado);
+    }
+    async function eliminar(id, num) {
+        if (!confirm('¿Eliminar la cotización ' + num + '? No se puede deshacer.')) return;
+        const d = await fetch('/api/cotizaciones/' + id, { method:'DELETE' }).then(r => r.json()).catch(() => ({ ok:false, error:'Error de conexión' }));
+        if (!d.ok) { toast('err', d.error); return; }
+        if (actual && actual.id === id) { actual = null; cambios = true; pintarCabecera(); }
+        toast('ok', 'Cotización eliminada'); cargarHist();
+    }
+
+    /* ───── PDF / Imagen ───── */
+    function imgDoc(src) {
+        if (!src) return '';
+        if (/^data:/.test(src) || src.startsWith('/')) return src;
+        return '/api/cotizaciones/img?url=' + encodeURIComponent(src);
+    }
+    function armarDoc() {
+        calcular();
+        const cli = $('c-cli').value.trim().replace(/\s*\([^)]*\)$/, '');
+        $('doc').innerHTML = `
+            <div class="d-head">
+                <div class="d-logo"><img src="/assets/Recurso 3.png" onerror="this.remove()"><div>Multi<span>Store</span></div></div>
+                <div class="d-num"><b>COTIZACIÓN</b>${esc(actual ? actual.numero : 'Borrador')}<br>${new Date().toLocaleDateString('es-HN', { day:'numeric', month:'long', year:'numeric' })}</div>
+            </div>
+            <div class="d-cli">${cli ? `<b>Cliente:</b> ${esc(cli)}` : ''}${$('c-tel').value ? ` &nbsp;·&nbsp; <b>Tel.:</b> ${esc($('c-tel').value)}` : ''}</div>
+            <table>
+                <thead><tr><th style="width:66px"></th><th>Producto</th><th>Talla / color</th><th class="r">Cant.</th><th class="r">Precio</th></tr></thead>
+                <tbody>${lineas.map(l => `<tr>
+                    <td>${l.foto ? `<img src="${esc(imgDoc(l.foto))}" crossorigin="anonymous" onerror="this.style.visibility='hidden'">` : ''}</td>
+                    <td>${esc(l.nombre || 'Producto')}</td><td>${esc(l.tallaColor || '')}</td>
+                    <td class="r">${parseInt(l.cantidad) || 1}</td><td class="r"><b>${L(l.final)}</b></td></tr>`).join('')}</tbody>
+            </table>
+            <div class="d-tot"><div>Total a pagar<b>${L(calc.totalL)}</b>Incluye envío a Honduras e impuestos</div></div>
+            ${$('c-notas').value.trim() ? `<div class="d-notas">${esc($('c-notas').value.trim())}</div>` : ''}`;
+        return Promise.all([...$('doc').querySelectorAll('img')].map(i => i.complete ? null : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 6000); })));
+    }
+    let h2cCargado = null;
+    function cargarH2C() {
+        if (window.html2canvas) return Promise.resolve();
+        if (!h2cCargado) h2cCargado = new Promise((ok, no) => {
+            const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s.onload = ok; s.onerror = no; document.head.appendChild(s);
+        });
+        return h2cCargado;
+    }
+    async function exportar(tipo) {
+        if (!lineas.length) { toast('err', 'Agrega productos primero'); return; }
+        if (cambios || !actual) await guardar(true);
+        await armarDoc();
+        if (tipo === 'pdf') { window.print(); return; }
+        try {
+            await cargarH2C();
+            const cv = await html2canvas($('doc'), { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const a = document.createElement('a');
+            a.download = (actual ? actual.numero : 'cotizacion') + '.png';
+            a.href = cv.toDataURL('image/png'); a.click();
+            toast('ok', '🖼 Imagen descargada: ' + a.download);
+        } catch (e) { toast('err', 'No se pudo crear la imagen; usa 🖨 PDF'); }
+    }
+
+    /* ───── Convertir en pedido ───── */
+    function palabras(t) { return norm(t).split(/[^a-z0-9ñ]+/).filter(w => w.length > 2 && !['de','del','para','con','los','las','por'].includes(w)).map(w => w.length > 4 && /[^aeiou]es$/.test(w) ? w.slice(0, -2) : (w.length > 3 && /s$/.test(w) ? w.slice(0, -1) : w)); }
+    function adivinarArt(titulo) {
+        try { // lo aprendido en "Pegar varios"
+            const t = new Set(palabras(titulo)); let mejor = null, pts = 0;
+            JSON.parse(localStorage.getItem('ms_aprendido') || '[]').forEach(x => {
+                const c = x.t.filter(w => t.has(w)).length, s = c / Math.max(x.t.length, 1);
+                if (c >= 2 && s >= 0.5 && s > pts) { mejor = x.id; pts = s; }
+            });
+            if (mejor && articulos.some(a => a.IdArticulo == mejor)) return +mejor;
+        } catch (e) {}
+        const t = new Set(palabras(titulo)); let m = null, n = 0;
+        articulos.forEach(a => { const w = palabras(a.NombreArticulo); if (w.length && w.every(x => t.has(x)) && w.length > n) { m = a; n = w.length; } });
+        return m ? m.IdArticulo : null;
+    }
+    async function abrirConvertir() {
+        if (!lineas.length) { toast('err', 'Agrega productos primero'); return; }
+        if (actual && actual.estado === 'Convertida') { toast('err', 'Esta cotización ya se convirtió en pedido'); return; }
+        if (!(await guardar(true))) return;
+        try {
+            const d = await fetch('/api/crear-pedidos/pedidos-abiertos').then(r => r.json());
+            $('cv-ped').innerHTML = '<option value="">— Elige el pedido —</option>' + (d.ok ? d.data : []).map(p =>
+                `<option value="${p.IdPedido}">${esc(p.NumeroPedido)} — ${esc(p.Tienda || '')} (${p.CantArticulos || 0} arts.)</option>`).join('');
+        } catch (e) {}
+        const cli = clienteDeTexto($('c-cli').value);
+        $('cv-aviso').innerHTML = cli ? '' : ($('c-cli').value.trim() ? '⚠ El cliente no está registrado: los artículos quedarán sin cliente (asígnalo después en el Dashboard).' : '⚠ La cotización no tiene cliente.');
+        $('cv-lineas').innerHTML = lineas.map(l => {
+            const id = l.idArticulo || adivinarArt(l.nombre); l.idArticulo = id;
+            const a = articulos.find(x => x.IdArticulo == id);
+            return `<div style="display:grid;grid-template-columns:44px 1fr 200px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #111827">
+                ${l.foto ? `<img class="foto" style="width:40px;height:40px" src="${esc(l.foto)}">` : '<div class="foto" style="width:40px;height:40px"></div>'}
+                <div><div class="art">${esc(l.nombre)}</div><div class="meta">${esc(l.tallaColor)} · ${L(l.final)}</div></div>
+                <input class="inp mini cv-art" data-u="${l.uid}" list="dl-art" placeholder="🔍 Artículo…" value="${esc(a ? a.NombreArticulo : '')}" style="${a ? '' : 'border-color:#b91c1c'}"
+                       onchange="const x = articulos.find(y => norm(y.NombreArticulo) === norm(this.value)); this.style.borderColor = x ? '' : '#b91c1c'; lineas.find(y => y.uid === ${l.uid}).idArticulo = x ? x.IdArticulo : null;">
+            </div>`;
+        }).join('');
+        $('m-conv').classList.add('open');
+    }
+    async function convertir() {
+        const idPedido = $('cv-ped').value;
+        if (!idPedido) { toast('err', 'Elige el pedido de MultiStore'); return; }
+        const falta = lineas.filter(l => !l.idArticulo).length;
+        if (falta) { toast('err', `Elige el artículo del catálogo en ${falta} producto(s)`); return; }
+        if (!(await guardar(true))) return;   // guarda los artículos elegidos
+        const btn = $('cv-btn'); btn.disabled = true; btn.textContent = 'Convirtiendo…';
+        try {
+            const d = await fetch(`/api/cotizaciones/${actual.id}/convertir`, { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ idPedido: +idPedido, noPedidoTienda: $('cv-nop').value.trim() || null }) }).then(r => r.json());
+            if (!d.ok) { toast('err', 'Error: ' + d.error); return; }
+            actual.estado = 'Convertida'; actual.idPedido = +idPedido;
+            cerrarModal('m-conv'); pintarCabecera(); cargarHist(true);
+            toast('ok', `🔁 ${d.creados} artículo(s) agregados al pedido`);
+        } catch (e) { toast('err', 'Error de conexión'); }
+        finally { btn.disabled = false; btn.textContent = '🔁 Convertir'; }
+    }
+
+    iniciar();
+</script>
+<script src="/assets/sidebar.js"></script>
+</body>
+</html>

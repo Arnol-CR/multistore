@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MultiStore — Crear Pedido</title>
     <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <script src="/assets/marcador.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
@@ -1020,73 +1021,6 @@
 
     // ── IMPORTAR DE SHEIN (botón de marcadores) ──
     // Esta función se ejecuta en la página de SHEIN, no en MultiStore: debe ser autocontenida.
-    // Se ejecuta en la página de la TIENDA (SHEIN, Amazon…), no en MultiStore: debe ser autocontenida.
-    function sheinScraper() {
-        var host = location.hostname, tienda = '', pedido = '', items = [];
-        function lineasDe(el) { return (el.innerText || '').split(/[\n\t]/).map(function(x){ return x.trim(); }).filter(Boolean); }
-        function filaCon(el) { var r = el; while (r && r !== document.body && !r.querySelector('img')) r = r.parentElement; return (r && r !== document.body) ? r : null; }
-        function imgDe(row) {
-            var img = row.querySelector('img'); var f = img ? (img.getAttribute('data-src') || img.currentSrc || img.src || '') : '';
-            if (f.indexOf('//') === 0) f = 'https:' + f; return /^data:/.test(f) ? '' : f;
-        }
-
-        if (/shein\./i.test(host)) {
-            tienda = 'SHEIN';
-            var m = location.pathname.match(/detail\/([A-Z0-9]+)/i); pedido = m ? m[1] : '';
-            var vistos = [], all = document.querySelectorAll('body *');
-            for (var i = 0; i < all.length; i++) {
-                var el = all[i];
-                if (el.children.length > 2) continue;
-                var ms = (el.textContent || '').trim().match(/^SKU\s*[:：]\s*([A-Za-z0-9\-_]+)$/);
-                if (!ms) continue;
-                var row = filaCon(el);
-                if (!row || vistos.indexOf(row) >= 0) continue;
-                vistos.push(row);
-                var lineas = lineasDe(row), txt = lineas.join('\n');
-                var precio = (txt.match(/\$\s*([\d,]+\.\d{1,2})/) || [])[1] || '0';
-                var cant = 1, titulo = '', talla = '';
-                lineas.forEach(function(l){
-                    if (/^\d{1,3}$/.test(l) && cant === 1) cant = parseInt(l, 10);
-                    else if (!talla && / \/ /.test(l) && l.length < 50 && l.indexOf('$') < 0 && !/SKU/i.test(l)) talla = l;
-                    else if (!titulo && l.length > 12 && !/SKU|\$|devolver|devoluci|Pol[ií]tica/i.test(l)) titulo = l;
-                });
-                var a = row.querySelector('a[href*="-p-"], a[href*="goods"]');
-                var gid = a ? (a.href.match(/-p-(\d+)/) || [])[1] : '';
-                items.push({ sku: ms[1], titulo: titulo.replace(/^\d+\s+piezas?\s+/i, ''), talla: talla,
-                    precio: parseFloat(precio.replace(/,/g, '')) || 0, cant: cant,
-                    foto: imgDe(row).replace(/_thumbnail_\d+x\d*/, ''), link: gid ? location.origin + '/p-' + gid + '.html' : '' });
-            }
-        } else if (/amazon\./i.test(host)) {
-            tienda = 'Amazon';
-            pedido = new URLSearchParams(location.search).get('orderID') || ((document.body.innerText.match(/\b(\d{3}-\d{7}-\d{7})\b/) || [])[1] || '');
-            var filas = [], links = document.querySelectorAll('a[href*="/dp/"], a[href*="/gp/product/"]');
-            for (var k = 0; k < links.length; k++) {
-                var ln = links[k], tt = (ln.innerText || '').trim();
-                var asin = (ln.href.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/) || [])[1];
-                if (!asin || tt.length < 15 || /^(ver|view|comprar|buy)\b/i.test(tt)) continue;
-                var r = filaCon(ln);
-                if (!r || filas.indexOf(r) >= 0) continue;
-                var rt = r.innerText || '';
-                if (!/Vendido por|Sold by|Comprar nuevamente|Buy it again|Ver el art[ií]culo|View your item|devoluci|Return/i.test(rt)) continue;
-                filas.push(r);
-                var pr = (rt.match(/(?:US\$|\$)\s*([\d,]+\.\d{2})/) || [])[1] || '0';
-                var q = (rt.match(/(?:Cantidad|Qty|Quantity)\s*:?\s*(\d+)/i) || [])[1];
-                if (!q) { var badge = r.querySelector('[class*="qty"], [class*="quantity"]'); if (badge && /^\d+$/.test(badge.innerText.trim())) q = badge.innerText.trim(); }
-                var var_ = lineasDe(r).filter(function(l){ return /^(Talla|Tamaño|Size|Color|Colour|Estilo|Style)\s*:/i.test(l); }).map(function(l){ return l.replace(/^[^:]+:\s*/, ''); }).join(' / ');
-                items.push({ sku: asin, titulo: tt.replace(/\s+/g, ' '), talla: var_, precio: parseFloat(pr.replace(/,/g, '')) || 0,
-                    cant: parseInt(q || '1', 10), foto: imgDe(r).replace(/\._[^./]+_\./, '.'), link: 'https://www.amazon.com/dp/' + asin });
-            }
-        } else {
-            alert('MultiStore: esta tienda todavía no está soportada (por ahora: SHEIN y Amazon).'); return;
-        }
-
-        if (!items.length) { alert('MultiStore: no encontré artículos en esta página de ' + tienda + '. Abre el DETALLE del pedido y espera a que cargue.'); return; }
-        var data = 'MULTISTORE_IMPORT' + JSON.stringify({ tienda: tienda, pedido: pedido, items: items });
-        var ok = function(){ alert('✓ MultiStore: ' + items.length + ' artículos copiados del pedido ' + tienda + ' ' + pedido + '.\nVe a MultiStore → Pegar varios → Pegar'); };
-        function viejo() { var ta = document.createElement('textarea'); ta.value = data; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(data).then(ok, viejo); else viejo();
-    }
-
     async function pegarDelPortapapeles() {
         try { document.getElementById('pv-texto').value = await navigator.clipboard.readText(); parsearPegado(); }
         catch(e) { mostrarMsg(document.getElementById('msg-pegar'),'err','El navegador no dejó leer el portapapeles: haz clic en el cuadro y pulsa Ctrl+V'); }
@@ -1100,7 +1034,7 @@
         document.getElementById('pv-nopedido').value = document.getElementById('a-nopedido').value;
         document.getElementById('dl-articulos').innerHTML = todosArticulos.map(a => `<option value="${(a.NombreArticulo||'').replace(/"/g,'&quot;')}">`).join('');
         document.getElementById('pv-art-todos').value = nombreDe(document.getElementById('a-articulo-id').value);
-        document.getElementById('bm-shein').href = 'javascript:' + encodeURIComponent('(' + sheinScraper.toString() + ')()');
+        document.getElementById('bm-shein').href = marcadorHref();
         filasPegadas = []; renderPegados();
         document.getElementById('na-panel').style.display = 'none';
         const selP = document.getElementById('a-pedido'), optP = selP.options[selP.selectedIndex];
