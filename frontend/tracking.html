@@ -1325,7 +1325,10 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                         <button class="btn-ghost btn-sm" onclick="toggleArticulosSeguimiento(${e.IdSeguimiento}, this, 'entrada')">Ver artículos</button>
                     </td>
                     <td><b>${e.Seguimiento}</b>${e.CambioSeguimiento ? ` <span style="color:#6b7280">(${e.CambioSeguimiento})</span>` : ''}
-                        <div class="meta-trk">${[e.Tiendas, e.Pedidos].filter(Boolean).join(' · ')} · ${e.Articulos} art.</div></td>
+                       <div class="meta-trk">
+                        ${[e.Tiendas, e.Pedidos].filter(Boolean).join(' · ')}
+                        · ${e.Articulos ?? e.articulos ?? 0} art.
+                        </div>
                     <td>${e.NombreCasillero ?? '-'}</td>
                     <td>${e.EntradaMiami ? fmtFecha(e.EntradaMiami) : `<span style="color:#6b7280">—</span><span class="tag-sin" title="Se registra sola al crear la orden">sin entrada</span>`}</td>
                     <td>${fmtFecha(e.EntregaEstimada || e.FechaEstimadaEntrega)}</td>
