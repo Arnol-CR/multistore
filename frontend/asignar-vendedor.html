@@ -174,7 +174,7 @@
                     <button class="btn btn-ghost" id="btn-tarjetas" onclick="generarTarjetas()" 
                             style="width:100%; justify-content:center;" 
                             title="Genera una imagen con el listado numerado de los artículos marcados">
-                        Generar listado
+                        Copiar listado
                     </button>
                 </div>
             </div>
@@ -372,7 +372,7 @@
         }
 
         const btn = document.getElementById('btn-tarjetas');
-        const txtOriginal = btn ? btn.innerHTML : 'Generar listado';
+        const txtOriginal = btn ? btn.innerHTML : 'Copiar listado';
         
         if (btn) {
             btn.disabled = true;
@@ -383,19 +383,19 @@
             
             const canvas = await window.generarTarjetasMultiples(articulos);
             
+            // Copiar la imagen; si el navegador no deja, se descarga
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `listado-articulos-${articulos.length}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-            
-            toast('ok', `Listado de ${articulos.length} artículo${articulos.length === 1 ? '' : 's'} descargado`);
+            try {
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                toast('ok', `Listado copiado (${articulos.length} artículo${articulos.length === 1 ? '' : 's'}). Pegalo en WhatsApp con Ctrl + V`);
+            } catch (err) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `listado-articulos-${articulos.length}.png`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                toast('err', 'El navegador no dejó copiar la imagen; se descargó el archivo');
+            }
         } catch (e) {
             console.error('Error generando tarjetas:', e);
             toast('err', 'Error: ' + (e.message || e));
