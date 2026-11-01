@@ -1,15 +1,6 @@
 /**
  * ver-articulo.js — MultiStore
- * Ventana "Ver artículo" compartida. Uso:
- *   <script src="/assets/ver-articulo.js"></script>
- *   verArticuloModal(objetoArticulo)
- * Acepta los campos de SP_PedidosRecientes / C_DetallePedido:
- *   IdDetallePedido, NombreArticulo, DescripcionArticulo, CodigoArticulo, TallaColor, Fotografia, Link,
- *   NumeroPedido, NoPedidoAplicacion, FechaPedido, NombreEmpresa|Tienda, NombreCliente, NombreVendedor,
- *   ValorCompra, CantidadArticulos|Cantidad, ValorCobroCliente|Venta, TasaCambio
- *
- * "Copiar imagen" arma una tarjeta para el cliente (foto, nombre, talla, cantidad, precio de venta).
- * No incluye costo, precio de la app ni vendedor.
+ * Ventana "Ver artículo" compartida + generación de tarjetas.
  */
 (function () {
   const css = `
@@ -81,6 +72,7 @@
   .va-sub{opacity:.6;pointer-events:none}
   @media(max-width:760px){.va-cuerpo{grid-template-columns:1fr}.va-foto{position:static;max-height:46vh;aspect-ratio:auto;height:46vh}.va-nom{font-size:17px}}
   @media(max-width:420px){.va-grid{grid-template-columns:1fr}}`;
+
   const ico = (p, s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   const OJO = '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>';
   const X = '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';
@@ -90,6 +82,7 @@
   const BAJAR = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>';
 
   let fondo, actual = null;
+
   function montar() {
     if (fondo) return;
     const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
@@ -116,9 +109,13 @@
     const venta = parseFloat(a.ValorCobroCliente ?? a.Venta ?? 0) || 0;
     const tasa = parseFloat(a.TasaCambio || 0);
     const costoL = compra != null && tasa ? compra * cant * tasa : (a.CostoL || null);
-    return { cant, compra, venta, costoL, gan: venta && costoL ? venta - costoL : null,
-             tienda: a.NombreEmpresa || a.Tienda || '', pedido: a.NoPedidoAplicacion || a.NumeroPedido || '',
-             link: a.Link && /^https?:\/\//i.test(a.Link) ? a.Link : '' };
+    return {
+      cant, compra, venta, costoL,
+      gan: venta && costoL ? venta - costoL : null,
+      tienda: a.NombreEmpresa || a.Tienda || '',
+      pedido: a.NoPedidoAplicacion || a.NumeroPedido || '',
+      link: a.Link && /^https?:\/\//i.test(a.Link) ? a.Link : ''
+    };
   }
 
   // ══════════ Edición rápida: foto, vendedor y tracking ══════════
@@ -127,7 +124,6 @@
     return (src ? `<img src="${esc(src)}" alt="">` : `${ico(IMG, 28)}Sin fotografía`) +
       `<div class="va-foto-acc">${actual && actual.Link && /^https?:/i.test(actual.Link) ? '<button class="va-fb va-desde-tienda" type="button" title="Toma la foto de la página del producto">Desde la tienda</button>' : ''}<button class="va-fb va-subir" type="button">Subir</button><button class="va-fb va-pegar-link" type="button">Link</button><span class="va-fb" style="cursor:default;font-weight:400;color:#9ca3af" title="Pegá una imagen, un link o lo que copió el marcador">o Ctrl+V</span></div>`;
   }
-  // ¿Es el link directo a una imagen, o la página de un producto?
   const esImagen = u => /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(u) || /ltwebstatic\.com|kwcdn\.com|media-amazon\.com|images-amazon\.com|blob\.core\.windows\.net|alicdn\.com/i.test(u);
   async function fotoDesdePagina(url) {
     const r = await fetch('/api/cotizaciones/leer-link?url=' + encodeURIComponent(url));
@@ -135,16 +131,26 @@
     if (d.ok && d.data && d.data.foto) return d.data.foto;
     throw new Error(d.bloqueado ? 'la tienda no dejó leer la página. Copiá la imagen (clic derecho → Copiar imagen) y pegala con Ctrl+V' : (d.error || 'no encontré la foto en esa página'));
   }
-  // Texto copiado por el marcador (MULTISTORE_IMPORT{...}): usar la foto del primer producto
   function fotoDeMarcador(t) {
     if (!/^MULTISTORE_IMPORT\s*\{/.test(t || '')) return '';
-    try { const d = JSON.parse(t.replace(/^MULTISTORE_IMPORT\s*/, '')); const it = (d.items || []).find(x => x.foto); let f = it ? it.foto : ''; if (f.indexOf('//') === 0) f = 'https:' + f; return /^https?:/i.test(f) ? f : ''; } catch (e) { return ''; }
+    try {
+      const d = JSON.parse(t.replace(/^MULTISTORE_IMPORT\s*/, ''));
+      const it = (d.items || []).find(x => x.foto);
+      let f = it ? it.foto : '';
+      if (f.indexOf('//') === 0) f = 'https:' + f;
+      return /^https?:/i.test(f) ? f : '';
+    } catch (e) { return ''; }
   }
   window.fotoDeMarcadorMS = fotoDeMarcador;
   window.fotoDesdeLinkMS = async u => esImagen(u) ? u : await fotoDesdePagina(u);
   function avisar(a, campos) { try { window.dispatchEvent(new CustomEvent('articulo-actualizado', { detail: { articulo: a, campos } })); } catch (e) {} }
   let vendedoresVA = null, seguimientosVA = null;
-  async function json(url, op) { const r = await fetch(url, op); const d = await r.json().catch(() => ({})); if (!r.ok || d.ok === false) throw new Error(d.error || d.mensaje || ('Error ' + r.status)); return d; }
+  async function json(url, op) {
+    const r = await fetch(url, op);
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.ok === false) throw new Error(d.error || d.mensaje || ('Error ' + r.status));
+    return d;
+  }
 
   async function guardarFoto(a, cuerpo) {
     const f = fondo.querySelector('.va-foto'); f.classList.add('va-sub');
@@ -187,7 +193,6 @@
       if (e.target.closest && e.target.closest('input')) return;
       const it = [...(e.clipboardData?.items || [])].find(x => x.type.startsWith('image/'));
       if (it) { e.preventDefault(); leerImagen(a, it.getAsFile()); return; }
-      // Un link pegado (de producto o de imagen) también sirve
       const txt = (e.clipboardData?.getData('text') || '').trim();
       const fm = fotoDeMarcador(txt);
       if (fm) { e.preventDefault(); guardarFoto(a, { url: fm }); return; }
@@ -197,6 +202,7 @@
     const desdeTienda = fondo.querySelector('.va-desde-tienda'); if (desdeTienda) desdeTienda.onclick = e => { e.stopPropagation(); usarLink(a.Link); };
     fondo.querySelector('.va-url-ok').onclick = () => usarLink();
     fondo.querySelector('.va-url').onkeydown = e => { if (e.key === 'Enter') usarLink(); };
+
     // Vendedor (solo administrador)
     const sv = fondo.querySelector('.va-vend');
     if (sv) {
@@ -217,6 +223,7 @@
         sv.disabled = false;
       };
     }
+
     // Tracking
     const ti = fondo.querySelector('.va-trk'), hint = fondo.querySelector('.va-trk-hint'), nt = fondo.querySelector('.va-nt');
     const cargarTrk = async (forzar) => {
@@ -313,35 +320,7 @@
   };
   window.cerrarVerArticuloModal = cerrar;
 
-  // ══════════ Tarjeta para el cliente (canvas) ══════════
-  function cargarImg(src) {
-    return new Promise(res => {
-      if (!src) return res(null);
-      const im = new Image();
-      im.crossOrigin = 'anonymous';
-      im.onload = () => res(im);
-      im.onerror = () => res(null);
-      // Las fotos de las tiendas pasan por el servidor para que el navegador deje copiarlas
-      let url = src;
-      try { const u = new URL(src, location.href); if (/^https?:$/.test(u.protocol) && u.origin !== location.origin) url = '/api/cotizaciones/img?url=' + encodeURIComponent(u.href); } catch (e) {}
-      im.src = url;
-    });
-  }
-  function lineas(ctx, texto, ancho, max) {
-    const pal = String(texto || '').split(/\s+/).filter(Boolean); const out = []; let l = '';
-    for (const p of pal) {
-      const prueba = l ? l + ' ' + p : p;
-      if (ctx.measureText(prueba).width > ancho && l) { out.push(l); l = p; if (out.length === max) break; } else l = prueba;
-    }
-    if (out.length < max && l) out.push(l);
-    if (out.length === max && pal.join(' ').length > out.join(' ').length) {
-      let u = out[max - 1]; while (ctx.measureText(u + '…').width > ancho && u.length) u = u.slice(0, -1); out[max - 1] = u.replace(/\s+$/, '') + '…';
-    }
-    return out;
-  }
-  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-
-    // ══════════ Tarjeta para el cliente (canvas) — diseño mejorado ══════════
+  // ══════════ Helpers de imagen ══════════
   function cargarImg(src) {
     return new Promise(res => {
       if (!src) return res(null);
@@ -358,7 +337,6 @@
       im.src = url;
     });
   }
-
   function lineas(ctx, texto, ancho, max) {
     const pal = String(texto || '').split(/\s+/).filter(Boolean);
     const out = [];
@@ -366,8 +344,7 @@
     for (const p of pal) {
       const prueba = l ? l + ' ' + p : p;
       if (ctx.measureText(prueba).width > ancho && l) {
-        out.push(l);
-        l = p;
+        out.push(l); l = p;
         if (out.length === max) break;
       } else l = prueba;
     }
@@ -379,7 +356,6 @@
     }
     return out;
   }
-
   function rr(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -390,19 +366,18 @@
     ctx.closePath();
   }
 
+  // ══════════ Tarjeta individual (mejorada) ══════════
   async function tarjeta(a) {
     const d = datos(a);
     const W = 1080, H = 1520, M = 56, F = "'Segoe UI', Arial, sans-serif";
     const c = document.createElement('canvas');
-    c.width = W;
-    c.height = H;
+    c.width = W; c.height = H;
     const ctx = c.getContext('2d');
 
-    // Fondo blanco
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
 
-    // Franja superior de marca (gradiente rosa → naranja)
+    // Franja superior
     const g = ctx.createLinearGradient(0, 0, W, 0);
     g.addColorStop(0, '#E8327A');
     g.addColorStop(1, '#EF7A30');
@@ -414,7 +389,7 @@
       cargarImg('/assets/shopaholic-logo.png')
     ]);
 
-    // ── Encabezado ──
+    // Encabezado
     let y = 48;
     if (logo) {
       const lh = 68, lw = logo.width * lh / logo.height;
@@ -426,7 +401,7 @@
       ctx.fillText('ShopAholic', M, y + 12);
     }
 
-    // Badge de pedido (derecha del logo)
+    // Nº de pedido (derecha)
     if (d.pedido) {
       ctx.textAlign = 'right';
       ctx.fillStyle = '#9ca3af';
@@ -440,7 +415,7 @@
 
     y = 140;
 
-    // ── Foto ──
+    // Foto
     const fh = 680, fw = W - 2 * M;
     rr(ctx, M, y, fw, fh, 24);
     ctx.fillStyle = '#f8fafc';
@@ -467,7 +442,7 @@
 
     y += fh + 36;
 
-    // ── Nombre del artículo ──
+    // Nombre
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#0f172a';
     ctx.font = `800 46px ${F}`;
@@ -476,7 +451,7 @@
       y += 54;
     }
 
-    // ── Descripción ──
+    // Descripción
     if (a.DescripcionArticulo) {
       y += 6;
       ctx.fillStyle = '#64748b';
@@ -487,7 +462,7 @@
       }
     }
 
-    // ── Chips (talla / cantidad) ──
+    // Chips
     y += 18;
     let x = M;
     ctx.font = `600 24px ${F}`;
@@ -510,7 +485,7 @@
     }
     if (chips.length) y += 60;
 
-    // ── Separador ──
+    // Separador
     y += 10;
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 1.5;
@@ -520,8 +495,7 @@
     ctx.stroke();
     y += 28;
 
-    // ── Bloque de información del pedido ──
-    // Fila 1: Tienda + Fecha
+    // Bloque de información
     const colW = (W - 2 * M - 24) / 2;
 
     // Tienda
@@ -532,7 +506,7 @@
     ctx.font = `700 26px ${F}`;
     ctx.fillText(lineas(ctx, d.tienda || '—', colW, 1)[0], M, y + 26);
 
-    // Fecha del pedido
+    // Fecha
     const fechaTxt = fecha(a.FechaPedido) || '—';
     ctx.fillStyle = '#94a3b8';
     ctx.font = `600 18px ${F}`;
@@ -543,7 +517,6 @@
 
     y += 72;
 
-    // Fila 2: Pedido para + Precio
     // Cliente
     ctx.fillStyle = '#94a3b8';
     ctx.font = `600 18px ${F}`;
@@ -552,7 +525,7 @@
     ctx.font = `700 28px ${F}`;
     ctx.fillText(lineas(ctx, a.NombreCliente || 'Sin cliente', colW + 40, 1)[0], M, y + 28);
 
-    // Precio al cliente (destacado)
+    // Precio
     if (d.venta) {
       ctx.textAlign = 'right';
       ctx.fillStyle = '#94a3b8';
@@ -564,7 +537,7 @@
       ctx.textAlign = 'left';
     }
 
-    // ── Pie inferior sutil ──
+    // Pie
     ctx.fillStyle = '#f1f5f9';
     ctx.fillRect(0, H - 48, W, 48);
     ctx.fillStyle = '#94a3b8';
@@ -576,7 +549,7 @@
 
     return c;
   }
-  
+
   const aBlob = c => new Promise(r => c.toBlob(r, 'image/png'));
   const nombreArchivo = a => ('shopaholic-' + (a.NombreArticulo || 'articulo') + '-' + (a.IdDetallePedido || '')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9-]+/g, '-') + '.png';
 
@@ -585,7 +558,9 @@
     btn.disabled = true;
     try {
       const blob = await aBlob(await tarjeta(actual));
-      const u = URL.createObjectURL(blob); const l = document.createElement('a'); l.href = u; l.download = nombreArchivo(actual); l.click();
+      const u = URL.createObjectURL(blob);
+      const l = document.createElement('a');
+      l.href = u; l.download = nombreArchivo(actual); l.click();
       setTimeout(() => URL.revokeObjectURL(u), 4000);
     } catch (e) { toast('No se pudo generar la imagen', true); }
     btn.disabled = false;
@@ -593,17 +568,80 @@
 
   async function copiar(btn) {
     if (!actual) return;
-    const txt = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Generando…';
+    const txt = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = 'Generando…';
     try {
       const c = await tarjeta(actual);
       if (!navigator.clipboard || !window.ClipboardItem) throw new Error('sin-portapapeles');
-      // Safari pide la promesa dentro del ClipboardItem
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': aBlob(c) })]);
       toast('Imagen copiada. Pegala en WhatsApp con Ctrl+V');
     } catch (e) {
-      if (String(e && e.name) === 'SecurityError' || /tainted|insecure/i.test(String(e))) toast('La foto de la tienda no se pudo copiar. Probá con Descargar.', true);
-      else { toast('Tu navegador no deja copiar imágenes aquí. Se descargó el archivo.', true); try { const c = await tarjeta(actual); const blob = await aBlob(c); const u = URL.createObjectURL(blob); const l = document.createElement('a'); l.href = u; l.download = nombreArchivo(actual); l.click(); } catch (_) {} }
+      if (String(e && e.name) === 'SecurityError' || /tainted|insecure/i.test(String(e))) {
+        toast('La foto de la tienda no se pudo copiar. Probá con Descargar.', true);
+      } else {
+        toast('Tu navegador no deja copiar imágenes aquí. Se descargó el archivo.', true);
+        try {
+          const c = await tarjeta(actual);
+          const blob = await aBlob(c);
+          const u = URL.createObjectURL(blob);
+          const l = document.createElement('a');
+          l.href = u; l.download = nombreArchivo(actual); l.click();
+        } catch (_) {}
+      }
     }
     btn.disabled = false; btn.innerHTML = txt;
   }
+
+  // ══════════ Tarjetas múltiples numeradas ══════════
+  window.generarTarjetasMultiples = async function (articulos) {
+    if (!articulos || !articulos.length) throw new Error('No hay artículos');
+
+    const CARD_W = 520;
+    const CARD_H = 780;
+    const GAP = 28;
+    const MARGIN = 40;
+    const COLS = 2;
+    const rows = Math.ceil(articulos.length / COLS);
+
+    const W = MARGIN * 2 + COLS * CARD_W + (COLS - 1) * GAP;
+    const H = MARGIN * 2 + rows * CARD_H + (rows - 1) * GAP + 60;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `800 28px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`Tarjetas de cliente  ·  ${articulos.length} artículo${articulos.length > 1 ? 's' : ''}`, MARGIN, 38);
+
+    for (let i = 0; i < articulos.length; i++) {
+      const a = articulos[i];
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = MARGIN + col * (CARD_W + GAP);
+      const y = 70 + row * (CARD_H + GAP);
+
+      const full = await tarjeta(a);
+      ctx.drawImage(full, x, y, CARD_W, CARD_H);
+
+      // Número
+      ctx.fillStyle = '#E8327A';
+      ctx.beginPath();
+      ctx.arc(x + 28, y + 28, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `800 20px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), x + 28, y + 28);
+    }
+
+    return canvas;
+  };
+
 })();

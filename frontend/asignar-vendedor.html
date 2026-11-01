@@ -165,7 +165,18 @@
         <div class="layout">
             <div class="vend-panel">
                 <div class="vend-head">Vendedores</div>
-                <div class="vend-lista" id="vendedores"><div class="vacio" style="padding:20px">Cargando…</div></div>
+                <div class="vend-lista" id="vendedores">
+                    <div class="vacio" style="padding:20px">Cargando…</div>
+                </div>
+
+                <!-- Botón Generar tarjetas -->
+                <div style="padding:12px 14px; border-top:1px solid #1e2530;">
+                    <button class="btn btn-ghost" id="btn-tarjetas" onclick="generarTarjetas()" 
+                            style="width:100%; justify-content:center;" 
+                            title="Genera un PNG con todas las tarjetas numeradas de los artículos seleccionados">
+                        Generar tarjetas
+                    </button>
+                </div>
             </div>
 
             <div>
@@ -334,6 +345,66 @@
         else toast('err', `${ok} de ${ids.length} · error: ${primerError}`);
         marcados.clear();
         await cargar();
+    }
+
+    // ========== GENERAR TARJETAS ==========
+    async function generarTarjetas() {
+        const ids = [...marcados];
+        
+        if (!ids.length) {
+            toast('err', 'Marca al menos un artículo primero');
+            return;
+        }
+
+        if (typeof window.generarTarjetasMultiples !== 'function') {
+            toast('err', 'No se cargó la función de tarjetas. Recarga la página con Ctrl+F5');
+            return;
+        }
+
+        const articulos = ids
+            .map(id => datos.find(x => x.IdDetallePedido === id))
+            .filter(Boolean);
+
+        if (!articulos.length) {
+            toast('err', 'No se encontraron los artículos seleccionados');
+            return;
+        }
+
+        const btn = document.getElementById('btn-tarjetas');
+        const txtOriginal = btn ? btn.innerHTML : 'Generar tarjetas';
+        
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = 'Generando…';
+        }
+
+        try {
+            console.log('Generando tarjetas para', articulos.length, 'artículos...');
+            
+            const canvas = await window.generarTarjetasMultiples(articulos);
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tarjetas-cliente-${articulos.length}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            
+            toast('ok', `¡Listo! Se generaron ${articulos.length} tarjetas`);
+        } catch (e) {
+            console.error('Error generando tarjetas:', e);
+            toast('err', 'Error: ' + (e.message || e));
+        }
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = txtOriginal;
+        }
     }
 
     function verFoto(src) { document.getElementById('zoom-img').src = src; document.getElementById('zoom').style.display = 'flex'; }
