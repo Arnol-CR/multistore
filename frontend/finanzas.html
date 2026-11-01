@@ -376,7 +376,7 @@
                 </table>
                 <div class="card-cuerpo" style="padding-top:4px">
                     ${sin.length ? `<div class="nota"><b>${pl(sin.length, 'artículo del período todavía sin precio de venta.', 'artículos del período todavía sin precio de venta.')}</b> Su costo (${L(costoSin)}) no entra en este cálculo hasta que tengan precio.</div>` : ''}
-                    <div class="nota">Los pagos a cuentas por pagar y los puntos todavía <b>no se restan</b>. Están en la pestaña Gastos para que definamos cómo tratarlos.</div>
+                    <div class="nota">Este resumen usa envío estimado cuando todavía no hay orden de entrega y no resta los puntos. El cálculo completo, con puntos, gastos por tienda y lo que gana cada persona, está en la pestaña <b>Reparto</b>. Los pagos a socios y vendedores no son gasto.</div>
                 </div>
             </div>
             <div class="card">
@@ -516,7 +516,7 @@
         <div class="kpis">
             <div class="kpi"><div class="kpi-tit">Combustible</div><div class="kpi-val">${L0(sum(comb, 'Monto'))}</div><div class="kpi-pie">${pl(comb.length, 'registro', 'registros')} · ${comb.filter(c => !num(c.Monto)).length} sin monto</div></div>
             <div class="kpi"><div class="kpi-tit">Otros gastos</div><div class="kpi-val">${L0(sum(otros, 'Monto'))}</div><div class="kpi-pie">${pl(otros.length, 'registro', 'registros')} · se restan en Reparto</div></div>
-            <div class="kpi"><div class="kpi-tit">Cuentas por pagar</div><div class="kpi-val">${L0(sum(trans, 'Valor'))}</div><div class="kpi-pie">${pl(trans.length, 'pago', 'pagos')} · no se restan todavía</div></div>
+            <div class="kpi"><div class="kpi-tit">Pagos a personas</div><div class="kpi-val">${L0(sum(trans, 'Valor'))}</div><div class="kpi-pie">${pl(trans.length, 'pago', 'pagos')} · comisiones y dividendos</div></div>
             <div class="kpi"><div class="kpi-tit">Puntos</div><div class="kpi-val">$${sum(conPuntos, 'ValorPunto').toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div><div class="kpi-pie">${pl(conPuntos.length, 'pedido con puntos', 'pedidos con puntos')}</div></div>
         </div>
 
@@ -571,7 +571,7 @@
         </div>
 
         <div class="card">
-            <div class="card-cab"><div><div class="card-tit">Pagos a cuentas por pagar</div><div class="card-sub">Todavía no se restan de la utilidad</div></div></div>
+            <div class="card-cab"><div><div class="card-tit">Pagos a socios y vendedores</div><div class="card-sub">Comisiones, dividendos y demás pagos (cuentas por pagar). No son gasto: se registran desde la pestaña Reparto.</div></div></div>
             ${gTrans.length ? `<table><tbody>${gTrans.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(trans, 'Valor'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin pagos en el período</div>'}
         </div>`;
         if (edComb) document.getElementById('c-monto').focus();
@@ -646,14 +646,16 @@
     function pReparto() {
         const ptsL = puntosPorLinea(), GAS = gastosPorLinea();
         const nombres = new Map();
+        (D.vendedores || []).forEach(v => nombres.set(v.IdVendedor, v.Nombre));
         LIN.forEach(l => l.IdVendedor && nombres.set(l.IdVendedor, l.Vendedor));
         D.capital.forEach(c => c.IdVendedor && nombres.set(c.IdVendedor, c.Socio));
         D.combustible.forEach(c => c.IdVendedor && nombres.set(c.IdVendedor, c.Vendedor));
         const idDaniela = [...nombres.entries()].find(([, n]) => DUENA_PUNTOS.test(n || '') && DUENA_PUNTOS2.test(n || ''));
+        const kId = id => 'v' + id, nom = id => nombres.get(id) || 'Vendedor ' + id;
+        const calc = filtro => {
         const P = new Map();
         const per = (k, nombre) => { if (!P.has(k)) P.set(k, { k, nombre, com: 0, div: 0, pts: 0, comb: 0, n: 0 }); return P.get(k); };
-        const kId = id => 'v' + id, nom = id => nombres.get(id) || 'Vendedor ' + id;
-        const per1 = LIN.filter(l => enPeriodo(l.Fecha) && l.Venta > 0);
+        const per1 = LIN.filter(l => filtro(l.Fecha) && l.Venta > 0);
         const listas = per1.filter(l => l.envioReal), pend = per1.filter(l => !l.envioReal);
         let ptsNoRep = 0, divSinSocio = 0;
         const filas = listas.map(l => {
@@ -674,8 +676,18 @@
             if (l.comb) { const c = l.combDe; (c && c.IdVendedor ? per(kId(c.IdVendedor), nom(c.IdVendedor)) : per('comb', 'Combustible sin persona')).comb += l.comb; }
             return { l, pts, gas, costo, util, m, t, com, div };
         });
-        repPersonas = [...P.values()].map(x => ({ ...x, tot: x.com + x.div + x.pts + x.comb })).sort((a, b) => b.tot - a.tot);
-        const T = repPersonas.reduce((a, x) => { a.com += x.com; a.div += x.div; a.pts += x.pts; a.comb += x.comb; a.tot += x.tot; return a; }, { com: 0, div: 0, pts: 0, comb: 0, tot: 0 });
+        return { P, filas, pend, ptsNoRep, divSinSocio };
+        };
+        const { P, filas, pend, ptsNoRep, divSinSocio } = calc(enPeriodo), H = calc(() => true).P;
+        // Pagos (cuentas por pagar) por persona: en el período y en todo el historial
+        const pagPer = new Map(), pagHist = new Map();
+        D.transacciones.forEach(t => { if (!t.IdVendedor) return; const k = kId(t.IdVendedor); pagHist.set(k, (pagHist.get(k) || 0) + num(t.Valor)); if (enPeriodo(t.Fecha)) pagPer.set(k, (pagPer.get(k) || 0) + num(t.Valor)); });
+        const totDe = x => x ? x.com + x.div + x.pts + x.comb : 0;
+        const claves = new Set([...P.keys(), ...pagPer.keys()]);
+        repPersonas = [...claves].map(k => { const x = P.get(k) || { k, nombre: nom(+k.slice(1)), com: 0, div: 0, pts: 0, comb: 0, n: 0 };
+            return { ...x, id: /^v\d+$/.test(k) ? +k.slice(1) : null, tot: totDe(x), pagado: pagPer.get(k) || 0, pendiente: totDe(H.get(k)) - (pagHist.get(k) || 0) }; })
+            .sort((a, b) => b.tot - a.tot);
+        const T = repPersonas.reduce((a, x) => { a.com += x.com; a.div += x.div; a.pts += x.pts; a.comb += x.comb; a.tot += x.tot; a.pag += x.pagado; a.pen += x.pendiente; return a; }, { com: 0, div: 0, pts: 0, comb: 0, tot: 0, pag: 0, pen: 0 });
         const utilTot = filas.reduce((a, f) => a + f.util, 0);
         const hasta = document.getElementById('hasta').value || hoy();
         const socios = participacion(hasta);
@@ -691,10 +703,11 @@
         ${(() => { const a = document.getElementById('desde').value.slice(0, 4), b = (document.getElementById('hasta').value || hoy()).slice(0, 4); const sa = GAS.sinAsignar.filter(g => g.Fecha.slice(0, 4) >= a && g.Fecha.slice(0, 4) <= b); return `<div class="nota">Los otros gastos se reparten entre las ventas de su mismo año y de su tienda (TODOS = todas). Del año en curso cambian a medida que se vende más.${sa.length ? ` <b>${pl(sa.length, 'gasto no tiene', 'gastos no tienen')} ventas de su tienda en ese año</b> (${L(sa.reduce((x, g) => x + num(g.Monto), 0))}) y no se restaron.` : ''}</div>`; })()}
         ${ptsNoRep > 0.004 || divSinSocio ? `<div class="nota">${ptsNoRep > 0.004 ? `Puntos sin repartir por falta de rentabilidad: <b>${L(ptsNoRep)}</b>. ` : ''}${divSinSocio ? `Dividendo sin socios registrados a esa fecha: <b>${L(divSinSocio)}</b>.` : ''}</div>` : ''}
         <div class="card">
-            <div class="card-cab"><div><div class="card-tit">Cuánto gana cada persona</div><div class="card-sub">Comisión como vendedor, dividendo como socio, puntos y combustible del período</div></div><button class="btn" onclick="exportarReparto()">Exportar CSV</button></div>
-            <div class="tabla-wrap">${repPersonas.length ? `<table><thead><tr><th>Persona</th><th class="num">Comisión vendedor</th><th class="num">Dividendo socio</th><th class="num">Puntos</th><th class="num">Combustible</th><th class="num">Total</th></tr></thead><tbody>
-            ${repPersonas.map(x => `<tr><td><b style="color:#fff">${esc(x.nombre)}</b>${x.n ? `<div class="meta">${pl(x.n, 'artículo vendido', 'artículos vendidos')}</div>` : ''}</td>${td(x.com)}${td(x.div)}${td(x.pts)}${td(x.comb)}<td class="num ${clsU(x.tot)}" style="font-weight:800">${L(x.tot)}</td></tr>`).join('')}
-            </tbody><tfoot><tr><td>Total</td><td class="num">${L(T.com)}</td><td class="num">${L(T.div)}</td><td class="num">${L(T.pts)}</td><td class="num">${L(T.comb)}</td><td class="num">${L(T.tot)}</td></tr></tfoot></table>` : '<div class="vacio">No hay artículos con precio y envío real en el período</div>'}</div>
+            <div class="card-cab"><div><div class="card-tit">Cuánto gana cada persona</div><div class="card-sub">Ganado en el período, lo pagado en el período y lo pendiente de todo el historial</div></div><button class="btn" onclick="exportarReparto()">Exportar CSV</button></div>
+            ${edPago ? formPago() : ''}
+            <div class="tabla-wrap">${repPersonas.length ? `<table><thead><tr><th>Persona</th><th class="num">Comisión vendedor</th><th class="num">Dividendo socio</th><th class="num">Puntos</th><th class="num">Combustible</th><th class="num">Total ganado</th><th class="num">Pagado</th><th class="num">Pendiente</th><th></th></tr></thead><tbody>
+            ${repPersonas.map(x => `<tr><td><b style="color:#fff">${esc(x.nombre)}</b>${x.n ? `<div class="meta">${pl(x.n, 'artículo vendido', 'artículos vendidos')}</div>` : ''}</td>${td(x.com)}${td(x.div)}${td(x.pts)}${td(x.comb)}<td class="num ${clsU(x.tot)}" style="font-weight:800">${L(x.tot)}</td>${td(x.pagado)}<td class="num ${x.pendiente > 0.004 ? 'amb' : ''}" style="font-weight:700">${Math.abs(x.pendiente) < 0.005 ? '<span style="color:var(--mudo)">—</span>' : L(x.pendiente)}</td><td>${x.id ? `<button class="btn mini" onclick="abrirPago(${x.id}, ${Math.max(0, x.pendiente).toFixed(2)})">Pagar</button>` : ''}</td></tr>`).join('')}
+            </tbody><tfoot><tr><td>Total</td><td class="num">${L(T.com)}</td><td class="num">${L(T.div)}</td><td class="num">${L(T.pts)}</td><td class="num">${L(T.comb)}</td><td class="num">${L(T.tot)}</td><td class="num">${L(T.pag)}</td><td class="num">${L(T.pen)}</td><td></td></tr></tfoot></table>` : '<div class="vacio">No hay artículos con precio y envío real en el período</div>'}</div>
         </div>
         <div class="grid2">
             <div class="card">
@@ -715,8 +728,38 @@
             </tbody></table>` : '<div class="vacio">Sin artículos</div>'}</div>
         </div>`;
     }
+    let edPago = null;
+    function abrirPago(id, pendiente) { edPago = { id, monto: pendiente }; pReparto(); const el = document.getElementById('pg-monto'); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); } }
+    function formPago() {
+        const x = edPago;
+        const cxp = D.cxp || [], com = cxp.find(c => /comisi/i.test(c.NombreCuenta));
+        return `<div class="form" id="f-pago">
+            <label>Fecha<input class="inp" type="date" id="pg-fecha" value="${hoy()}"></label>
+            <label>Persona<select class="inp" id="pg-vend">${opts(D.vendedores, 'IdVendedor', v => v.Nombre, x.id, 'Elegí la persona')}</select></label>
+            <label>Concepto<select class="inp" id="pg-cxp">${opts(cxp, 'IdCuentasPorPagar', c => c.NombreCuenta, com && com.IdCuentasPorPagar, 'Elegí el concepto')}</select></label>
+            <label>Monto (L)<input class="inp" type="number" min="0" step="0.01" id="pg-monto" value="${x.monto || ''}"></label>
+            <label>Forma<select class="inp" id="pg-forma" onchange="document.getElementById('pg-cli-w').hidden = this.value !== 'abono'"><option value="cuenta">Pago desde cuenta</option><option value="abono">Abono a un cliente</option></select></label>
+            <label>Cuenta<select class="inp" id="pg-cuenta">${opts(D.cuentas, 'IdCuentaBanco', nomCuenta, null, 'Elegí la cuenta')}</select></label>
+            <label id="pg-cli-w" hidden>Cliente<input class="inp" id="pg-cli" list="dl-clientes-pago" placeholder="Buscar cliente…"></label>
+            <label>Nota<input class="inp" id="pg-obs"></label>
+            <div class="acciones"><button class="btn ok" onclick="guardarPago()">Registrar pago</button><button class="btn" onclick="edPago = null; pReparto()">Cancelar</button></div>
+            <datalist id="dl-clientes-pago">${(D.clientes || []).map(c => `<option value="${esc(c.Nombre + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : ''))}">`).join('')}</datalist>
+        </div>`;
+    }
+    async function guardarPago() {
+        const v = id => document.getElementById(id).value;
+        let idCliente = null;
+        if (v('pg-forma') === 'abono') {
+            const t = nT(v('pg-cli').replace(/\s*\([^)]*\)$/, '')), c = (D.clientes || []).find(c => nT(c.Nombre) === t);
+            if (!c) { aviso('Elegí el cliente de la lista', true); return; }
+            idCliente = c.IdCliente;
+        }
+        const cuerpo = { fecha: v('pg-fecha'), idVendedor: v('pg-vend'), idCxp: v('pg-cxp'), monto: v('pg-monto'), idCuenta: v('pg-cuenta'), idCliente, observaciones: v('pg-obs') };
+        try { await enviar('/api/finanzas/pago', 'POST', cuerpo); aviso(idCliente ? 'Pago registrado como abono al cliente' : 'Pago registrado'); edPago = null; await recargar(); }
+        catch (e) { aviso('No se pudo registrar: ' + e.message, true); }
+    }
     function exportarReparto() {
-        const filas = [['Persona', 'Comision vendedor', 'Dividendo socio', 'Puntos', 'Combustible', 'Total']].concat(repPersonas.map(x => [x.nombre, x.com.toFixed(2), x.div.toFixed(2), x.pts.toFixed(2), x.comb.toFixed(2), x.tot.toFixed(2)]));
+        const filas = [['Persona', 'Comision vendedor', 'Dividendo socio', 'Puntos', 'Combustible', 'Total ganado', 'Pagado', 'Pendiente']].concat(repPersonas.map(x => [x.nombre, x.com.toFixed(2), x.div.toFixed(2), x.pts.toFixed(2), x.comb.toFixed(2), x.tot.toFixed(2), x.pagado.toFixed(2), x.pendiente.toFixed(2)]));
         const csv = '\ufeff' + filas.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
         a.download = `reparto_${document.getElementById('desde').value}_${document.getElementById('hasta').value}.csv`; a.click();

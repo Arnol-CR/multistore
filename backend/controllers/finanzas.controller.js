@@ -50,7 +50,7 @@ const CONSULTAS = {
            OG.Empresa, OG.Referencia, OG.IdCuentaBancaria, CB.NombreCuenta AS Cuenta
     FROM A_OtrosGastos OG LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = OG.IdCuentaBancaria`,
   transacciones: `
-    SELECT T.IdTransaccion, ${F('T.Fecha')} AS Fecha, ISNULL(T.Valor, 0) AS Valor, T.Observaciones,
+    SELECT T.IdTransaccion, ${F('T.Fecha')} AS Fecha, ISNULL(T.Valor, 0) AS Valor, T.Observaciones, T.IdVendedor, T.IdCuentaPorPagar,
            CP.NombreCuenta AS CuentaPorPagar, CB.NombreCuenta AS Cuenta, ${nombre('V.Nombres', 'V.Apellidos')} AS Vendedor
     FROM A_Transacciones T
     LEFT JOIN A_CuentasPorPagar CP ON CP.IdCuentasPorPagar = T.IdCuentaPorPagar
@@ -76,7 +76,9 @@ const CONSULTAS = {
     LEFT JOIN (SELECT IdPedido, SUM(TotalCompra) AS TotalCompra, COUNT(*) AS Lineas FROM C_DetallePedido GROUP BY IdPedido) T ON T.IdPedido = P.IdPedido`,
   vendedores: `SELECT IdVendedor, ${nombre('Nombres', 'Apellidos')} AS Nombre FROM A_Vendedores ORDER BY Nombres`,
   cuentas: `SELECT IdCuentaBanco, NombreCuenta, Banco FROM A_CuentaBanco ORDER BY NombreCuenta`,
-  metodos: `SELECT IdMetodoPago, Metodo FROM A_MetodosPagos ORDER BY Metodo`
+  metodos: `SELECT IdMetodoPago, Metodo FROM A_MetodosPagos ORDER BY Metodo`,
+  cxp: `SELECT IdCuentasPorPagar, NombreCuenta FROM A_CuentasPorPagar ORDER BY NombreCuenta`,
+  clientes: `SELECT IdCliente, ${nombre('Nombre', 'Apellido')} AS Nombre, CodigoCliente FROM C_Clientes ORDER BY Nombre`
 };
 
 async function getDatos(req, res) {
@@ -196,4 +198,41 @@ async function guardarCapital(req, res) {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 }
 
-module.exports = { getDatos, getBancos, crearGasto, editarGasto, editarCombustible, editarPuntos, guardarCapital };
+// Pago a un socio o vendedor (comisión, dividendo, puntos, combustible) en A_Transacciones.
+// Si es "abono a cliente", además se registra el pago en la cuenta de ese cliente con la misma
+// cuenta bancaria: el banco queda igual (sale y entra) y el saldo del cliente baja.
+async function registrarPago(req, res) {
+  const pool = await poolPromise;
+  const tx = new sql.Transaction(pool);
+  try {
+    const b = req.body || {}, monto = parseFloat(b.monto), idV = parseInt(b.idVendedor), idCxp = parseInt(b.idCxp), cuenta = parseInt(b.idCuenta);
+    const idCli = parseInt(b.idCliente) || null;
+    if (!fecha(b.fecha) || !(monto > 0) || !idV || !idCxp || !cuenta)
+      return res.status(400).json({ ok: false, error: 'Fecha, persona, concepto, monto y cuenta son obligatorios' });
+    await tx.begin();
+    const nom = (await new sql.Request(tx).input('V', sql.Int, idV).query(`SELECT LTRIM(RTRIM(CONCAT(Nombres, ' ', Apellidos))) AS N FROM A_Vendedores WHERE IdVendedor = @V`)).recordset[0];
+    if (!nom) throw new Error('No encontré a esa persona');
+    let obs = txt(b.observaciones) || '';
+    if (idCli) {
+      const cli = (await new sql.Request(tx).input('C', sql.Int, idCli).query(`SELECT LTRIM(RTRIM(CONCAT(Nombre, ' ', Apellido))) AS N FROM C_Clientes WHERE IdCliente = @C`)).recordset[0];
+      if (!cli) throw new Error('No encontré al cliente');
+      obs = (`Abono a cliente ${cli.N}` + (obs ? ' · ' + obs : '')).substring(0, 500);
+      await new sql.Request(tx).input('Fecha', sql.Date, b.fecha).input('Cli', sql.Int, idCli).input('Monto', sql.Decimal(18, 2), monto)
+        .input('Metodo', sql.Int, parseInt(b.idMetodo) || null).input('Obs', sql.NVarChar(sql.MAX), `Abono descontado a ${nom.N}` + (txt(b.observaciones) ? ' · ' + txt(b.observaciones) : ''))
+        .input('Ref', sql.NVarChar(sql.MAX), txt(b.referencia) || '').input('Cuenta', sql.Int, cuenta)
+        .query(`INSERT INTO C_MovimientoClientes (FechaMovimiento, IdCliente, IdMovimiento, Monto, IdMetodoPago, Observaciones, NumeroReferencia, IdCuentaBanco)
+                VALUES (@Fecha, @Cli, 3, @Monto, @Metodo, @Obs, @Ref, @Cuenta)`);
+    }
+    await new sql.Request(tx).input('Cxp', sql.Int, idCxp).input('Valor', sql.Decimal(18, 2), monto)
+      .input('Obs', sql.VarChar(500), (obs || '').substring(0, 500) || null).input('Cuenta', sql.Int, cuenta)
+      .input('Fecha', sql.Date, b.fecha).input('V', sql.Int, idV)
+      .execute('sp_InsertTransaccion');
+    await tx.commit();
+    res.json({ ok: true });
+  } catch (e) {
+    try { await tx.rollback(); } catch (_) {}
+    res.status(500).json({ ok: false, error: e.message });
+  }
+}
+
+module.exports = { registrarPago, getDatos, getBancos, crearGasto, editarGasto, editarCombustible, editarPuntos, guardarCapital };
