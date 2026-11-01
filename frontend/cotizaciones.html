@@ -131,9 +131,17 @@
         .card-t { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1.5px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
         .add { display:flex; gap:8px; flex-wrap:wrap; }
         .add .inp { flex:1; min-width:240px; }
+        .add-main { display:flex; gap:8px; }
+        .add-in { flex:1; display:flex; align-items:center; gap:8px; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:0 12px; color:#4b5563; }
+        .add-in:focus-within { border-color:#3b82f6; background:#0c1525; color:#60a5fa; }
+        .add-in input { flex:1; background:none; border:none; outline:none; color:#e2e8f0; font-size:13px; padding:11px 0; font-family:inherit; min-width:0; }
+        .add-in input::placeholder { color:#374151; }
+        .add-alt { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px dashed #1e2530; }
+        .add-o { font-size:11px; color:#4b5563; }
+        .add-bm { margin-left:auto; display:flex; align-items:center; gap:8px; font-size:11px; color:#4b5563; }
         .hint { font-size:11px; color:#4b5563; margin-top:10px; line-height:1.7; }
         .bm { display:inline-flex; align-items:center; gap:6px; background:#1d4ed8; color:#fff; padding:3px 10px; border-radius:6px; font-weight:700; text-decoration:none; font-size:11px; cursor:grab; }
-        .lin { display:grid; grid-template-columns:70px 1fr 92px 64px 92px 110px 30px; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #111827; }
+        .lin { display:grid; grid-template-columns:22px 70px 1fr 92px 64px 92px 110px 30px; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #111827; }
         .lin:last-child { border-bottom:none; }
         .lin-h { font-size:10px; color:#374151; text-transform:uppercase; letter-spacing:1px; font-weight:700; padding:0 0 6px; border-bottom:1px solid #111827; }
         .fbox { width:70px; height:70px; border:2px dashed #1e2530; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; position:relative; font-size:10px; color:#374151; text-align:center; outline:none; background:#0a0e18; }
@@ -146,10 +154,24 @@
         .sub-in > input { flex:1; min-width:0; }
         .panel .inp, .panel select { width:100%; min-width:0; }
         .row2 > * { min-width:0; }
+        .art-in { margin-top:5px; display:flex; gap:6px; align-items:center; }
+        .art-in input { flex:1; min-width:0; }
+        .art-in.falta input { border-color:#b91c1c; background:#1f0707; }
+        .btn-nuevo { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:transparent; border:1px solid #14532d; color:#4ade80; border-radius:6px; padding:5px 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-nuevo:hover { background:#052e16; }
+        .art-tag { font-size:10px; color:#6b7280; white-space:nowrap; }
+        .fuente { font-size:10px; color:#4b5563; margin-top:3px; }
         .lnk { font-size:10.5px; color:#60a5fa; text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; display:block; margin-top:4px; }
         .final { text-align:right; font-weight:800; color:#4ade80; font-size:15px; }
         .final small { display:block; font-size:10px; color:#4b5563; font-weight:600; }
         .del { background:none; border:1px solid transparent; color:#4b5563; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:14px; }
+        .sel-l { width:16px; height:16px; accent-color:#8b5cf6; cursor:pointer; }
+        .lin.marcada { background:linear-gradient(90deg, rgba(139,92,246,.08), transparent); }
+        .lin.en-pedido { opacity:.6; }
+        .pill-ped { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:#c084fc; background:#1f1025; border:1px solid #3b1f5e; border-radius:99px; padding:2px 8px; margin-top:5px; }
+        .sel-bar { display:none; align-items:center; gap:10px; padding:8px 12px; margin-bottom:8px; background:#160d24; border:1px solid #3b1f5e; border-radius:8px; font-size:12px; color:#d8b4fe; }
+        .sel-bar.on { display:flex; }
+        .e-Parcial { background:#2d1f0a; color:#fbbf24; }
         .del:hover { color:#f87171; border-color:#7f1d1d; background:#1f0707; }
         .panel { position:sticky; top:0; }
         .fg { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
@@ -182,36 +204,69 @@
         .modal-f { padding:14px 20px; border-top:1px solid #1e2530; display:flex; justify-content:flex-end; gap:8px; }
         .x { background:none; border:none; color:#4b5563; font-size:22px; cursor:pointer; }
 
-        /* ── Documento para el cliente (PDF / imagen) ── */
+        /* ── Documento para el cliente (PDF / imagen) — factura clásica ShopAholic ── */
         #doc-wrap { position:fixed; left:-10000px; top:0; }
-        #doc { width:760px; background:#fff; color:#111827; font-family:'Segoe UI',Arial,sans-serif; padding:34px 38px; }
-        #doc .d-head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #1d4ed8; padding-bottom:14px; margin-bottom:18px; }
-        #doc .d-logo { display:flex; align-items:center; gap:10px; font-size:24px; font-weight:900; color:#0f172a; }
-        #doc .d-logo span { color:#1d4ed8; }
-        #doc .d-logo img { width:46px; height:46px; object-fit:contain; }
-        #doc .d-num { text-align:right; font-size:12px; color:#475569; }
-        #doc .d-num b { display:block; font-size:18px; color:#0f172a; }
-        #doc .d-cli { font-size:13px; color:#334155; margin-bottom:14px; }
-        #doc table { width:100%; border-collapse:collapse; font-size:12.5px; }
-        #doc th { background:#eff6ff; color:#1e3a8a; text-align:left; padding:8px; font-size:10.5px; text-transform:uppercase; letter-spacing:.8px; border:none; }
-        #doc td { padding:8px; border-bottom:1px solid #e2e8f0; color:#0f172a; vertical-align:middle; }
-        #doc td img { width:54px; height:54px; object-fit:cover; border-radius:6px; display:block; }
+        #doc { --rosa:#E8327A; --nar:#EF7A30; --tinta:#1f2937; --gris:#6b7280; --linea:#e5e7eb;
+               width:800px; background:#fff; color:var(--tinta); font-family:Arial,'Segoe UI',Helvetica,sans-serif; padding:40px 48px 30px; font-size:12px; line-height:1.45;
+               -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        #doc * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        #doc td, #doc th, #doc div, #doc span, #doc li { color:inherit; }
+        #doc .h { display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:3px solid var(--rosa); }
+        #doc .h img { height:74px; display:block; }
+        #doc .tit { text-align:right; }
+        #doc .tit .k { font-size:26px; font-weight:700; letter-spacing:3px; color:var(--rosa); line-height:1; }
+        #doc .tit .num { font-size:13px; font-weight:700; margin-top:8px; color:var(--tinta); }
+        #doc .tit .f { font-size:12px; color:var(--gris); margin-top:2px; }
+        #doc .datos { display:grid; grid-template-columns:1.25fr 1fr; gap:18px; margin:20px 0 6px; }
+        #doc .cli { background:#fdf2f7; border-left:4px solid var(--rosa); border-radius:0 8px 8px 0; padding:12px 16px; }
+        #doc .k2 { font-size:9.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--rosa); margin-bottom:4px; }
+        #doc .cli .nom { font-size:16px; font-weight:700; color:var(--tinta); }
+        #doc .cli .sub { font-size:12px; color:var(--gris); margin-top:3px; }
+        #doc .cli .sub b { color:var(--tinta); font-weight:600; }
+        #doc .ent { border:1px solid var(--linea); border-radius:8px; padding:12px 16px; }
+        #doc .ent .k2 { color:var(--nar); }
+        #doc .ent .rango { font-size:14px; font-weight:700; color:var(--tinta); }
+        #doc .ent .sub { font-size:11.5px; color:var(--gris); margin-top:3px; }
+        #doc .items { width:100%; border-collapse:collapse; margin-top:18px; }
+        #doc .items thead { display:table-header-group; }
+        #doc .items th { text-align:left; font-size:9.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--tinta); padding:8px 6px; border-bottom:2px solid var(--tinta); background:#fff; }
+        #doc .items tr { page-break-inside:avoid; break-inside:avoid; }
+        #doc .items td { padding:8px 6px; border-bottom:1px solid var(--linea); vertical-align:middle; color:var(--tinta); background:#fff; }
+        #doc .items td.n { color:var(--gris); width:24px; text-align:center; font-weight:700; }
+        #doc .items td img { width:42px; height:42px; object-fit:cover; border-radius:6px; border:1px solid var(--linea); display:block; }
+        #doc .p-nom { font-weight:600; color:var(--tinta); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        #doc .p-var { font-size:11px; color:var(--gris); margin-top:2px; }
         #doc .r { text-align:right; white-space:nowrap; }
-        #doc .d-tot { margin-top:16px; display:flex; justify-content:flex-end; }
-        #doc .d-tot div { background:#1d4ed8; color:#fff; border-radius:10px; padding:12px 20px; font-size:13px; text-align:right; }
-        #doc .d-tot b { display:block; font-size:24px; }
-        #doc .d-notas { margin-top:18px; font-size:11.5px; color:#475569; white-space:pre-wrap; border-top:1px dashed #cbd5e1; padding-top:12px; }
+        #doc .c { text-align:center; }
+        #doc .pie { display:grid; grid-template-columns:1fr 280px; gap:28px; margin-top:16px; align-items:start; page-break-inside:avoid; break-inside:avoid; }
+        #doc .cond { font-size:10.5px; color:var(--gris); }
+        #doc .cond .k2 { color:var(--tinta); }
+        #doc .cond ol { margin:0; padding-left:16px; }
+        #doc .cond li { margin-bottom:2px; }
+        #doc .total { border-top:2px solid var(--tinta); border-bottom:2px solid var(--tinta); padding:10px 4px; display:flex; justify-content:space-between; align-items:baseline; }
+        #doc .total .k { font-size:13px; font-weight:700; letter-spacing:1px; color:var(--tinta); }
+        #doc .total .k small { display:block; font-size:10.5px; font-weight:400; letter-spacing:0; color:var(--gris); }
+        #doc .total .v { font-size:22px; font-weight:800; color:var(--rosa); }
+        #doc .notas { margin-top:14px; font-size:11px; color:var(--tinta); background:#fff7ed; border-left:3px solid var(--nar); padding:6px 10px; white-space:pre-wrap; }
+        #doc .firma { display:flex; justify-content:space-between; align-items:flex-end; margin-top:32px; font-size:11px; color:var(--gris); }
+        #doc .firma b { color:var(--tinta); }
+        #doc .firma .linea { width:220px; border-top:1px solid #9ca3af; padding-top:4px; text-align:center; color:var(--tinta); }
+        #doc .gracias { text-align:center; margin-top:20px; padding-top:10px; border-top:1px solid var(--linea); font-size:11px; color:var(--rosa); font-weight:600; letter-spacing:.3px; }
         @media print {
             body > *:not(#doc-wrap) { display:none !important; }
             #doc-wrap { position:static !important; }
-            #doc { width:auto; padding:0; }
-            @page { margin:14mm; }
+            #doc { width:auto; padding:4px 10px 0; }
+            #doc .h img { height:60px; }
+            #doc .items td { padding:6px; }
+            #doc .items td img { width:36px; height:36px; }
+            #doc .firma { margin-top:24px; }
+            @page { size:letter portrait; margin:8mm; }
         }
         @media (max-width:1100px) { .cot { grid-template-columns:1fr; } .panel { position:static; } }
         @media (max-width:700px) {
-            .lin { grid-template-columns:64px 1fr 30px; }
+            .lin { grid-template-columns:22px 64px 1fr 30px; }
             .lin-h { display:none; }
-            .lin > .c-pre, .lin > .c-can, .lin > .c-pes, .lin > .c-fin { grid-column:2 / 3; }
+            .lin > .c-pre, .lin > .c-can, .lin > .c-pes, .lin > .c-fin { grid-column:3 / 4; }
             .fbox { width:64px; height:64px; }
         }
     </style>
@@ -232,8 +287,8 @@
         </div>
     </div>
     <div class="tabs">
-        <button class="tab on" id="t-cot" onclick="verTab('cot')">📝 Cotizar</button>
-        <button class="tab" id="t-his" onclick="verTab('his')">📚 Historial <span id="his-n" style="color:#4b5563"></span></button>
+        <button class="tab on" id="t-cot" onclick="verTab('cot')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg> Cotizar</button>
+        <button class="tab" id="t-his" onclick="verTab('his')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg> Historial <span id="his-n" style="color:#4b5563"></span></button>
     </div>
 
     <div class="content">
@@ -244,22 +299,24 @@
                 <div>
                     <div class="card">
                         <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#3b82f6"></span>Agregar productos</div>
-                        <div class="add">
-                            <input class="inp" id="in-link" placeholder="🔗 Pega el link del producto (SHEIN, Amazon…) y Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarLink();}">
-                            <button class="btn btn-blue" onclick="agregarLink()">Agregar link</button>
-                            <button class="btn btn-ghost" onclick="pegarMarcador()" title="Pega lo que copió el marcador 📦">📦 Pegar del marcador</button>
-                            <button class="btn btn-ghost" onclick="nuevaLinea({})">＋ Manual</button>
+                        <div class="add-main">
+                            <div class="add-in"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><input id="in-link" placeholder="Pega aquí el link del producto (SHEIN, Amazon…)" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarLink();}"></div>
+                            <button class="btn btn-blue" onclick="agregarLink()">Agregar</button>
                         </div>
-                        <div class="hint">
-                            📦 <b style="color:#9ca3af">Marcador:</b> abre el producto en la tienda y toca
-                            <a class="bm" id="bm" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de marcadores (solo una vez).')">📦 Tienda → MultiStore</a>
-                            (arrástralo a tus marcadores si no lo tienes) · trae nombre, precio, foto y peso.<br>
-                            🖼️ <b style="color:#9ca3af">Imagen:</b> copia la foto de un producto y pulsa <b>Ctrl+V</b> aquí: se crea una línea con esa foto.
+                        <div class="add-alt">
+                            <span class="add-o">o también</span>
+                            <button class="btn btn-ghost btn-sm" onclick="pegarMarcador()" title="Pega lo que copió el botón de marcadores"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg> Pegar del marcador</button>
+                            <button class="btn btn-ghost btn-sm" onclick="nuevaLinea({})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Producto manual</button>
+                            <div class="add-bm">
+                                <span>Botón para tus marcadores:</span>
+                                <a class="bm" id="bm" href="#" title="Arrástralo a la barra de marcadores (solo una vez)" onclick="event.preventDefault();alert('Arrástralo a tu barra de marcadores (solo una vez). Luego, en la tienda, tócalo en un producto, carrito o pedido.')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Tienda → MultiStore</a>
+                            </div>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="lin lin-h"><div></div><div>Producto</div><div style="text-align:right">Precio $</div><div style="text-align:right">Cant.</div><div style="text-align:right">Peso (lb)</div><div style="text-align:right">Precio cliente</div><div></div></div>
+                        <div class="sel-bar" id="sel-bar"><span id="sel-txt"></span><button class="btn btn-purple btn-sm" style="margin-left:auto" onclick="abrirConvertir()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg> Convertir seleccionados</button><button class="btn btn-ghost btn-sm" onclick="selTodas(false)">Quitar selección</button></div>
+                        <div class="lin lin-h"><div><input type="checkbox" class="sel-l" id="sel-todas" title="Seleccionar todos" onchange="selTodas(this.checked)"></div><div></div><div>Producto</div><div style="text-align:right">Precio $</div><div style="text-align:right">Cant.</div><div style="text-align:right">Peso (g)</div><div style="text-align:right">Precio cliente</div><div></div></div>
                         <div id="lineas"></div>
                     </div>
                 </div>
@@ -268,21 +325,24 @@
                     <div class="card">
                         <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#4ade80"></span>Cliente</div>
                         <div class="fg">
-                            <input class="inp" id="c-cli" list="dl-cli" placeholder="👤 Buscar cliente o escribir nombre" autocomplete="off" oninput="marcarCambio()">
+                            <input class="inp" id="c-cli" list="dl-cli" placeholder="Buscar cliente o escribir nombre" autocomplete="off" oninput="marcarCambio()" onchange="clienteElegido()">
                             <datalist id="dl-cli"></datalist>
                         </div>
-                        <div class="fg" style="margin-bottom:0"><input class="inp" id="c-tel" placeholder="📱 Teléfono (opcional)" oninput="marcarCambio()"></div>
+                        <div class="fg" style="margin-bottom:0"><input class="inp" id="c-tel" placeholder="Teléfono (opcional)" oninput="marcarCambio()"></div>
                     </div>
 
                     <div class="card">
                         <div class="card-t"><span style="width:7px;height:7px;border-radius:50%;background:#f59e0b"></span>Cálculo</div>
                         <div class="row2">
                             <div class="fg"><label class="fl">Casillero</label><select class="inp" id="c-cas" onchange="cambioCasillero()"><option value="">—</option></select></div>
-                            <div class="fg"><label class="fl">Tarifa $ / lb</label><input class="inp" id="c-tar" type="number" step="0.01" min="0" oninput="calcular()"></div>
+                            <div class="fg"><label class="fl">Tarifa L / lb</label><input class="inp" id="c-tar" type="number" step="0.01" min="0" oninput="$('c-tar-f').textContent='escrita a mano'; calcular()"><div class="fuente" id="c-tar-f"></div></div>
                         </div>
                         <div class="row2">
-                            <div class="fg"><label class="fl">Impuesto tienda %</label><input class="inp" id="c-imp" type="number" step="0.5" min="0" value="8" oninput="calcular()"></div>
-                            <div class="fg"><label class="fl">Tasa cambio (L)</label><input class="inp" id="c-tasa" type="number" step="0.01" min="0" oninput="calcular()"></div>
+                            <div class="fg"><label class="fl">Tienda</label><select class="inp" id="c-tienda" onchange="cambioTienda()"><option value="">—</option></select></div>
+                            <div class="fg"><label class="fl">Impuesto tienda %</label><input class="inp" id="c-imp" type="number" step="0.5" min="0" value="8" oninput="$('c-imp-f').textContent='escrito a mano'; calcular()"><div class="fuente" id="c-imp-f"></div></div>
+                        </div>
+                        <div class="row2">
+                            <div class="fg" style="grid-column:1/-1"><label class="fl">Tasa cambio (L)</label><input class="inp" id="c-tasa" type="number" step="0.01" min="0" oninput="calcular()"></div>
                         </div>
                         <div class="fg"><label class="fl">Rentabilidad %</label>
                             <div style="display:flex;gap:6px">
@@ -299,11 +359,11 @@
                         <div class="des" id="desglose"></div>
                         <div class="fg" style="margin:12px 0 0"><textarea class="inp" id="c-notas" rows="2" placeholder="Notas para el cliente (ej. válido por 3 días, tiempo de entrega…)" oninput="marcarCambio()"></textarea></div>
                         <div class="acc">
-                            <button class="btn btn-green" id="b-guardar" onclick="guardar()">💾 Guardar</button>
-                            <button class="btn btn-ghost" onclick="nueva()">＋ Nueva</button>
-                            <button class="btn btn-ghost" onclick="exportar('pdf')">🖨 PDF</button>
-                            <button class="btn btn-ghost" onclick="exportar('img')">🖼 Imagen</button>
-                            <button class="btn btn-purple" style="grid-column:1/-1" onclick="abrirConvertir()">🔁 Convertir en pedido</button>
+                            <button class="btn btn-green" id="b-guardar" onclick="guardar()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Guardar</button>
+                            <button class="btn btn-ghost" onclick="nueva()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nueva</button>
+                            <button class="btn btn-ghost" onclick="exportar('pdf')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> PDF</button>
+                            <button class="btn btn-ghost" onclick="exportar('img')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg> Imagen</button>
+                            <button class="btn btn-purple" style="grid-column:1/-1" onclick="abrirConvertir()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg> Convertir en pedido</button>
                         </div>
                     </div>
                 </div>
@@ -313,11 +373,11 @@
         <!-- ═════════ HISTORIAL ═════════ -->
         <div class="pane" id="p-his">
             <div class="toolbar">
-                <input class="inp" id="h-buscar" style="flex:1;min-width:220px" placeholder="🔍 Buscar por número o cliente…" oninput="renderHist()">
+                <input class="inp" id="h-buscar" style="flex:1;min-width:220px" placeholder="Buscar por número o cliente…" oninput="renderHist()">
                 <select class="inp" id="h-estado" onchange="renderHist()">
-                    <option value="">Todos los estados</option><option>Borrador</option><option>Enviada</option><option>Aceptada</option><option>Rechazada</option><option>Convertida</option>
+                    <option value="">Todos los estados</option><option>Borrador</option><option>Enviada</option><option>Aceptada</option><option>Rechazada</option><option>Parcial</option><option>Convertida</option>
                 </select>
-                <button class="btn btn-ghost btn-sm" onclick="cargarHist()">↻</button>
+                <button class="btn btn-ghost btn-sm" onclick="cargarHist()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
             </div>
             <div class="grupo">
                 <table class="hist">
@@ -332,7 +392,7 @@
 <!-- Convertir en pedido -->
 <div class="modal-bg" id="m-conv">
     <div class="modal">
-        <div class="modal-h">🔁 Convertir en pedido <button class="x" onclick="cerrarModal('m-conv')">×</button></div>
+        <div class="modal-h"><span style="display:flex;align-items:center;gap:8px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg> <span id="cv-titulo">Convertir en pedido</span></span> <button class="x" onclick="cerrarModal('m-conv')">×</button></div>
         <div class="modal-b">
             <div class="row2" style="margin-bottom:6px">
                 <div class="fg"><label class="fl">Pedido de MultiStore *</label><select class="inp" id="cv-ped"></select></div>
@@ -346,7 +406,26 @@
         </div>
         <div class="modal-f">
             <button class="btn btn-ghost" onclick="cerrarModal('m-conv')">Cancelar</button>
-            <button class="btn btn-purple" id="cv-btn" onclick="convertir()">🔁 Convertir</button>
+            <button class="btn btn-purple" id="cv-btn" onclick="convertir()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg> Convertir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Nuevo artículo del catálogo -->
+<div class="modal-bg" id="m-art">
+    <div class="modal" style="max-width:480px">
+        <div class="modal-h"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo artículo del catálogo <button class="x" onclick="cerrarModal('m-art')">×</button></div>
+        <div class="modal-b">
+            <div style="font-size:11.5px;color:#6b7280;margin-bottom:12px" id="na-para"></div>
+            <div class="fg"><label class="fl">Nombre</label><input class="inp" id="na-nombre" placeholder="Ej: Cafetera" onkeydown="if(event.key==='Enter')crearArt()"></div>
+            <div class="row2">
+                <div class="fg"><label class="fl">Categoría</label><select class="inp" id="na-cat"></select></div>
+                <div class="fg"><label class="fl">Peso (g)</label><input class="inp" id="na-peso" type="number" min="0" step="1" placeholder="0" onkeydown="if(event.key==='Enter')crearArt()"></div>
+            </div>
+        </div>
+        <div class="modal-f">
+            <button class="btn btn-ghost" onclick="cerrarModal('m-art')">Cancelar</button>
+            <button class="btn btn-green" id="na-btn" onclick="crearArt()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Crear y asignar</button>
         </div>
     </div>
 </div>
@@ -368,7 +447,7 @@
 
     let lineas = [];          // { uid, nombre, link, foto, sku, tallaColor, precioUSD, cantidad, pesoLb, idArticulo, final }
     let actual = null;        // { id, numero, estado, idPedido }
-    let clientes = [], casilleros = [], articulos = [], historial = [];
+    let clientes = [], casilleros = [], tiendas = [], articulos = [], historial = [];
     let defaults = { tarifas: [] };
     let cambios = false, uid = 1, calc = {};
 
@@ -389,15 +468,36 @@
     function guardarCfg() {
         const c = leerCfg(); c.tarifas = c.tarifas || {};
         if ($('c-cas').value && $('c-tar').value) c.tarifas[$('c-cas').value] = parseFloat($('c-tar').value);
-        Object.assign(c, { casillero: $('c-cas').value, imp: $('c-imp').value, mar: $('c-mar').value, tasa: $('c-tasa').value, redlb: $('c-redlb').checked, red5: $('c-red5').checked });
+        Object.assign(c, { tienda: $('c-tienda').value, casillero: $('c-cas').value, imp: $('c-imp').value, mar: $('c-mar').value, tasa: $('c-tasa').value, redlb: $('c-redlb').checked, red5: $('c-red5').checked });
         try { localStorage.setItem('ms_cot_cfg', JSON.stringify(c)); } catch (e) {}
     }
+    // Prioridad: tarifa guardada en la base de datos → última usada
     function tarifaDe(idCas) {
+        const d = casilleros.find(c => c.IdCasillero == idCas);
+        if (d && d.PrecioLibra > 0) return { v: +d.PrecioLibra, f: 'de la base (PrecioLibra)' };
         const c = leerCfg();
-        if (c.tarifas && c.tarifas[idCas]) return c.tarifas[idCas];
-        const d = defaults.tarifas.find(t => t.IdCasillero == idCas); return d ? d.TarifaLibra : '';
+        if (c.tarifas && c.tarifas[idCas]) return { v: c.tarifas[idCas], f: 'última usada' };
+        return { v: '', f: idCas ? 'este casillero no tiene PrecioLibra: escríbela' : '' };
     }
-    function cambioCasillero() { const t = tarifaDe($('c-cas').value); if (t) $('c-tar').value = t; calcular(); }
+    // Impuesto de la tienda: A_Empresas.ValorImpuesto (acepta 8 o 0.08)
+    function impuestoDe(idTienda) {
+        const e = (defaults.impuestos || []).find(x => x.IdEmpresa == idTienda);
+        if (!e || e.ValorImpuesto == null) return null;
+        const v = +e.ValorImpuesto; return v > 0 && v <= 1 ? +(v * 100).toFixed(2) : v;
+    }
+    function cambioTienda(silencioso) {
+        const v = impuestoDe($('c-tienda').value);
+        if (v != null) { $('c-imp').value = v; $('c-imp-f').textContent = 'de la base (ValorImpuesto)'; }
+        else if ($('c-tienda').value) $('c-imp-f').textContent = 'esta tienda no tiene ValorImpuesto';
+        if (!silencioso) marcarCambio();
+        calcular();
+    }
+    function elegirTiendaPorNombre(nombre) {
+        const n = norm(nombre); if (!n) return;
+        const t = tiendas.find(x => norm(x.NombreEmpresa) === n) || tiendas.find(x => norm(x.NombreEmpresa).includes(n) || n.includes(norm(x.NombreEmpresa)));
+        if (t && $('c-tienda').value != t.IdEmpresa) { $('c-tienda').value = t.IdEmpresa; cambioTienda(); }
+    }
+    function cambioCasillero() { const t = tarifaDe($('c-cas').value); $('c-tar').value = t.v; $('c-tar-f').textContent = t.f; calcular(); }
     function margen(v) { $('c-mar').value = v; calcular(); }
 
     async function iniciar() {
@@ -405,20 +505,27 @@
         try {
             const [cl, ca, ar, df] = await Promise.all([
                 fetch('/api/clientes/todos').then(r => r.json()).catch(() => ({})),
-                fetch('/api/crear-pedidos/casilleros').then(r => r.json()).catch(() => ({})),
+                fetch('/api/crear-pedidos/tiendas').then(r => r.json()).catch(() => ({})),
                 fetch('/api/crear-pedidos/articulos').then(r => r.json()).catch(() => ({})),
                 fetch('/api/cotizaciones/defaults').then(r => r.json()).catch(() => ({}))
             ]);
-            clientes = cl.ok ? cl.data : []; casilleros = ca.ok ? ca.data : []; articulos = ar.ok ? ar.data : [];
+            clientes = cl.ok ? cl.data : []; tiendas = ca.ok ? ca.data : []; articulos = ar.ok ? ar.data : [];
             if (df.ok) defaults = df.data;
+            casilleros = defaults.casilleros || [];
         } catch (e) {}
         $('dl-cli').innerHTML = clientes.map(c => `<option value="${esc(etiqCli(c))}">`).join('');
         $('dl-art').innerHTML = articulos.map(a => `<option value="${esc(a.NombreArticulo)}">`).join('');
-        $('c-cas').innerHTML = '<option value="">— Casillero —</option>' + casilleros.map(c => `<option value="${c.IdEmpresa}">${esc(c.NombreEmpresa)}</option>`).join('');
+        $('c-cas').innerHTML = '<option value="">— Casillero —</option>' + casilleros.map(c => {
+            const n = [c.NombreEmpresa, c.NombreCasillero].filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).join(' · ');
+            return `<option value="${c.IdCasillero}">${esc(n)}${c.PrecioLibra > 0 ? ' — L ' + (+c.PrecioLibra).toFixed(2) + '/lb' : ''}</option>`;
+        }).join('');
+        $('c-tienda').innerHTML = '<option value="">— Tienda —</option>' + tiendas.map(t => `<option value="${t.IdEmpresa}">${esc(t.NombreEmpresa)}</option>`).join('');
         const cfg = leerCfg();
         if (cfg.casillero) $('c-cas').value = cfg.casillero;
-        $('c-tar').value = $('c-cas').value ? tarifaDe($('c-cas').value) : '';
+        if (cfg.tienda) { $('c-tienda').value = cfg.tienda; }
+        if ($('c-cas').value) { const t = tarifaDe($('c-cas').value); $('c-tar').value = t.v; $('c-tar-f').textContent = t.f; }
         if (cfg.imp) $('c-imp').value = cfg.imp;
+        if ($('c-tienda').value) cambioTienda(true);
         if (cfg.mar) $('c-mar').value = cfg.mar;
         $('c-tasa').value = cfg.tasa || defaults.tasaCambio || '';
         if (cfg.redlb === false) $('c-redlb').checked = false;
@@ -428,7 +535,76 @@
         cargarHist(true);
     }
 
+    /* ───── Artículo del catálogo por línea ───── */
+    function nombreArt(id) { const a = articulos.find(x => x.IdArticulo == id); return a ? a.NombreArticulo : ''; }
+    function aprender(titulo, idArt) {
+        if (!titulo || !idArt) return;
+        try {
+            const w = [...new Set(palabras(titulo))].slice(0, 12);
+            const l = JSON.parse(localStorage.getItem('ms_aprendido') || '[]').filter(x => x.t.join(' ') !== w.join(' '));
+            l.unshift({ t: w, id: String(idArt) });
+            localStorage.setItem('ms_aprendido', JSON.stringify(l.slice(0, 500)));
+        } catch (e) {}
+    }
+    // forzar = true cuando lo eligen a mano: el peso se reemplaza por el del catálogo
+    function aplicarArt(l, a, forzar) {
+        l.idArticulo = a ? a.IdArticulo : null;
+        if (a && parseFloat(a.PesoArticulo) > 0 && (forzar || !(parseFloat(l.pesoLb) > 0))) l.pesoLb = a.PesoArticulo / 453.592;   // g → lb
+    }
+    function elegirArt(u, texto) {
+        const l = lineas.find(x => x.uid === u); if (!l) return;
+        const t = norm(texto);
+        if (!t) { l.idArticulo = null; render(); return; }
+        const a = articulos.find(x => norm(x.NombreArticulo) === t);
+        if (!a) { abrirNuevoArt(texto.trim(), u); return; }
+        aplicarArt(l, a, true); aprender(l.nombre, a.IdArticulo); cambios = true;
+        if (!(parseFloat(a.PesoArticulo) > 0)) toast('err', `"${a.NombreArticulo}" no tiene peso en el catálogo: escríbelo en gramos`);
+        // otras líneas parecidas sin artículo
+        lineas.forEach(o => { if (!o.idArticulo) { const g = adivinarArt(o.nombre); if (g) aplicarArt(o, articulos.find(x => x.IdArticulo == g)); } });
+        render();
+        const sig = lineas.find(o => !o.idArticulo);
+        if (sig) setTimeout(() => { const el = document.querySelector(`.in-art[data-u="${sig.uid}"]`); if (el) el.focus(); }, 30);
+    }
+    let naLinea = null, categorias = null;
+    async function abrirNuevoArt(nombre, u) {
+        naLinea = u;
+        $('na-nombre').value = nombre || ''; $('na-peso').value = '';
+        const l = lineas.find(x => x.uid === u);
+        $('na-para').textContent = l ? (l.nombre || '').substring(0, 70) : '';
+        if (l && parseFloat(l.pesoLb) > 0) $('na-peso').value = Math.round(l.pesoLb * 453.592);
+        if (!categorias) {
+            try { const d = await fetch('/api/catalogo/categorias').then(r => r.json()); categorias = d.ok ? d.data : []; } catch (e) { categorias = []; }
+            $('na-cat').innerHTML = '<option value="">— Elegir —</option>' + categorias.map(c => `<option value="${c.IdCategoria}">${esc(c.CategoriaProducto)}</option>`).join('');
+        }
+        $('m-art').classList.add('open');
+        setTimeout(() => $(nombre ? 'na-cat' : 'na-nombre').focus(), 50);
+    }
+    async function crearArt() {
+        const nombre = $('na-nombre').value.trim(), cat = $('na-cat').value, peso = parseFloat($('na-peso').value) || 0;
+        if (!nombre || !cat) { toast('err', 'Escribe el nombre y elige la categoría'); return; }
+        if (articulos.some(x => norm(x.NombreArticulo) === norm(nombre))) { toast('err', 'Ese artículo ya existe en el catálogo'); return; }
+        const b = $('na-btn'); b.disabled = true;
+        try {
+            const d = await fetch('/api/catalogo/articulos', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ Nombre: nombre, IdCategoria: +cat, Peso: peso }) }).then(r => r.json());
+            if (!d.ok) { toast('err', 'Error: ' + d.error); return; }
+            const a = await fetch('/api/crear-pedidos/articulos').then(r => r.json());
+            if (a.ok) { articulos = a.data; $('dl-art').innerHTML = articulos.map(x => `<option value="${esc(x.NombreArticulo)}">`).join(''); }
+            cerrarModal('m-art');
+            toast('ok', 'Artículo "' + nombre + '" creado en el catálogo');
+            if (naLinea) elegirArt(naLinea, nombre);
+            const cv = document.querySelector(`.cv-art[data-u="${naLinea}"]`);
+            if (cv) { cv.value = nombre; cv.style.borderColor = ''; }
+        } catch (e) { toast('err', 'Error de conexión'); }
+        finally { b.disabled = false; }
+    }
+
     function etiqCli(c) { return (c.NombreCompleto || '').trim() + (c.CodigoCliente ? ' (' + c.CodigoCliente + ')' : ''); }
+    function telDe(c) { return (c && (c.Telefeno || c.Telefono || c.Celular)) || ''; }
+    function clienteElegido() {
+        const c = clienteDeTexto($('c-cli').value);
+        if (c && telDe(c)) $('c-tel').value = telDe(c);
+    }
     function clienteDeTexto(t) {
         const n = norm(t); if (!n) return null;
         return clientes.find(c => norm(etiqCli(c)) === n) || clientes.find(c => norm(c.NombreCompleto) === n) || null;
@@ -436,13 +612,24 @@
 
     /* ───── Líneas ───── */
     function nuevaLinea(d, sinRender) {
-        lineas.push({ uid: uid++, nombre: d.nombre || '', link: d.link || '', foto: d.foto || '', sku: d.sku || '', tallaColor: d.tallaColor || '',
-                      precioUSD: d.precioUSD || '', cantidad: d.cantidad || 1, pesoLb: d.pesoLb || '', idArticulo: d.idArticulo || null });
+        const l = { uid: uid++, nombre: d.nombre || '', link: d.link || '', foto: d.foto || '', sku: d.sku || '', tallaColor: d.tallaColor || '',
+                    precioUSD: d.precioUSD || '', cantidad: d.cantidad || 1, pesoLb: d.pesoLb || '', idArticulo: d.idArticulo || null };
+        if (!l.idArticulo && l.nombre) { const g = adivinarArt(l.nombre); if (g) aplicarArt(l, articulos.find(x => x.IdArticulo == g)); }
+        lineas.push(l);
         cambios = true;
         if (!sinRender) {
             render();
             setTimeout(() => { const el = document.querySelector(`.lin[data-u="${uid - 1}"] ${d.nombre ? '.in-pre' : '.in-nom'}`); if (el) el.focus(); }, 30);
         }
+    }
+    function selLinea(u, on) { const l = lineas.find(x => x.uid === u); if (l) l.sel = on; pintarSeleccion(); }
+    function selTodas(on) { lineas.forEach(l => { if (!l.idDetallePedido) l.sel = on; }); render(); }
+    function pintarSeleccion() {
+        const libres = lineas.filter(l => !l.idDetallePedido), n = libres.filter(l => l.sel).length;
+        document.querySelectorAll('.lin[data-u]').forEach(el => { const l = lineas.find(x => x.uid == el.dataset.u); if (l) el.classList.toggle('marcada', !!l.sel); });
+        const chk = $('sel-todas'); if (chk) { chk.checked = libres.length > 0 && n === libres.length; chk.indeterminate = n > 0 && n < libres.length; }
+        $('sel-bar').classList.toggle('on', n > 0);
+        $('sel-txt').innerHTML = `<b>${n}</b> producto${n === 1 ? '' : 's'} seleccionado${n === 1 ? '' : 's'}`;
     }
     function quitar(u) { lineas = lineas.filter(l => l.uid !== u); cambios = true; render(); }
     function setL(u, campo, v) {
@@ -450,32 +637,34 @@
         l[campo] = v; cambios = true; calcular();
     }
     // Acepta "1.5", "500g", "12 oz", "0.8kg"
+    // Lo escrito en el peso → libras. Sin unidad = gramos.
     function aLibras(t) {
         t = String(t || '').toLowerCase().replace(/,/g, '.').trim();
         const m = t.match(/^(\d+(?:\.\d+)?)\s*(lb|lbs|libras?|oz|onzas?|kg|kilos?|g|gr|gramos?)?$/);
-        if (!m) return parseFloat(t) || 0;
-        const v = parseFloat(m[1]), u = m[2] || 'lb';
+        if (!m) return (parseFloat(t) || 0) / 453.592;
+        const v = parseFloat(m[1]), u = m[2] || 'g';
         if (/^(oz|onza)/.test(u)) return v / 16;
         if (/^(kg|kilo)/.test(u)) return v * 2.20462;
         if (/^(g|gr|gramo)/.test(u)) return v / 453.592;
         return v;
     }
-    function pesoBlur(u, el) {
+    function pesoBlur(u, el) {   // acepta 500, 500g, 1.5lb, 12oz, 0.5kg
         const lb = aLibras(el.value);
-        if (el.value && !/^\d+(\.\d+)?$/.test(el.value.trim())) { el.value = lb ? +lb.toFixed(3) : ''; }
+        if (el.value && !/^\d+(\.\d+)?$/.test(el.value.trim())) { el.value = lb ? Math.round(lb * 453.592) : ''; }
         setL(u, 'pesoLb', lb || '');
     }
 
     function render() {
         const cont = $('lineas');
         if (!lineas.length) {
-            cont.innerHTML = `<div class="vacio" style="padding:40px 10px"><b>🛍️</b>Pega un link, usa el marcador 📦, pega una imagen con Ctrl+V o agrega una línea manual</div>`;
+            cont.innerHTML = `<div class="vacio" style="padding:40px 10px"><b><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></b>Pega un link, usa el marcador o agrega una línea manual</div>`;
         } else {
             cont.innerHTML = lineas.map(l => `
-            <div class="lin" data-u="${l.uid}">
+            <div class="lin ${l.sel ? 'marcada' : ''} ${l.idDetallePedido ? 'en-pedido' : ''}" data-u="${l.uid}">
+                <div>${l.idDetallePedido ? '' : `<input type="checkbox" class="sel-l" ${l.sel ? 'checked' : ''} onchange="selLinea(${l.uid}, this.checked)">`}</div>
                 <div class="fbox" tabindex="0" title="Clic para subir foto · o selecciona y Ctrl+V" onpaste="pegarFoto(event, ${l.uid})"
                      ondragover="event.preventDefault()" ondrop="soltarFoto(event, ${l.uid})">
-                    ${l.foto ? `<img src="${esc(l.foto)}" onerror="this.remove()">` : '🖼️<br>Foto'}
+                    ${l.foto ? `<img src="${esc(l.foto)}" onerror="this.remove()">` : '<br>Foto'}
                     <input type="file" accept="image/*" onchange="archivoFoto(this.files[0], ${l.uid})">
                 </div>
                 <div style="min-width:0">
@@ -484,16 +673,24 @@
                         <input class="inp mini" value="${esc(l.tallaColor)}" placeholder="Talla / color" oninput="setL(${l.uid}, 'tallaColor', this.value)">
                         <input class="inp mini" value="${esc(l.link)}" placeholder="Link (opcional)" oninput="setL(${l.uid}, 'link', this.value)" style="flex:1.4">
                     </div>
-                    ${l.link ? `<a class="lnk" href="${esc(l.link)}" target="_blank">↗ ${esc(l.link.replace(/^https?:\/\/(www\.)?/, '').substring(0, 60))}</a>` : ''}
+                    <div class="art-in ${l.idArticulo ? '' : 'falta'}">
+                        <span class="art-tag"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Artículo</span>
+                        <input class="inp mini in-art" list="dl-art" data-u="${l.uid}" value="${esc(nombreArt(l.idArticulo))}" placeholder="Buscar en catálogo…" autocomplete="off"
+                               onchange="elegirArt(${l.uid}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+                        <button class="btn-nuevo" type="button" title="Crear un artículo nuevo en el catálogo" onclick="abrirNuevoArt('', ${l.uid})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo</button>
+                    </div>
+                    ${l.idDetallePedido ? `<span class="pill-ped"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> En pedido</span>` : ''}
+                    ${l.link ? `<a class="lnk" href="${esc(l.link)}" target="_blank"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> ${esc(l.link.replace(/^https?:\/\/(www\.)?/, '').substring(0, 60))}</a>` : ''}
                 </div>
                 <div class="c-pre"><input class="inp mini in-pre" type="number" step="0.01" min="0" style="text-align:right" value="${l.precioUSD}" placeholder="$ 0.00" oninput="setL(${l.uid}, 'precioUSD', this.value)"></div>
                 <div class="c-can"><input class="inp mini" type="number" min="1" style="text-align:right" value="${l.cantidad}" oninput="setL(${l.uid}, 'cantidad', this.value)"></div>
-                <div class="c-pes"><input class="inp mini" style="text-align:right" value="${l.pesoLb}" placeholder="lb · 500g" title="Libras por unidad. También puedes escribir 500g, 12oz o 0.5kg" onblur="pesoBlur(${l.uid}, this)" oninput="if(/^\\d*\\.?\\d*$/.test(this.value)) setL(${l.uid}, 'pesoLb', this.value)"></div>
+                <div class="c-pes"><input class="inp mini" style="text-align:right" value="${parseFloat(l.pesoLb) > 0 ? Math.round(l.pesoLb * 453.592) : ''}" placeholder="g" title="Gramos por unidad. También puedes escribir 1.5lb, 12oz o 0.5kg" onblur="pesoBlur(${l.uid}, this)" oninput="if(/^\\d*\\.?\\d*$/.test(this.value)) setL(${l.uid}, 'pesoLb', this.value ? (parseFloat(this.value) || 0) / 453.592 : '')"></div>
                 <div class="c-fin final" id="fin-${l.uid}">—</div>
-                <button class="del" title="Quitar" onclick="quitar(${l.uid})">🗑</button>
+                <button class="del" title="Quitar" ${l.idDetallePedido ? 'disabled style="visibility:hidden"' : ''} onclick="quitar(${l.uid})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </div>`).join('');
         }
         calcular();
+        pintarSeleccion();
     }
 
     /* ───── Fórmula ───── */
@@ -508,7 +705,8 @@
         const prod = lineas.reduce((a, l) => a + (parseFloat(l.precioUSD) || 0) * (parseInt(l.cantidad) || 1), 0);
         const lb = lineas.reduce((a, l) => a + (parseFloat(l.pesoLb) || 0) * (parseInt(l.cantidad) || 1), 0);
         const lbCobro = lb > 0 ? (redlb ? Math.max(1, Math.ceil(lb - 1e-9)) : lb) : 0;
-        const impuesto = prod * imp, envio = lbCobro * tar;
+        const envioL = lbCobro * tar;                       // la tarifa del casillero está en lempiras
+        const impuesto = prod * imp, envio = tasa > 0 ? envioL / tasa : 0;   // envío pasado a dólares para la fórmula
         const base = prod + impuesto + envio, gan = base * mar;
         const totalUSD = base + gan;
 
@@ -526,17 +724,18 @@
             if (el) el.innerHTML = l.final ? `${L(l.final)}<small>${(parseInt(l.cantidad) || 1) > 1 ? L(l.final / (parseInt(l.cantidad) || 1)) + ' c/u' : usd(l.final / (tasa || 1))}</small>` : '<span style="color:#374151">—</span>';
         });
         calc = { prod, impuesto, lb, lbCobro, envio, gan, totalUSD, totalL };
-        const faltaTasa = !tasa ? '<div style="color:#f87171">⚠ Falta la tasa de cambio</div>' : '';
-        const faltaTar = (lb > 0 && !tar) ? '<div style="color:#fbbf24">⚠ Falta la tarifa por libra</div>' : '';
-        const sinPeso = lineas.some(l => !(parseFloat(l.pesoLb) > 0)) && lineas.length ? `<div style="color:#fbbf24">⚠ ${lineas.filter(l => !(parseFloat(l.pesoLb) > 0)).length} producto(s) sin peso</div>` : '';
+        const faltaTasa = !tasa ? '<div style="color:#f87171"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Falta la tasa de cambio</div>' : '';
+        const faltaTar = (lb > 0 && !tar) ? '<div style="color:#fbbf24"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Falta la tarifa por libra</div>' : '';
+        const sinPeso = lineas.some(l => !(parseFloat(l.pesoLb) > 0)) && lineas.length ? `<div style="color:#fbbf24">${lineas.filter(l => !(parseFloat(l.pesoLb) > 0)).length} producto(s) sin peso</div>` : '';
+        const sinArt = lineas.filter(l => !l.idArticulo).length;
         $('desglose').innerHTML = `
             <div><span>Productos (${lineas.reduce((a, l) => a + (parseInt(l.cantidad) || 1), 0)})</span><b>${usd(prod)}</b></div>
             <div><span>Impuesto tienda ${$('c-imp').value || 0}%</span><b>${usd(impuesto)}</b></div>
-            <div><span>Envío ${lbCobro ? (+lbCobro.toFixed(2)) + ' lb' : ''} ${lb && redlb && lbCobro !== lb ? `<span style="color:#4b5563">(${lb.toFixed(2)})</span>` : ''} × ${usd(tar)}</span><b>${usd(envio)}</b></div>
+            <div><span>Envío ${lbCobro ? (+lbCobro.toFixed(2)) + ' lb' : ''} × ${L(tar)} = ${L(envioL)}${lb ? `<br><span style="color:#4b5563;font-size:11px">peso real ${Math.round(lb * 453.592).toLocaleString('es-HN')} g = ${lb.toFixed(2)} lb</span>` : ''}</span><b>${usd(envio)}</b></div>
             <div><span>Rentabilidad ${$('c-mar').value || 0}%</span><b>${usd(gan)}</b></div>
             <div><span>Total en dólares</span><b>${usd(totalUSD)}</b></div>
             <div class="tot"><span style="color:#e2e8f0;font-weight:700">Total cliente</span><span class="tl">${L(totalL)}</span></div>
-            ${faltaTasa}${faltaTar}${sinPeso}`;
+            ${faltaTasa}${faltaTar}${sinPeso}${sinArt ? `<div style="color:#fbbf24"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ${sinArt} producto(s) sin artículo del catálogo</div>` : ''}`;
         guardarCfg();
     }
 
@@ -566,9 +765,34 @@
         if (v.startsWith('MULTISTORE_')) { importarTexto(v); $('in-link').value = ''; return; }
         const d = datosDeLink(v);
         if (!d) { toast('err', 'Ese link no es válido'); return; }
+        if (/shein\./i.test(v)) elegirTiendaPorNombre('SHEIN'); else if (/amazon\./i.test(v)) elegirTiendaPorNombre('Amazon');
         nuevaLinea(d);
         $('in-link').value = '';
-        toast('ok', 'Producto agregado: completa precio y peso' + (d.nombre ? '' : ' y nombre'));
+        completarDesdeLink(uid - 1, v);
+    }
+    function estadoLinea(u, txt) { const el = $('fin-' + u); if (el) el.innerHTML = `<span style="color:#60a5fa;font-size:12px;font-weight:600">${txt}</span>`; }
+    async function completarDesdeLink(u, url) {
+        estadoLinea(u, 'Leyendo…');
+        let d;
+        try { d = await fetch('/api/cotizaciones/leer-link?url=' + encodeURIComponent(url)).then(r => r.json()); } catch (e) { d = { ok: false, error: 'Error de conexión' }; }
+        const l = lineas.find(x => x.uid === u); if (!l) return;
+        if (!d.ok) {
+            render();
+            toast('err', (d.bloqueado ? 'La tienda no dejó leer la página. ' : (d.error || 'No pude leer el link') + '. ') + 'Usa el marcador o pega una captura.');
+            return;
+        }
+        const x = d.data;
+        if (x.nombre) l.nombre = x.nombre;
+        if (x.precio > 0) l.precioUSD = x.precio;
+        if (x.foto) l.foto = x.foto;
+        if (x.sku) l.sku = x.sku;
+        if (x.link) l.link = x.link;
+        if (x.pesoLb > 0 && !(parseFloat(l.pesoLb) > 0)) l.pesoLb = x.pesoLb;
+        if (x.tienda) elegirTiendaPorNombre(x.tienda);
+        if (!l.idArticulo) { const g = adivinarArt(l.nombre); if (g) aplicarArt(l, articulos.find(a => a.IdArticulo == g)); }
+        cambios = true; render();
+        const falta = [!(l.precioUSD > 0) && 'precio', !(parseFloat(l.pesoLb) > 0) && 'peso', !l.tallaColor && 'talla/color'].filter(Boolean);
+        toast('ok', 'Producto leído' + (falta.length ? ' · completa: ' + falta.join(', ') : ''));
     }
 
     /* ───── Marcador ───── */
@@ -577,17 +801,18 @@
         if (!pref) return false;
         try {
             const d = JSON.parse(txt.substring(pref.length));
+            if (d.tienda) elegirTiendaPorNombre(d.tienda);
             (d.items || []).forEach(x => nuevaLinea({ nombre: (x.titulo || '').substring(0, 300), link: x.link, foto: x.foto, sku: x.sku, tallaColor: x.talla,
                 precioUSD: x.precio || '', cantidad: x.cant || 1, pesoLb: x.pesoLb ? +(+x.pesoLb).toFixed(3) : '' }, true));
             render();
-            toast('ok', `📦 ${d.items.length} producto${d.items.length === 1 ? '' : 's'} de ${d.tienda || 'la tienda'} agregado${d.items.length === 1 ? '' : 's'}`);
+            toast('ok', `${d.items.length} producto${d.items.length === 1 ? '' : 's'} de ${d.tienda || 'la tienda'} agregado${d.items.length === 1 ? '' : 's'}`);
             return true;
         } catch (e) { toast('err', 'No pude leer lo copiado por el marcador'); return true; }
     }
     async function pegarMarcador() {
         try {
             const t = await navigator.clipboard.readText();
-            if (!importarTexto(t || '')) toast('err', 'En el portapapeles no hay nada del marcador. Toca 📦 en la página del producto primero.');
+            if (!importarTexto(t || '')) toast('err', 'En el portapapeles no hay nada del marcador. Toca en la página del producto primero.');
         } catch (e) { toast('err', 'El navegador no dejó leer el portapapeles: pega con Ctrl+V en el cuadro del link'); $('in-link').focus(); }
     }
 
@@ -618,18 +843,11 @@
         if (it) { e.preventDefault(); e.stopPropagation(); archivoFoto(it.getAsFile(), u); }
     }
     function soltarFoto(e, u) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) archivoFoto(f, u); }
-    // Ctrl+V en cualquier parte: imagen → nueva línea con foto; texto del marcador → importar
+    // Ctrl+V en cualquier parte: texto del marcador → importar; link → agregar
     document.addEventListener('paste', async e => {
         if (!$('p-cot').classList.contains('on') || document.querySelector('.modal-bg.open')) return;
         const items = [...((e.clipboardData || {}).items || [])];
         const img = items.find(i => i.type.startsWith('image/'));
-        if (img && !e.target.closest('.fbox')) {
-            e.preventDefault();
-            const foto = await comprimir(img.getAsFile());
-            nuevaLinea({ foto });
-            toast('ok', '🖼️ Línea creada con la imagen: escribe nombre, precio y peso');
-            return;
-        }
         const txt = (e.clipboardData || window.clipboardData).getData('text') || '';
         if (txt.startsWith('MULTISTORE_')) { e.preventDefault(); importarTexto(txt); }
         else if (/^https?:\/\//.test(txt.trim()) && !/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) { e.preventDefault(); $('in-link').value = txt.trim(); agregarLink(); }
@@ -645,12 +863,13 @@
             telefono: $('c-tel').value.trim(),
             idVendedor: usuario.id,
             idCasillero: $('c-cas').value || null,
+            idTienda: $('c-tienda').value || null,
             tarifaLibra: $('c-tar').value, impuestoPct: $('c-imp').value, margenPct: $('c-mar').value, tasaCambio: $('c-tasa').value,
             redondearLibras: $('c-redlb').checked,
             totalUSD: calc.totalUSD.toFixed(2), totalLempiras: calc.totalL.toFixed(2),
             notas: $('c-notas').value,
             lineas: lineas.map(l => ({ nombre: l.nombre || 'Producto', link: l.link, foto: l.foto, sku: l.sku, tallaColor: l.tallaColor,
-                precioUSD: l.precioUSD, cantidad: l.cantidad, pesoLb: l.pesoLb, idArticulo: l.idArticulo, precioFinalL: l.final }))
+                precioUSD: l.precioUSD, cantidad: l.cantidad, pesoLb: l.pesoLb, idArticulo: l.idArticulo, precioFinalL: l.final, idDetallePedido: l.idDetallePedido || null }))
         };
     }
     async function guardar(silencioso) {
@@ -661,19 +880,21 @@
         try {
             const d = await fetch('/api/cotizaciones', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(datosCotizacion()) }).then(r => r.json());
             if (!d.ok) { toast('err', 'Error: ' + d.error); return false; }
+            lineas.forEach(l => aprender(l.nombre, l.idArticulo));
             actual = { id: d.idCotizacion, numero: d.numero, estado: actual ? actual.estado : 'Borrador' };
             cambios = false; pintarCabecera();
             history.replaceState({}, '', '/cotizaciones.html?id=' + d.idCotizacion);
-            if (!silencioso) toast('ok', '💾 Cotización ' + d.numero + ' guardada');
+            if (!silencioso) toast('ok', 'Cotización ' + d.numero + ' guardada');
             cargarHist(true);
             return true;
         } catch (e) { toast('err', 'Error de conexión'); return false; }
-        finally { b.disabled = false; b.textContent = '💾 Guardar'; }
+        finally { b.disabled = false; b.textContent = 'Guardar'; }
     }
     function pintarCabecera() {
         $('cot-sub').innerHTML = actual ? `<b style="color:#93c5fd">${esc(actual.numero)}</b> · <span class="estado-b e-${actual.estado}">${actual.estado}</span>` : 'Nueva cotización';
         const bn = $('banner');
-        if (actual && actual.estado === 'Convertida') { bn.style.display = 'block'; bn.innerHTML = `🔁 Esta cotización ya se convirtió en pedido${actual.idPedido ? ' (pedido #' + actual.idPedido + ')' : ''}. Puedes verla, exportarla o duplicarla con <b>＋ Nueva</b>, pero no editarla.`; }
+        if (actual && actual.estado === 'Parcial') { bn.style.display = 'block'; bn.innerHTML = `Algunos productos de esta cotización ya están en un pedido (marcados como <b>En pedido</b>). Puedes seleccionar los demás y convertirlos después.`; }
+        else if (actual && actual.estado === 'Convertida') { bn.style.display = 'block'; bn.innerHTML = `Esta cotización ya se convirtió en pedido${actual.idPedido ? ' (pedido #' + actual.idPedido + ')' : ''}. Puedes verla, exportarla o duplicarla con <b><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nueva</b>, pero no editarla.`; }
         else bn.style.display = 'none';
     }
     async function abrir(id) {
@@ -685,12 +906,14 @@
             actual = { id: c.IdCotizacion, numero: c.NumeroCotizacion, estado: c.Estado, idPedido: c.IdPedido };
             const cli = clientes.find(x => x.IdCliente === c.IdCliente);
             $('c-cli').value = cli ? etiqCli(cli) : (c.NombreCliente || '');
-            $('c-tel').value = c.Telefono || '';
+            $('c-tel').value = c.Telefono || telDe(cli);
             $('c-cas').value = c.IdCasillero || '';
+            $('c-tienda').value = c.IdTienda || '';
+            $('c-tar-f').textContent = ''; $('c-imp-f').textContent = '';
             $('c-tar').value = c.TarifaLibra || ''; $('c-imp').value = c.ImpuestoPct; $('c-mar').value = c.MargenPct; $('c-tasa').value = c.TasaCambio || '';
             $('c-redlb').checked = !!c.RedondearLibras; $('c-notas').value = c.Notas || '';
             lineas = c.lineas.map(l => ({ uid: uid++, nombre: l.Nombre, link: l.Link || '', foto: l.Foto || '', sku: l.Sku || '', tallaColor: l.TallaColor || '',
-                precioUSD: l.PrecioUSD, cantidad: l.Cantidad, pesoLb: +l.PesoLb || '', idArticulo: l.IdArticulo }));
+                precioUSD: l.PrecioUSD, cantidad: l.Cantidad, pesoLb: +l.PesoLb || '', idArticulo: l.IdArticulo, idDetallePedido: l.IdDetallePedido || null }));
             verTab('cot'); render(); cambios = false; pintarCabecera();
             history.replaceState({}, '', '/cotizaciones.html?id=' + id);
         } catch (e) { toast('err', 'Error de conexión'); }
@@ -725,12 +948,12 @@
                 <td style="color:#d1d5db">${esc(c.NombreCliente)}<div class="meta">${esc(c.Telefono || '')}</div></td>
                 <td class="num">${c.CantLineas}</td>
                 <td class="num" style="color:#4ade80;font-weight:800">${L(c.TotalLempiras)}<div class="meta">${usd(c.TotalUSD)}</div></td>
-                <td onclick="event.stopPropagation()">${c.Estado === 'Convertida'
-                    ? '<span class="estado-b e-Convertida">Convertida</span>'
+                <td onclick="event.stopPropagation()">${c.Estado === 'Convertida' || c.Estado === 'Parcial'
+                    ? `<span class="estado-b e-${c.Estado}">${c.Estado === 'Parcial' ? 'Parcial' : 'Convertida'}</span>`
                     : `<select class="inp" style="padding:5px 8px;font-size:12px" onchange="cambiarEstado(${c.IdCotizacion}, this.value)">
                         ${['Borrador','Enviada','Aceptada','Rechazada'].map(e => `<option ${e === c.Estado ? 'selected' : ''}>${e}</option>`).join('')}</select>`}</td>
-                <td onclick="event.stopPropagation()">${c.Estado === 'Convertida' ? '' : `<button class="del" title="Eliminar" onclick="eliminar(${c.IdCotizacion}, '${esc(c.NumeroCotizacion)}')">🗑</button>`}</td>
-            </tr>`).join('') : `<tr><td colspan="7" class="vacio"><b>📄</b>${historial.length ? 'No hay cotizaciones con estos filtros' : 'Todavía no hay cotizaciones guardadas'}</td></tr>`;
+                <td onclick="event.stopPropagation()">${c.Estado === 'Convertida' || c.Estado === 'Parcial' ? '' : `<button class="del" title="Eliminar" onclick="eliminar(${c.IdCotizacion}, '${esc(c.NumeroCotizacion)}')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}</td>
+            </tr>`).join('') : `<tr><td colspan="7" class="vacio"><b><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg></b>${historial.length ? 'No hay cotizaciones con estos filtros' : 'Todavía no hay cotizaciones guardadas'}</td></tr>`;
     }
     async function cambiarEstado(id, estado) {
         const d = await fetch(`/api/cotizaciones/${id}/estado`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ estado }) }).then(r => r.json()).catch(() => ({ ok:false, error:'Error de conexión' }));
@@ -753,24 +976,70 @@
         if (/^data:/.test(src) || src.startsWith('/')) return src;
         return '/api/cotizaciones/img?url=' + encodeURIComponent(src);
     }
+    const TIENDA = { nombre: 'ShopAholic', lema: 'Compras en línea con entrega en Honduras', logo: '/assets/shopaholic-logo.png' };
+    const ENTREGA_DIAS = [30, 40];
+    const VALIDEZ_DIAS = 3;
+    function fechaLarga(d) { return d.toLocaleDateString('es-HN', { day:'numeric', month:'long', year:'numeric' }); }
+    function fechaCorta(d) { return d.toLocaleDateString('es-HN', { day:'numeric', month:'short' }); }
+    function masDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d; }
     function armarDoc() {
         calcular();
         const cli = $('c-cli').value.trim().replace(/\s*\([^)]*\)$/, '');
+        const cliObj = clienteDeTexto($('c-cli').value);
+        const vendedor = usuario ? `${usuario.nombres || ''} ${usuario.apellidos || ''}`.trim() : '';
+        const unidades = lineas.reduce((a, l) => a + (parseInt(l.cantidad) || 1), 0);
+        const hoy = new Date(), e1 = masDias(ENTREGA_DIAS[0]), e2 = masDias(ENTREGA_DIAS[1]);
+        const corta = d => d.toLocaleDateString('es-HN', { day:'numeric', month:'short' }).replace('.', '');
+        const subCli = [$('c-tel').value ? `Tel. <b>${esc($('c-tel').value)}</b>` : '', cliObj && cliObj.CodigoCliente ? `Código <b>${esc(cliObj.CodigoCliente)}</b>` : ''].filter(Boolean).join(' &nbsp;·&nbsp; ');
         $('doc').innerHTML = `
-            <div class="d-head">
-                <div class="d-logo"><img src="/assets/Recurso 3.png" onerror="this.remove()"><div>Multi<span>Store</span></div></div>
-                <div class="d-num"><b>COTIZACIÓN</b>${esc(actual ? actual.numero : 'Borrador')}<br>${new Date().toLocaleDateString('es-HN', { day:'numeric', month:'long', year:'numeric' })}</div>
+            <div class="h">
+                <img src="${TIENDA.logo}" alt="${TIENDA.nombre}">
+                <div class="tit">
+                    <div class="k">COTIZACIÓN</div>
+                    <div class="num">N° ${esc(actual ? actual.numero : 'BORRADOR')}</div>
+                    <div class="f">${fechaLarga(hoy)}</div>
+                </div>
             </div>
-            <div class="d-cli">${cli ? `<b>Cliente:</b> ${esc(cli)}` : ''}${$('c-tel').value ? ` &nbsp;·&nbsp; <b>Tel.:</b> ${esc($('c-tel').value)}` : ''}</div>
-            <table>
-                <thead><tr><th style="width:66px"></th><th>Producto</th><th>Talla / color</th><th class="r">Cant.</th><th class="r">Precio</th></tr></thead>
-                <tbody>${lineas.map(l => `<tr>
+            <div class="datos">
+                <div class="cli">
+                    <div class="k2">Cotizado a</div>
+                    <div class="nom">${esc(cli || 'Cliente')}</div>
+                    ${subCli ? `<div class="sub">${subCli}</div>` : ''}
+                </div>
+                <div class="ent">
+                    <div class="k2">Entrega estimada</div>
+                    <div class="rango">${corta(e1)} – ${fechaLarga(e2)}</div>
+                    <div class="sub">${ENTREGA_DIAS[0]} a ${ENTREGA_DIAS[1]} días · Válida hasta el ${fechaLarga(masDias(VALIDEZ_DIAS))}</div>
+                </div>
+            </div>
+            <table class="items">
+                <thead><tr><th class="c">#</th><th style="width:48px"></th><th>Descripción</th><th class="c">Cant.</th><th class="r">Precio unit.</th><th class="r">Importe</th></tr></thead>
+                <tbody>${lineas.map((l, i) => {
+                    const c = parseInt(l.cantidad) || 1;
+                    return `<tr>
+                    <td class="n">${i + 1}</td>
                     <td>${l.foto ? `<img src="${esc(imgDoc(l.foto))}" crossorigin="anonymous" onerror="this.style.visibility='hidden'">` : ''}</td>
-                    <td>${esc(l.nombre || 'Producto')}</td><td>${esc(l.tallaColor || '')}</td>
-                    <td class="r">${parseInt(l.cantidad) || 1}</td><td class="r"><b>${L(l.final)}</b></td></tr>`).join('')}</tbody>
+                    <td><div class="p-nom">${esc(l.nombre || 'Producto')}</div>${l.tallaColor ? `<div class="p-var">${esc(l.tallaColor)}</div>` : ''}</td>
+                    <td class="c">${c}</td>
+                    <td class="r">${L(l.final / c)}</td>
+                    <td class="r"><b>${L(l.final)}</b></td></tr>`; }).join('')}</tbody>
             </table>
-            <div class="d-tot"><div>Total a pagar<b>${L(calc.totalL)}</b>Incluye envío a Honduras e impuestos</div></div>
-            ${$('c-notas').value.trim() ? `<div class="d-notas">${esc($('c-notas').value.trim())}</div>` : ''}`;
+            <div class="pie">
+                <div class="cond">
+                    <div class="k2">Términos y condiciones</div>
+                    <ol>
+                        <li>Precios en lempiras; incluyen producto, impuestos de la tienda y envío hasta Honduras.</li>
+                        <li>El tiempo de entrega cuenta a partir de la confirmación del pedido.</li>
+                        <li>Precios y disponibilidad sujetos a cambios de la tienda hasta confirmar la compra.</li>
+                    </ol>
+                </div>
+                <div class="total"><div class="k">TOTAL<small>${unidades} unidad${unidades === 1 ? '' : 'es'}</small></div><div class="v">${L(calc.totalL)}</div></div>
+            </div>
+            ${$('c-notas').value.trim() ? `<div class="notas"><b>Notas:</b> ${esc($('c-notas').value.trim())}</div>` : ''}
+            <div class="firma">
+                <div>Generado por: <b>${esc(vendedor || TIENDA.nombre)}</b></div>
+            </div>
+            <div class="gracias">¡Gracias por comprar con nosotros!</div>`;
         return Promise.all([...$('doc').querySelectorAll('img')].map(i => i.complete ? null : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 6000); })));
     }
     let h2cCargado = null;
@@ -786,15 +1055,15 @@
         if (!lineas.length) { toast('err', 'Agrega productos primero'); return; }
         if (cambios || !actual) await guardar(true);
         await armarDoc();
-        if (tipo === 'pdf') { window.print(); return; }
+        if (tipo === 'pdf') { const t = document.title; document.title = 'ShopAholic-' + (actual ? actual.numero : 'cotizacion'); window.print(); document.title = t; return; }
         try {
             await cargarH2C();
             const cv = await html2canvas($('doc'), { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
             const a = document.createElement('a');
-            a.download = (actual ? actual.numero : 'cotizacion') + '.png';
+            a.download = 'ShopAholic-' + (actual ? actual.numero : 'cotizacion') + '.png';
             a.href = cv.toDataURL('image/png'); a.click();
-            toast('ok', '🖼 Imagen descargada: ' + a.download);
-        } catch (e) { toast('err', 'No se pudo crear la imagen; usa 🖨 PDF'); }
+            toast('ok', 'Imagen descargada: ' + a.download);
+        } catch (e) { toast('err', 'No se pudo crear la imagen; usa PDF'); }
     }
 
     /* ───── Convertir en pedido ───── */
@@ -812,9 +1081,15 @@
         articulos.forEach(a => { const w = palabras(a.NombreArticulo); if (w.length && w.every(x => t.has(x)) && w.length > n) { m = a; n = w.length; } });
         return m ? m.IdArticulo : null;
     }
+    // Productos a convertir: los seleccionados; si no hay selección, todos los que aún no están en un pedido
+    function aConvertir() {
+        const libres = lineas.filter(l => !l.idDetallePedido), sel = libres.filter(l => l.sel);
+        return sel.length ? sel : libres;
+    }
     async function abrirConvertir() {
         if (!lineas.length) { toast('err', 'Agrega productos primero'); return; }
-        if (actual && actual.estado === 'Convertida') { toast('err', 'Esta cotización ya se convirtió en pedido'); return; }
+        const lista = aConvertir();
+        if (!lista.length) { toast('err', 'Todos los productos de esta cotización ya están en un pedido'); return; }
         if (!(await guardar(true))) return;
         try {
             const d = await fetch('/api/crear-pedidos/pedidos-abiertos').then(r => r.json());
@@ -822,35 +1097,43 @@
                 `<option value="${p.IdPedido}">${esc(p.NumeroPedido)} — ${esc(p.Tienda || '')} (${p.CantArticulos || 0} arts.)</option>`).join('');
         } catch (e) {}
         const cli = clienteDeTexto($('c-cli').value);
-        $('cv-aviso').innerHTML = cli ? '' : ($('c-cli').value.trim() ? '⚠ El cliente no está registrado: los artículos quedarán sin cliente (asígnalo después en el Dashboard).' : '⚠ La cotización no tiene cliente.');
-        $('cv-lineas').innerHTML = lineas.map(l => {
+        $('cv-titulo').textContent = `Convertir ${lista.length} producto${lista.length === 1 ? '' : 's'} en pedido`;
+        $('cv-aviso').innerHTML = cli ? '' : ($('c-cli').value.trim() ? 'El cliente no está registrado: los artículos quedarán sin cliente (asígnalo después en el Dashboard).' : 'La cotización no tiene cliente.');
+        const total = lista.reduce((a, l) => a + (l.final || 0), 0);
+        $('cv-lineas').innerHTML = lista.map(l => {
             const id = l.idArticulo || adivinarArt(l.nombre); l.idArticulo = id;
             const a = articulos.find(x => x.IdArticulo == id);
-            return `<div style="display:grid;grid-template-columns:44px 1fr 200px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #111827">
+            return `<div style="display:grid;grid-template-columns:44px 1fr 200px auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #111827">
                 ${l.foto ? `<img class="foto" style="width:40px;height:40px" src="${esc(l.foto)}">` : '<div class="foto" style="width:40px;height:40px"></div>'}
-                <div><div class="art">${esc(l.nombre)}</div><div class="meta">${esc(l.tallaColor)} · ${L(l.final)}</div></div>
-                <input class="inp mini cv-art" data-u="${l.uid}" list="dl-art" placeholder="🔍 Artículo…" value="${esc(a ? a.NombreArticulo : '')}" style="${a ? '' : 'border-color:#b91c1c'}"
-                       onchange="const x = articulos.find(y => norm(y.NombreArticulo) === norm(this.value)); this.style.borderColor = x ? '' : '#b91c1c'; lineas.find(y => y.uid === ${l.uid}).idArticulo = x ? x.IdArticulo : null;">
+                <div><div class="art">${esc(l.nombre)}</div><div class="meta">${esc(l.tallaColor)}${l.tallaColor ? ' · ' : ''}${L(l.final)}</div></div>
+                <input class="inp mini cv-art" data-u="${l.uid}" list="dl-art" placeholder="Artículo…" value="${esc(a ? a.NombreArticulo : '')}" style="${a ? '' : 'border-color:#b91c1c'}"
+                       onchange="const x = articulos.find(y => norm(y.NombreArticulo) === norm(this.value)); if (!x && this.value.trim()) { abrirNuevoArt(this.value.trim(), ${l.uid}); return; } this.style.borderColor = x ? '' : '#b91c1c'; lineas.find(y => y.uid === ${l.uid}).idArticulo = x ? x.IdArticulo : null;">
+                <button class="btn-nuevo" type="button" title="Crear un artículo nuevo en el catálogo" onclick="abrirNuevoArt('', ${l.uid})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo</button>
             </div>`;
-        }).join('');
+        }).join('') + `<div style="display:flex;justify-content:flex-end;padding-top:8px;font-size:12px;color:#9ca3af">Total a pasar: <b style="color:#4ade80;margin-left:6px">${L(total)}</b></div>`;
         $('m-conv').classList.add('open');
     }
     async function convertir() {
         const idPedido = $('cv-ped').value;
         if (!idPedido) { toast('err', 'Elige el pedido de MultiStore'); return; }
-        const falta = lineas.filter(l => !l.idArticulo).length;
+        const lista = aConvertir();
+        const falta = lista.filter(l => !l.idArticulo).length;
         if (falta) { toast('err', `Elige el artículo del catálogo en ${falta} producto(s)`); return; }
+        const uids = lista.map(l => l.uid);
         if (!(await guardar(true))) return;   // guarda los artículos elegidos
+        const posiciones = lineas.map((l, i) => uids.includes(l.uid) ? i : -1).filter(i => i >= 0);
         const btn = $('cv-btn'); btn.disabled = true; btn.textContent = 'Convirtiendo…';
         try {
             const d = await fetch(`/api/cotizaciones/${actual.id}/convertir`, { method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ idPedido: +idPedido, noPedidoTienda: $('cv-nop').value.trim() || null }) }).then(r => r.json());
+                body: JSON.stringify({ idPedido: +idPedido, noPedidoTienda: $('cv-nop').value.trim() || null, posiciones }) }).then(r => r.json());
             if (!d.ok) { toast('err', 'Error: ' + d.error); return; }
-            actual.estado = 'Convertida'; actual.idPedido = +idPedido;
-            cerrarModal('m-conv'); pintarCabecera(); cargarHist(true);
-            toast('ok', `🔁 ${d.creados} artículo(s) agregados al pedido`);
+            cerrarModal('m-conv');
+            cambios = false;
+            await abrir(actual.id);      // recarga para marcar los productos que ya están en el pedido
+            cargarHist(true);
+            toast('ok', `${d.creados} producto${d.creados === 1 ? '' : 's'} agregado${d.creados === 1 ? '' : 's'} al pedido` + (d.pendientes ? ` · quedan ${d.pendientes} sin convertir` : ''));
         } catch (e) { toast('err', 'Error de conexión'); }
-        finally { btn.disabled = false; btn.textContent = '🔁 Convertir'; }
+        finally { btn.disabled = false; btn.textContent = 'Convertir'; }
     }
 
     iniciar();

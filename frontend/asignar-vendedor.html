@@ -167,14 +167,14 @@
 
             <div>
                 <div class="toolbar">
-                    <input class="inp" id="buscar" style="flex:1;min-width:220px" placeholder="🔍 Buscar artículo, cliente, N° de pedido…" oninput="render()">
+                    <input class="inp" id="buscar" style="flex:1;min-width:220px" placeholder="Buscar artículo, cliente, N° de pedido…" oninput="render()">
                     <select class="inp" id="f-estado" onchange="render()">
                         <option value="sin">Sin vendedor</option>
                         <option value="todos">Todos</option>
                         <option value="con">Con vendedor</option>
                     </select>
                     <select class="inp" id="f-pedido" onchange="render()" style="max-width:220px"><option value="">Todos los pedidos</option></select>
-                    <button class="btn btn-ghost btn-sm" onclick="cargar()" title="Actualizar">↻</button>
+                    <button class="btn btn-ghost btn-sm" onclick="cargar()" title="Actualizar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
                 </div>
                 <div class="items">
                     <table>
@@ -249,7 +249,7 @@
                 <span class="vend-n" title="Artículos pendientes asignados">${cuenta(v.IdVendedor)}</span>
             </div>`).join('') + `
             <div class="vend ${vendSel === null ? 'sel' : ''}" onclick="elegirVendedor(null)">
-                <div class="vend-av quitar">✕</div>
+                <div class="vend-av quitar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>
                 <div><div class="vend-nom" style="color:#f87171">Quitar vendedor</div><div class="vend-cod">Dejar sin vendedor</div></div>
                 <span class="vend-n" style="color:#f87171;background:#2d0a0a;border-color:#7f1d1d" title="Artículos sin vendedor">${sinV}</span>
             </div>`;
@@ -284,7 +284,7 @@
                 <td style="font-size:12px;color:${p.IdCliente ? '#d1d5db' : '#ef4444'}">${esc(p.NombreCliente || 'Sin cliente')}</td>
                 <td>${p.IdVendedor ? `<span class="pill con">${esc(p.CodigoVendedor || p.NombreVendedor || 'Asignado')}</span>` : '<span class="pill sin">Sin vendedor</span>'}</td>
             </tr>`;
-        }).join('') : `<tr><td colspan="6" class="vacio"><b>🎉</b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</td></tr>`;
+        }).join('') : `<tr><td colspan="6" class="vacio"><b></b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</td></tr>`;
         const chk = document.getElementById('chk-todos');
         const n = lista.filter(p => marcados.has(p.IdDetallePedido)).length;
         chk.checked = lista.length > 0 && n === lista.length; chk.indeterminate = n > 0 && n < lista.length;
@@ -304,7 +304,7 @@
             (destino ? ` → <b>${esc(destino)}</b>` : ' · <span style="color:#fbbf24">elige un vendedor a la izquierda</span>');
         const btn = document.getElementById('btn-asignar');
         btn.disabled = vendSel === undefined;
-        btn.textContent = vendSel === null ? `✕ Quitar vendedor a ${n}` : `👥 Asignar ${n}`;
+        btn.textContent = vendSel === null ? `Quitar vendedor a ${n}` : `Asignar ${n}`;
     }
 
     async function asignar() {
@@ -319,8 +319,8 @@
             res.forEach(r => { if (r.ok) ok++; else primerError = primerError || r.error; });
         }
         const v = vendedores.find(x => x.IdVendedor === vendSel);
-        if (ok === ids.length) toast('ok', vendSel === null ? `✓ Vendedor quitado a ${ok} artículo(s)` : `✓ ${ok} artículo(s) asignados a ${nomVen(v)}`);
-        else toast('err', `✓ ${ok} de ${ids.length} · error: ${primerError}`);
+        if (ok === ids.length) toast('ok', vendSel === null ? `Vendedor quitado a ${ok} artículo(s)` : `${ok} artículo(s) asignados a ${nomVen(v)}`);
+        else toast('err', `${ok} de ${ids.length} · error: ${primerError}`);
         marcados.clear();
         await cargar();
     }

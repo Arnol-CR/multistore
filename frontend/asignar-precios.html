@@ -90,6 +90,11 @@
         .precio.tiene { color:#4ade80; }
         .precio.cambio { border-color:#b45309; color:#fbbf24; background:#1a1205; }
         .estado { width:26px; text-align:center; font-weight:800; }
+        .grupo table { table-layout:fixed; }
+        .grupo th:nth-child(1) { width:62px; } .grupo th:nth-child(3) { width:190px; } .grupo th:nth-child(4) { width:90px; }
+        .grupo th:nth-child(5) { width:100px; } .grupo th:nth-child(6) { width:140px; } .grupo th:nth-child(7) { width:34px; }
+        .art, .meta { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        @media (max-width:900px) { .grupo th:nth-child(6) { width:100px; } .grupo th:nth-child(5) { width:70px; } }
         .vacio { text-align:center; padding:60px 20px; color:#374151; font-size:14px; }
         .vacio b { display:block; font-size:34px; margin-bottom:8px; }
 
@@ -142,13 +147,13 @@
         </div>
 
         <div class="toolbar">
-            <input class="inp" id="buscar" style="flex:1;min-width:220px" placeholder="🔍 Buscar artículo, cliente, N° de pedido…" oninput="render()">
+            <input class="inp" id="buscar" style="flex:1;min-width:220px" placeholder="Buscar artículo, cliente, N° de pedido…" oninput="render()">
             <select class="inp" id="f-pedido" onchange="render()" style="max-width:220px" title="Filtrar por pedido (opcional)"><option value="">Todos los pedidos</option></select>
             <label class="chk"><input type="checkbox" id="f-sin" checked onchange="render()"> Solo sin precio</label>
             <label class="chk"><input type="checkbox" id="f-agrupar" checked onchange="render()"> Agrupar por cliente</label>
             <label class="chk" id="wrap-mios" style="display:none"><input type="checkbox" id="f-mios" onchange="render()"> Solo mis artículos</label>
-            <button class="btn btn-amber btn-sm" onclick="usarSugeridoTodos()" title="Pone el precio sugerido en todas las casillas vacías visibles">⚡ Sugerido en vacíos</button>
-            <button class="btn btn-ghost btn-sm" onclick="cargar()" title="Actualizar">↻</button>
+            <button class="btn btn-amber btn-sm" onclick="usarSugeridoTodos()" title="Pone el precio sugerido en todas las casillas vacías visibles"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Sugerido en vacíos</button>
+            <button class="btn btn-ghost btn-sm" onclick="cargar()" title="Actualizar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
         </div>
 
         <div id="lista"><div class="vacio">Cargando…</div></div>
@@ -158,7 +163,7 @@
 <div class="barra" id="barra">
     <div class="info" id="barra-info"></div>
     <button class="btn btn-ghost" onclick="descartar()">Descartar</button>
-    <button class="btn btn-green" id="btn-guardar" onclick="guardar()">✓ Guardar</button>
+    <button class="btn btn-green" id="btn-guardar" onclick="guardar()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Guardar</button>
 </div>
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom" onclick="this.style.display='none'"><img id="zoom-img"></div>
@@ -225,9 +230,9 @@
         const sug = red5(p.PrecioSugerido);
         const cambiado = cambios.has(id);
         const st = estados.get(id) || '';
-        const icono = st === 'ok' ? '<span style="color:#4ade80" title="Guardado">✓</span>'
-                    : st.startsWith('err') ? `<span style="color:#f87171" title="${esc(st.substring(4))}">✗</span>`
-                    : cambiado ? '<span style="color:#fbbf24" title="Sin guardar">●</span>' : '';
+        const icono = st === 'ok' ? '<span style="color:#4ade80" title="Guardado"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg></span>'
+                    : st.startsWith('err') ? `<span style="color:#f87171" title="${esc(st.substring(4))}"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>`
+                    : cambiado ? '<span style="color:#fbbf24" title="Sin guardar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></span>' : '';
         const costo = p.ValorCompra != null ? `$${Number(p.ValorCompra).toFixed(2)}` : '—';
         return `<tr class="${cambiado ? 'dirty' : ''}">
             <td style="width:54px">${p.Fotografia ? `<img class="foto" src="${esc(p.Fotografia)}" loading="lazy" onclick="verFoto(this.src)" onerror="this.style.visibility='hidden'">` : '<div class="foto"></div>'}</td>
@@ -261,7 +266,7 @@
         document.getElementById('st-tot').textContent = L(datos.reduce((a, p) => a + (parseFloat(precioActual(p)) || 0), 0));
 
         if (!lista.length) {
-            cont.innerHTML = `<div class="vacio"><b>🎉</b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</div>`;
+            cont.innerHTML = `<div class="vacio"><b></b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</div>`;
         } else if (!agrupar) {
             cont.innerHTML = `<div class="grupo"><table>${cabeceraTabla()}<tbody>${lista.map(fila).join('')}</tbody></table></div>`;
         } else {
@@ -283,9 +288,9 @@
                         <div class="grupo-av ${k ? '' : 'sin'}">${esc(ini)}</div>
                         <div>
                             <div class="grupo-nom">${esc(nom)}</div>
-                            <div class="grupo-sub">${items.length} artículo${items.length === 1 ? '' : 's'}${faltan ? ` · <span style="color:#f87171">${faltan} sin precio</span>` : ' · <span style="color:#4ade80">todos con precio</span>'}${items[0].NombreVendedor && k ? ' · 👥 ' + esc(items[0].NombreVendedor) : ''}</div>
+                            <div class="grupo-sub">${items.length} artículo${items.length === 1 ? '' : 's'}${faltan ? ` · <span style="color:#f87171">${faltan} sin precio</span>` : ' · <span style="color:#4ade80">todos con precio</span>'}${items[0].NombreVendedor && k ? ' · ' + esc(items[0].NombreVendedor) : ''}</div>
                         </div>
-                        ${faltan ? `<button class="btn btn-amber btn-sm" onclick="usarSugeridoGrupo(${k})">⚡ Sugerido en vacíos</button>` : ''}
+                        ${faltan ? `<button class="btn btn-amber btn-sm" onclick="usarSugeridoGrupo(${k})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Sugerido en vacíos</button>` : ''}
                         <div class="grupo-tot"><div class="l">Total</div><div class="v">${L(total)}</div></div>
                     </div>
                     <table>${cabeceraTabla()}<tbody>${items.map(fila).join('')}</tbody></table>
@@ -305,7 +310,7 @@
         const tr = inp.closest('tr');
         tr.classList.toggle('dirty', cambios.has(id));
         inp.classList.toggle('cambio', cambios.has(id));
-        tr.querySelector('.estado').innerHTML = cambios.has(id) ? '<span style="color:#fbbf24" title="Sin guardar">●</span>' : '';
+        tr.querySelector('.estado').innerHTML = cambios.has(id) ? '<span style="color:#fbbf24" title="Sin guardar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></span>' : '';
         actualizarBarra(true);
     }
 
@@ -334,7 +339,7 @@
             if (sug && !(parseFloat(precioActual(p)) > 0)) { cambios.set(p.IdDetallePedido, sug); estados.delete(p.IdDetallePedido); n++; }
         });
         render();
-        toast(n ? 'ok' : 'err', n ? `⚡ Sugerido puesto en ${n} artículo${n === 1 ? '' : 's'}. Revisa y guarda.` : 'No hay vacíos con precio sugerido');
+        toast(n ? 'ok' : 'err', n ? `Sugerido puesto en ${n} artículo${n === 1 ? '' : 's'}. Revisa y guarda.` : 'No hay vacíos con precio sugerido');
     }
     function usarSugeridoTodos() { sugeridoEn(filtrados()); }
     function usarSugeridoGrupo(k) { sugeridoEn(filtrados().filter(p => (p.IdCliente || 0) === k)); }
@@ -345,7 +350,7 @@
         const tot = [...cambios.values()].reduce((a, v) => a + (parseFloat(v) || 0), 0);
         document.getElementById('barra').classList.toggle('visible', cambios.size > 0);
         document.getElementById('barra-info').innerHTML = `<b>${cambios.size}</b> precio${cambios.size === 1 ? '' : 's'} sin guardar · ${L(tot)}` + (borrados ? ` · <span style="color:#6b7280">${borrados} vacío(s) no se guardan</span>` : '');
-        document.getElementById('btn-guardar').textContent = `✓ Guardar ${n}`;
+        document.getElementById('btn-guardar').textContent = `Guardar ${n}`;
         if (sinRender) {
             // refrescar totales sin redibujar la tabla
             document.getElementById('st-tot').textContent = L(datos.reduce((a, p) => a + (parseFloat(precioActual(p)) || 0), 0));
@@ -374,7 +379,7 @@
         }
         btn.disabled = false;
         render();
-        toast(err ? 'err' : 'ok', err ? `✓ ${ok} guardados · ✗ ${err} con error: ${primerError}` : `✓ ${ok} precio${ok === 1 ? '' : 's'} guardado${ok === 1 ? '' : 's'}`);
+        toast(err ? 'err' : 'ok', err ? `${ok} guardados · ${err} con error: ${primerError}` : `${ok} precio${ok === 1 ? '' : 's'} guardado${ok === 1 ? '' : 's'}`);
     }
 
     function verFoto(src) { document.getElementById('zoom-img').src = src; document.getElementById('zoom').style.display = 'flex'; }

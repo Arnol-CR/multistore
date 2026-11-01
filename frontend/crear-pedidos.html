@@ -356,8 +356,8 @@
                         <span id="form-art-titulo">Datos del artículo</span>
                     </div>
                     <div id="edit-badge" style="display:none;align-items:center;gap:8px">
-                        <span class="badge badge-amber">✏️ Editando</span>
-                        <button class="btn btn-ghost btn-sm" onclick="cancelarEdicion()">✕ Cancelar</button>
+                        <span class="badge badge-amber"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg> Editando</span>
+                        <button class="btn btn-ghost btn-sm" onclick="cancelarEdicion()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Cancelar</button>
                     </div>
                 </div>
                 <input type="hidden" id="a-detalle-id">
@@ -425,10 +425,10 @@
                     </div>
                     <div style="display:flex;gap:8px;flex:1;justify-content:flex-end">
                         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;cursor:pointer;margin-right:auto" title="Después de guardar, deja puestos el N° de pedido de la tienda y el artículo">
-                            <input type="checkbox" id="chk-mantener" onchange="guardarPrefMantener()"> 📌 Mantener N° pedido y artículo
+                            <input type="checkbox" id="chk-mantener" onchange="guardarPrefMantener()"> <svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg> Mantener N° pedido y artículo
                         </label>
-                        <button class="btn btn-ghost" onclick="abrirPegarVarios()" title="Pegar varias filas desde Excel">📋 Pegar varios</button>
-                        <button class="btn btn-ghost" onclick="limpiarArticulo()">✕ Limpiar</button>
+                        <button class="btn btn-ghost" onclick="abrirPegarVarios()" title="Pegar varias filas desde Excel"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Pegar varios</button>
+                        <button class="btn btn-ghost" onclick="limpiarArticulo()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Limpiar</button>
                         <button class="btn btn-green" id="btn-guardar-art" onclick="guardarArticulo()" style="min-width:170px;justify-content:center">
                             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             Agregar artículo
@@ -436,7 +436,7 @@
                     </div>
                 </div>
                 <div class="msg" id="msg-agregar"></div>
-                <div style="font-size:10px;color:#374151;margin-top:8px">⌨️ <b>Enter</b> guarda · <b>Esc</b> limpia · <b>Ctrl+V</b> con una imagen la pone como foto · ⧉ en la tabla duplica un artículo</div>
+                <div style="font-size:10px;color:#374151;margin-top:8px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg> <b>Enter</b> guarda · <b>Esc</b> limpia · <b>Ctrl+V</b> con una imagen la pone como foto · en la tabla duplica un artículo</div>
             </div>
 
             <!-- Tabla artículos -->
@@ -455,7 +455,7 @@
                                 <th style="text-align:right">Cant.</th>
                                 <th style="text-align:right">Precio</th>
                                 <th style="text-align:right">Total</th>
-                                <th>📷</th><th></th>
+                                <th><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></th><th></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-articulos">
@@ -545,7 +545,7 @@
                 body: JSON.stringify({ fechaPedido:fecha, numeroPedido:numero, idEmpresa:+tienda, idMoneda:+mon, idCasillero:+cas })
             }).then(r => r.json());
             if (d.ok) {
-                mostrarMsg(msg, 'ok', '✓ Pedido ' + d.numeroPedido + ' creado correctamente');
+                mostrarMsg(msg, 'ok', 'Pedido ' + d.numeroPedido + ' creado correctamente');
                 await cargarPedidosAbiertos();
                 generarNumeroPedido();
             } else { mostrarMsg(msg, 'err', 'Error: ' + d.error); }
@@ -614,9 +614,9 @@
 </td>
                 <td>${cuenta}</td>
                 <td onclick="event.stopPropagation()" style="display:flex;gap:5px;padding:7px 12px;white-space:nowrap">
-                    <button onclick="verFaltantes('${p.NumeroPedido}')" class="btn btn-blue btn-sm">📋 Ver faltantes</button>
-                    <button onclick="abrirModalTasa(${p.IdPedido},'${p.NumeroPedido}',${p.TasaCambio||0},${p.IdCuenta||0})" class="btn btn-purple btn-sm">💱 Tasa</button>
-                    <button onclick="confirmarCerrarPedido(${p.IdPedido},'${p.NumeroPedido}')" class="btn btn-red btn-sm">🔒 Cerrar</button>
+                    <button onclick="verFaltantes('${p.NumeroPedido}')" class="btn btn-blue btn-sm"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Ver faltantes</button>
+                    <button onclick="abrirModalTasa(${p.IdPedido},'${p.NumeroPedido}',${p.TasaCambio||0},${p.IdCuenta||0})" class="btn btn-purple btn-sm"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Tasa</button>
+                    <button onclick="confirmarCerrarPedido(${p.IdPedido},'${p.NumeroPedido}')" class="btn btn-red btn-sm"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Cerrar</button>
                 </td>
             </tr>`;
         }).join('');
@@ -665,7 +665,7 @@
             const foto   = a.Fotografia
                 ? `<div style="position:relative;width:28px;height:28px">
                        <img src="${a.Fotografia}" style="width:28px;height:28px;object-fit:cover;border-radius:4px" onerror="this.parentElement.style.display='none'">
-                       <span style="position:absolute;bottom:-3px;right:-3px;background:#16a34a;color:#fff;border-radius:50%;width:13px;height:13px;display:flex;align-items:center;justify-content:center;font-size:8px;line-height:1;border:1.5px solid #0d1117">✓</span>
+                       <span style="position:absolute;bottom:-3px;right:-3px;background:#16a34a;color:#fff;border-radius:50%;width:13px;height:13px;display:flex;align-items:center;justify-content:center;font-size:8px;line-height:1;border:1.5px solid #0d1117"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg></span>
                    </div>`
                 : '—';
             return `<tr>
@@ -679,7 +679,7 @@
                 <td style="text-align:right;color:#9ca3af">$${precio.toFixed(2)}</td>
                 <td style="text-align:right;color:#4ade80;font-weight:700">$${(precio*cant).toFixed(2)}</td>
                 <td>${foto}</td>
-                <td style="display:flex;gap:4px"><button onclick="editarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Editar">✏️</button><button onclick="duplicarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Duplicar (mismo artículo, otra talla/color)">⧉</button>${a.EstaEntregado ? '' : `<button onclick="pedirEliminarArt(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm imp-del-btn" title="Eliminar artículo">🗑</button>`}</td>
+                <td style="display:flex;gap:4px"><button onclick="editarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Editar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg></button><button onclick="duplicarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Duplicar (mismo artículo, otra talla/color)"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>${a.EstaEntregado ? '' : `<button onclick="pedirEliminarArt(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm imp-del-btn" title="Eliminar artículo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}</td>
             </tr>`;
         }).join('');
         actualizarTotales(data);
@@ -818,7 +818,7 @@
                 }).then(r => r.json());
             }
             if (d.ok) {
-                mostrarMsg(msg,'ok', detalleId ? '✓ Artículo actualizado' : '✓ Artículo agregado');
+                mostrarMsg(msg,'ok', detalleId ? 'Artículo actualizado' : 'Artículo agregado');
                 limpiarArticulo(!detalleId);
                 document.getElementById(document.getElementById('a-articulo-id').value ? 'a-sku' : 'a-articulo-txt').focus();
                 cargarArticulosPedido(+idPed);
@@ -1146,7 +1146,7 @@
             document.getElementById('na-panel').style.display = 'none';
             if (naFila >= 0 && nuevo) cambiarArtFila(naFila, nombre);
             else renderPegados();
-            mostrarMsg(document.getElementById('msg-pegar'), 'ok', '✓ Artículo "' + nombre + '" creado');
+            mostrarMsg(document.getElementById('msg-pegar'), 'ok', 'Artículo "' + nombre + '" creado');
         } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
         finally { btn.disabled = false; }
     }
@@ -1207,10 +1207,10 @@
         const faltan = pend.filter(f => !f.idArt).length;
         document.getElementById('pv-resumen').innerHTML = filasPegadas.length
             ? `<span><b>${filasPegadas.length}</b> artículos</span><span><b>${unidades}</b> unidades</span><span>Peso <b>${peso.toLocaleString('es-HN')} g</b></span><span>Total <b class="tot">$${tot.toFixed(2)}</b></span>`
-              + (faltan ? `<span style="color:#f87171;cursor:pointer;text-decoration:underline dotted" title="Ir a la siguiente fila sin artículo" onclick="irSiguienteFaltante()">● ${faltan} sin artículo →</span>` : '')
+              + (faltan ? `<span style="color:#f87171;cursor:pointer;text-decoration:underline dotted" title="Ir a la siguiente fila sin artículo" onclick="irSiguienteFaltante()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg> ${faltan} sin artículo →</span>` : '')
             : '';
         const btn = document.getElementById('pv-btn');
-        btn.textContent = pend.length ? `✓ Guardar ${pend.length} artículo${pend.length === 1 ? '' : 's'}` : '✓ Guardar';
+        btn.textContent = pend.length ? `Guardar ${pend.length} artículo${pend.length === 1 ? '' : 's'}` : 'Guardar';
         tb.innerHTML = filasPegadas.length ? filasPegadas.map((f,i) => {
             const pesoF = f.peso || pesoDe(f.idArt);
             const meta = [esc(f.sku), f.talla ? `<span>${esc(f.talla)}</span>` : ''].filter(Boolean).join(' · ');
@@ -1220,17 +1220,17 @@
                 <div class="imp-prod" title="${esc(f.desc)}">${f.link ? `<a href="${esc(f.link)}" target="_blank" style="color:inherit;text-decoration:none">${esc(f.desc || f.sku)}</a>` : esc(f.desc || f.sku)}</div>
                 <div class="imp-meta">${meta}</div>
             </td>
-            <td><input class="form-input pv-art" data-i="${i}" list="dl-articulos" autocomplete="off" placeholder="🔍 Buscar…" value="${esc(nombreDe(f.idArt))}"
+            <td><input class="form-input pv-art" data-i="${i}" list="dl-articulos" autocomplete="off" placeholder="Buscar…" value="${esc(nombreDe(f.idArt))}"
                 style="padding:6px 9px;font-size:12px;width:100%;${f.idArt ? '' : 'border-color:#b91c1c;background:#1f0707'}" ${f.guardado ? 'disabled' : ''}
                 onchange="cambiarArtFila(${i}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></td>
-            <td><input class="form-input pv-cli" data-i="${i}" list="dl-clientes" autocomplete="off" placeholder="👤 Sin cliente" value="${esc(nombreCli(f.idCli))}"
+            <td><input class="form-input pv-cli" data-i="${i}" list="dl-clientes" autocomplete="off" placeholder="Sin cliente" value="${esc(nombreCli(f.idCli))}"
                 style="padding:6px 9px;font-size:12px;width:100%;${f.idCli ? 'border-color:#1e3a5f;color:#93c5fd' : ''}" ${f.guardado ? 'disabled' : ''}
                 onchange="cambiarCliFila(${i}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></td>
             <td style="text-align:right;color:#e2e8f0">${f.cant}</td>
             <td style="text-align:right">$${f.precio.toFixed(2)}</td>
             <td style="text-align:right;color:#6b7280">${pesoF} g</td>
             <td style="text-align:right;color:#4ade80;font-weight:700">$${(f.precio*f.cant).toFixed(2)}</td>
-            <td id="pv-st-${i}" style="text-align:center;color:#4ade80;font-weight:700">${f.guardado ? '✓' : `<button class="imp-del" title="Quitar esta fila" onclick="eliminarFila(${i})">🗑</button>`}</td></tr>`;
+            <td id="pv-st-${i}" style="text-align:center;color:#4ade80;font-weight:700">${f.guardado ? '<svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg>' : `<button class="imp-del" title="Quitar esta fila" onclick="eliminarFila(${i})"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}</td></tr>`;
         }).join('')
             : '<tr><td colspan="9" class="imp-empty">Pega un pedido de SHEIN o filas de Excel para ver los artículos aquí</td></tr>';
     }
@@ -1244,7 +1244,7 @@
                 <div><div style="color:#e2e8f0;font-weight:700">${esc(a.NombreArticulo || '—')} <span style="color:#6b7280;font-weight:400">· ${esc(a.TallaColor || '')}</span></div>
                 <div style="font-family:monospace;font-size:11px;color:#6b7280;margin-top:2px">${esc(a.CodigoArticulo || '')}</div>
                 <div style="font-size:12px;color:#4ade80;margin-top:2px">$${(parseFloat(a.ValorCompra||0) * parseInt(a.CantidadArticulos||1)).toFixed(2)}</div></div>
-             </div>` + (a.IdCliente ? '<div style="margin-top:10px;font-size:12px;color:#fbbf24">⚠ Este artículo ya está asignado a un cliente.</div>' : '');
+             </div>` + (a.IdCliente ? '<div style="margin-top:10px;font-size:12px;color:#fbbf24"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Este artículo ya está asignado a un cliente.</div>' : '');
         document.getElementById('msg-del-art').style.display = 'none';
         document.getElementById('modal-del-art').classList.add('open');
     }
@@ -1257,7 +1257,7 @@
             if (!d.ok) { mostrarMsg(msg, 'err', d.error); return; }
             document.getElementById('modal-del-art').classList.remove('open');
             if (document.getElementById('a-detalle-id').value == artAEliminar.IdDetallePedido) limpiarArticulo();
-            mostrarMsg(document.getElementById('msg-agregar'), 'ok', '✓ Artículo eliminado');
+            mostrarMsg(document.getElementById('msg-agregar'), 'ok', 'Artículo eliminado');
             const idPed = document.getElementById('a-pedido').value;
             cargarArticulosPedido(+idPed); cargarPedidosAbiertos();
         } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
@@ -1308,7 +1308,7 @@
         for (let i = 0; i < filasPegadas.length; i++) {
             const f = filasPegadas[i], st = document.getElementById('pv-st-' + i);
             if (f.guardado) continue;
-            st.textContent = '⏳';
+            st.innerHTML = '<svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>';
             try {
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDe(f.idArt), fotoUrl:f.foto||null, idArticulo: +f.idArt,
@@ -1321,14 +1321,14 @@
                     } catch(e) { f.errCli = 'Error de conexión'; }
                 }
                 if (d.ok && f.idCli && !d.idDetallePedido) f.errCli = 'el servidor no devolvió el ID (reinicia el backend)';
-                if (d.ok) { ok++; f.guardado = true; aprender(f.desc, f.idArt); st.textContent = '✓'; st.style.color = '#4ade80'; } else { err++; st.textContent = '✗'; st.title = d.error; st.style.color = '#f87171'; if (!primerError) primerError = d.error; }
-            } catch(e) { err++; st.textContent = '✗'; st.style.color = '#f87171'; if (!primerError) primerError = 'Error de conexión'; }
+                if (d.ok) { ok++; f.guardado = true; aprender(f.desc, f.idArt); st.innerHTML = '<svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg>'; st.style.color = '#4ade80'; } else { err++; st.innerHTML = '<svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'; st.title = d.error; st.style.color = '#f87171'; if (!primerError) primerError = d.error; }
+            } catch(e) { err++; st.innerHTML = '<svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'; st.style.color = '#f87171'; if (!primerError) primerError = 'Error de conexión'; }
         }
         btn.disabled = false;
-        mostrarMsg(msg, err ? 'err' : 'ok', `✓ ${ok} guardados` + (err ? ` · ✗ ${err} con error: ${primerError}` : ''));
+        mostrarMsg(msg, err ? 'err' : 'ok', `${ok} guardados` + (err ? ` · ${err} con error: ${primerError}` : ''));
         cargarArticulosPedido(+idPed); cargarPedidosAbiertos();
         const sinCli = filasPegadas.filter(f => f.errCli).length;
-        if (sinCli) { mostrarMsg(msg, 'err', `✓ ${ok} guardados, pero ${sinCli} no se pudieron asignar al cliente: ${filasPegadas.find(f => f.errCli).errCli}. Asígnalos en Clientes.`); }
+        if (sinCli) { mostrarMsg(msg, 'err', `${ok} guardados, pero ${sinCli} no se pudieron asignar al cliente: ${filasPegadas.find(f => f.errCli).errCli}. Asígnalos en Clientes.`); }
         renderPegados();
         if (!err && !sinCli) setTimeout(cerrarPegar, 1400);
     }
@@ -1343,7 +1343,7 @@
 <div class="modal-bg" id="modal-tasa-cp">
     <div class="modal">
         <div class="modal-head">
-            <div class="modal-title">💱 Tasa de Cambio</div>
+            <div class="modal-title"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Tasa de Cambio</div>
             <button class="modal-x" onclick="document.getElementById('modal-tasa-cp').classList.remove('open')">×</button>
         </div>
         <div class="modal-body">
@@ -1381,7 +1381,7 @@
     <div class="modal imp-modal">
         <div class="modal-head">
             <div class="imp-head">
-                <div class="imp-ico">📦</div>
+                <div class="imp-ico"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
                 <div>
                     <div class="modal-title">Importar artículos</div>
                     <div class="imp-sub" id="pv-subtitulo">—</div>
@@ -1393,14 +1393,14 @@
             <div id="pv-origen">
                 <div class="imp-src">
                     <div class="imp-card">
-                        <h4>🛍️ Desde SHEIN o Amazon</h4>
+                        <h4><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Desde SHEIN o Amazon</h4>
                         Abre el detalle del pedido en la tienda, toca el marcador y vuelve aquí.<br>
                         <a id="bm-shein" class="imp-bm" href="#" title="Arrástralo a tu barra de marcadores"
-                           onclick="event.preventDefault();alert('Arrástralo a la barra de marcadores. Luego úsalo en la página del pedido en SHEIN.')">📦 Tienda → MultiStore</a>
+                           onclick="event.preventDefault();alert('Arrástralo a la barra de marcadores. Luego úsalo en la página del pedido en SHEIN.')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Tienda → MultiStore</a>
                         <span style="font-size:11px;color:#4b5563"> ← arrástralo a tus marcadores (solo una vez)</span>
                     </div>
                     <div class="imp-card">
-                        <h4>📊 Desde Excel</h4>
+                        <h4><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg> Desde Excel</h4>
                         Copia las filas con estas columnas, en este orden:<br>
                         <span class="imp-cols">SKU · Talla/Color · Precio · Cantidad · Peso · Descripción · Link</span><br>
                         <span style="font-size:11px;color:#4b5563">Solo el SKU es obligatorio.</span>
@@ -1408,13 +1408,13 @@
                 </div>
                 <div style="display:flex;gap:8px;align-items:stretch;margin-bottom:16px">
                     <textarea class="form-input" id="pv-texto" rows="3" style="flex:1;font-family:monospace;font-size:12px;resize:vertical" oninput="parsearPegado()" placeholder="Haz clic aquí y pega con Ctrl+V…"></textarea>
-                    <button class="btn btn-blue" onclick="pegarDelPortapapeles()" style="flex-direction:column;justify-content:center;min-width:96px">📥<span>Pegar</span></button>
+                    <button class="btn btn-blue" onclick="pegarDelPortapapeles()" style="flex-direction:column;justify-content:center;min-width:96px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10"/><path d="m17 10 4 4-4 4"/></svg><span>Pegar</span></button>
                 </div>
             </div>
             <div class="imp-loaded" id="pv-cargado">
-                <span style="font-size:16px">✓</span>
+                <span style="font-size:16px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg></span>
                 <div style="flex:1" id="pv-cargado-txt"></div>
-                <button class="btn btn-ghost btn-sm" onclick="cambiarOrigen()">↺ Pegar otro</button>
+                <button class="btn btn-ghost btn-sm" onclick="cambiarOrigen()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Pegar otro</button>
             </div>
 
             <div class="imp-opts">
@@ -1424,19 +1424,19 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Artículo para filas vacías</label>
-                    <input class="form-input" id="pv-art-todos" list="dl-articulos" placeholder="🔍 Escribe para buscar…" autocomplete="off" onchange="aplicarArtTodos(idPorNombre(this.value))">
+                    <input class="form-input" id="pv-art-todos" list="dl-articulos" placeholder="Escribe para buscar…" autocomplete="off" onchange="aplicarArtTodos(idPorNombre(this.value))">
                     <datalist id="dl-articulos"></datalist>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Cliente para filas vacías <span style="text-transform:none;letter-spacing:0;color:#374151">(opcional)</span></label>
-                    <input class="form-input" id="pv-cli-todos" list="dl-clientes" placeholder="👤 Buscar cliente…" autocomplete="off" onchange="aplicarCliTodos(this.value)">
+                    <input class="form-input" id="pv-cli-todos" list="dl-clientes" placeholder="Buscar cliente…" autocomplete="off" onchange="aplicarCliTodos(this.value)">
                     <datalist id="dl-clientes"></datalist>
                 </div>
-                <button class="btn btn-ghost" onclick="abrirNuevoArt('', -1)" style="height:41px">➕ Nuevo artículo</button>
+                <button class="btn btn-ghost" onclick="abrirNuevoArt('', -1)" style="height:41px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo artículo</button>
             </div>
 
             <div id="na-panel" style="display:none;background:#071a11;border:1px solid #14532d;border-radius:10px;padding:14px;margin-bottom:12px">
-                <div style="font-size:11px;color:#4ade80;font-weight:700;margin-bottom:10px;letter-spacing:.5px">➕ NUEVO ARTÍCULO DEL CATÁLOGO <span id="na-para" style="color:#6b7280;font-weight:400"></span></div>
+                <div style="font-size:11px;color:#4ade80;font-weight:700;margin-bottom:10px;letter-spacing:.5px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> NUEVO ARTÍCULO DEL CATÁLOGO <span id="na-para" style="color:#6b7280;font-weight:400"></span></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
                     <div class="form-group" style="flex:2;min-width:160px"><label class="form-label">Nombre</label>
                         <input class="form-input" id="na-nombre" type="text" placeholder="Ej: Maquillaje" onkeydown="if(event.key==='Enter'){event.preventDefault();crearArtRapido();}"></div>
@@ -1466,7 +1466,7 @@
             <div class="imp-stats" id="pv-resumen"></div>
             <div style="display:flex;gap:8px">
                 <button class="btn btn-ghost" onclick="cerrarPegar()">Cancelar</button>
-                <button class="btn btn-green" id="pv-btn" onclick="guardarPegados()" style="min-width:170px;justify-content:center">✓ Guardar</button>
+                <button class="btn btn-green" id="pv-btn" onclick="guardarPegados()" style="min-width:170px;justify-content:center"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M20 6 9 17l-5-5"/></svg> Guardar</button>
             </div>
         </div>
     </div>
@@ -1477,7 +1477,7 @@
 <div class="modal-bg" id="modal-del-art">
     <div class="modal">
         <div class="modal-head">
-            <div class="modal-title">🗑 Eliminar artículo</div>
+            <div class="modal-title"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Eliminar artículo</div>
             <button class="modal-x" onclick="document.getElementById('modal-del-art').classList.remove('open')">×</button>
         </div>
         <div class="modal-body">
@@ -1487,7 +1487,7 @@
         </div>
         <div class="modal-foot">
             <button class="btn btn-ghost" onclick="document.getElementById('modal-del-art').classList.remove('open')">Cancelar</button>
-            <button class="btn btn-red" id="btn-del-art" onclick="confirmarEliminarArt()">🗑 Sí, eliminar</button>
+            <button class="btn btn-red" id="btn-del-art" onclick="confirmarEliminarArt()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Sí, eliminar</button>
         </div>
     </div>
 </div>
@@ -1496,7 +1496,7 @@
 <div class="modal-bg" id="modal-cerrar-cp">
     <div class="modal">
         <div class="modal-head">
-            <div class="modal-title">🔒 Cerrar Pedido</div>
+            <div class="modal-title"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Cerrar Pedido</div>
             <button class="modal-x" onclick="document.getElementById('modal-cerrar-cp').classList.remove('open')">×</button>
         </div>
         <div class="modal-body">
@@ -1510,7 +1510,7 @@
         </div>
         <div class="modal-foot">
             <button class="btn btn-ghost" onclick="document.getElementById('modal-cerrar-cp').classList.remove('open')">Cancelar</button>
-            <button class="btn btn-red" onclick="ejecutarCerrarPedido()">🔒 Sí, cerrar pedido</button>
+            <button class="btn btn-red" onclick="ejecutarCerrarPedido()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Sí, cerrar pedido</button>
         </div>
     </div>
 </div>

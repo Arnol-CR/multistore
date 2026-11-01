@@ -1,6 +1,6 @@
 /**
  * marcador.js — MultiStore
- * Código del botón de marcadores "📦 Tienda → MultiStore".
+ * Código del botón de marcadores "Tienda → MultiStore".
  * La función sheinScraper() se ejecuta en la página de la TIENDA (SHEIN, Amazon…), no en MultiStore,
  * por eso debe ser autocontenida (no puede usar nada de fuera).
  *
@@ -95,6 +95,82 @@ function sheinScraper() {
         }
     }
 
+    /* ───────── CARRITO SHEIN ───────── */
+    else if (/shein\./i.test(host) && /cart/i.test(location.pathname)) {
+        tienda = 'SHEIN'; tipo = 'carrito';
+        var tachado = function (e) {
+            for (var x = e; x && x !== document.body; x = x.parentElement) {
+                if (/^(DEL|S|STRIKE)$/.test(x.tagName)) return true;
+                if ((getComputedStyle(x).textDecorationLine || '').indexOf('line-through') >= 0) return true;
+            }
+            return false;
+        };
+        // Precio real: elemento cuyo texto completo es "$8.86" y que NO está tachado (SHEIN parte el precio en varios <span>)
+        var precioDe = function (fila) {
+            var els = fila.querySelectorAll('*');
+            for (var e = 0; e < els.length; e++) {
+                var t = (els[e].textContent || '').replace(/\s+/g, '');
+                if (/^(US)?\$[\d,]+(\.\d{1,2})?$/.test(t) && !tachado(els[e])) return parseFloat(t.replace(/[^\d.]/g, '')) || 0;
+            }
+            return 0;
+        };
+        var tituloLimpio = function (t) {
+            return t.replace(/\s+/g, ' ').trim().replace(/^(Local|Trends|Nuevo|New|Hot)\s+/i, '').replace(/^-?\d+%\s*/, '').replace(/^\d+\s+piezas?\s+/i, '');
+        };
+        // Cada producto del carrito tiene UN control "Qty": se usa para separar los productos.
+        var marcas = [].filter.call(document.querySelectorAll('body *'), function (e) {
+            return /^(Qty|Cant(idad)?)\s*[:：]?\s*\d*$/i.test((e.textContent || '').replace(/\s+/g, ' ').trim());
+        });
+        marcas = marcas.filter(function (e) { return !marcas.some(function (o) { return o !== e && e.contains(o); }); });   // los más internos
+        var cuenta = function (el) { var n = 0; for (var q = 0; q < marcas.length; q++) if (el.contains(marcas[q])) n++; return n; };
+        var ruido = /\$|vendid|sold|Qty|Cant(idad)?\s*:|agotad|restante|Baj[oó] de precio|Env[ií]o|[uú]ltimos|estimado|cup[oó]n|^-?\d+%|^(Local|Trends|Nuevo)$/i;
+        var filasC = [];
+        marcas.forEach(function (m) {
+            var fr = m;
+            while (fr.parentElement && fr.parentElement !== document.body && cuenta(fr.parentElement) === 1) fr = fr.parentElement;
+            if (!fr.querySelector('img') || filasC.indexOf(fr) >= 0) return;
+            filasC.push(fr);
+            var ls = lineasDe(fr), tit = '', vc = '', iTit = -1;
+            for (var k = 0; k < ls.length; k++) if (ls[k].length >= 15 && !ruido.test(ls[k])) { tit = ls[k]; iTit = k; break; }
+            if (!tit) return;
+            var at = fr.querySelectorAll('[class*="attr"], [class*="sku-info"], [class*="skuInfo"], [class*="sale-attr"], [class*="goods-size"], [class*="color-size"]');
+            for (var z = 0; z < at.length && !vc; z++) {
+                var tz = (at[z].innerText || '').replace(/\s+/g, ' ').trim();
+                if (tz && tz.length < 80 && !ruido.test(tz) && tz !== tit) vc = tz;
+            }
+            if (!vc) for (var k2 = iTit + 1; k2 < ls.length && !vc; k2++) {
+                var l2 = ls[k2];
+                if (l2.length < 60 && !ruido.test(l2) && !/vendido por|sold by/i.test(l2)) vc = l2;
+            }
+            vc = vc.replace(/[\s⌄▾▼˅⌵›>∨]+$/, '').trim();
+            var qc = ((fr.innerText || '').match(/(?:Qty|Cant(?:idad)?)\s*[:：]?\s*(\d+)/i) || [])[1] || '1';
+            var ah = fr.querySelector('a[href*="-p-"]');
+            var gidC = ah ? (ah.href.match(/-p-(\d+)/) || [])[1] : '';
+            var skuEl = fr.querySelector('[data-sku]');
+            items.push({ sku: skuEl ? skuEl.getAttribute('data-sku') : '', titulo: tituloLimpio(tit), talla: vc,
+                precio: precioDe(fr), cant: parseInt(qc, 10) || 1,
+                foto: imgDe(fr).replace(/_thumbnail_\d+x\d*/, ''), link: gidC ? location.origin + '/p-' + gidC + '.html' : '' });
+        });
+    }
+    /* ───────── CARRITO AMAZON ───────── */
+    else if (/amazon\./i.test(host) && /cart/i.test(location.pathname)) {
+        tienda = 'Amazon'; tipo = 'carrito';
+        var activos = document.querySelector('#sc-active-cart') || document;
+        var cs = activos.querySelectorAll('[data-asin][data-price], .sc-list-item[data-asin]');
+        for (var a2 = 0; a2 < cs.length; a2++) {
+            var ci = cs[a2], asn = ci.getAttribute('data-asin');
+            if (!asn || items.some(function (x) { return x.sku === asn; })) continue;
+            var tt2 = (ci.querySelector('.sc-product-title, .a-truncate-full, .sc-product-link') || {}).innerText || '';
+            var im2 = ci.querySelector('img');
+            var vars = [].map.call(ci.querySelectorAll('.sc-product-variation, .a-list-item .a-size-small'), function (e) { return (e.innerText || '').replace(/^[^:]+:\s*/, '').trim(); }).filter(Boolean).slice(0, 3);
+            items.push({ sku: asn, titulo: tt2.replace(/\s+/g, ' ').trim(), talla: vars.join(' / '),
+                precio: parseFloat(ci.getAttribute('data-price')) || num((ci.querySelector('.sc-product-price, .a-price .a-offscreen') || {}).innerText),
+                cant: parseInt(ci.getAttribute('data-quantity'), 10) || 1,
+                foto: im2 ? (im2.src || '').replace(/\._[^./]+_\./, '.') : '', link: 'https://www.amazon.com/dp/' + asn });
+        }
+        items = items.filter(function (x) { return x.titulo; });
+    }
+
     /* ───────── PÁGINA DE PRODUCTO (cotizar) ───────── */
     if (!items.length) {
         tipo = 'producto';
@@ -136,11 +212,43 @@ function sheinScraper() {
                 it.precio = num(pe ? (pe.getAttribute('content') || pe.innerText) : '') || num(meta('product:price:amount') || meta('og:price:amount'));
             }
             if (/shein\./i.test(host)) {
-                var skuM = (document.body.innerText.match(/SKU\s*[:：]\s*([A-Za-z0-9\-_]+)/) || [])[1];
-                if (skuM) it.sku = skuM;
+                // El precio y la talla se buscan JUNTO AL TÍTULO del producto
+                // (en la página también hay precios del carrito desplegable y de recomendaciones).
+                var esTachado = function (e) {
+                    for (var x = e; x && x !== document.body; x = x.parentElement) {
+                        if (/^(DEL|S|STRIKE)$/.test(x.tagName)) return true;
+                        if ((getComputedStyle(x).textDecorationLine || '').indexOf('line-through') >= 0) return true;
+                    }
+                    return false;
+                };
+                var primerPrecio = function (cont) {
+                    var els = cont.querySelectorAll('*');
+                    for (var e = 0; e < els.length; e++) {
+                        var t = (els[e].textContent || '').replace(/\s+/g, '');
+                        if (/^(US)?\$[\d,]+(\.\d{1,2})?$/.test(t) && !esTachado(els[e]) && els[e].offsetParent !== null) return parseFloat(t.replace(/[^\d.]/g, '')) || 0;
+                    }
+                    return 0;
+                };
+                var h1 = document.querySelector('h1') || document.querySelector('[class*="goods-name"], [class*="product-intro__head-name"]');
+                var intro = h1;
+                while (intro && intro.parentElement && intro !== document.body && !primerPrecio(intro)) intro = intro.parentElement;
+                if (intro && intro !== document.body) {
+                    var pIntro = primerPrecio(intro); if (pIntro) it.precio = pIntro;
+                    var skuM = ((intro.innerText || '').match(/SKU\s*[:：]\s*([A-Za-z0-9\-_]+)/) || [])[1]; if (skuM) it.sku = skuM;
+                    // talla / color seleccionados: botones marcados (sin imagen, texto corto)
+                    var selec = [], cand = intro.parentElement ? intro.parentElement.querySelectorAll('[aria-checked="true"], [aria-selected="true"], [class*="active"], [class*="selected"], [class*="checked"]') : [];
+                    for (var c2 = 0; c2 < cand.length && selec.length < 2; c2++) {
+                        var el2 = cand[c2];
+                        if (el2.querySelector('img') && !(el2.getAttribute('aria-label') || el2.getAttribute('title'))) continue;
+                        var tx = ((el2.innerText || '').trim() || el2.getAttribute('aria-label') || el2.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+                        if (!tx || tx.length > 40 || /\$|talla|color|size|cup[oó]n|env[ií]o|añadir|bolsa|^\d+$/i.test(tx) || selec.indexOf(tx) >= 0) continue;
+                        selec.push(tx);
+                    }
+                    if (selec.length) it.talla = selec.join(' / ');
+                } else {
+                    var skuB = (document.body.innerText.match(/SKU\s*[:：]\s*([A-Za-z0-9\-_]+)/) || [])[1]; if (skuB) it.sku = skuB;
+                }
                 var gid2 = (location.pathname.match(/-p-(\d+)/) || [])[1]; if (gid2) it.link = location.origin + '/p-' + gid2 + '.html';
-                var tSel = document.querySelector('[class*="size-radio_active"], [class*="sizes-radio_active"], [class*="size-item--active"]');
-                if (tSel) it.talla = (tSel.innerText || '').trim();
                 it.foto = it.foto.replace(/_thumbnail_\d+x\d*/, '');
             }
             if (it.foto && it.foto.indexOf('//') === 0) it.foto = 'https:' + it.foto;
@@ -152,9 +260,11 @@ function sheinScraper() {
     if (!items.length) { alert('MultiStore: no encontré artículos en esta página. Abre el DETALLE de un pedido o la página de un producto y espera a que cargue.'); return; }
     var data = 'MULTISTORE_IMPORT' + JSON.stringify({ tienda: tienda, pedido: pedido, tipo: tipo, items: items });
     var ok = function () {
-        alert(tipo === 'producto'
-            ? '✓ MultiStore: producto copiado (' + tienda + ').\n' + items[0].titulo.substring(0, 80) + (items[0].precio ? '\n$' + items[0].precio : '') + (items[0].pesoLb ? ' · ' + items[0].pesoLb.toFixed(2) + ' lb' : '') + '\nVe a MultiStore → Cotización → Pegar'
-            : '✓ MultiStore: ' + items.length + ' artículos copiados del pedido ' + tienda + ' ' + pedido + '.\nVe a MultiStore → Pegar varios (o Cotización) → Pegar');
+        alert(tipo === 'carrito'
+            ? 'MultiStore: ' + items.length + ' productos copiados del carrito de ' + tienda + '.\nVe a MultiStore → Cotización → Pegar'
+            : tipo === 'producto'
+            ? 'MultiStore: producto copiado (' + tienda + ').\n' + items[0].titulo.substring(0, 80) + (items[0].precio ? '\n$' + items[0].precio : '') + (items[0].pesoLb ? ' · ' + items[0].pesoLb.toFixed(2) + ' lb' : '') + '\nVe a MultiStore → Cotización → Pegar'
+            : 'MultiStore: ' + items.length + ' artículos copiados del pedido ' + tienda + ' ' + pedido + '.\nVe a MultiStore → Pegar varios (o Cotización) → Pegar');
     };
     function viejo() { var ta = document.createElement('textarea'); ta.value = data; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(data).then(ok, viejo); else viejo();

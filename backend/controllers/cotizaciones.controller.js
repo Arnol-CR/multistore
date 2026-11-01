@@ -47,12 +47,17 @@ async function asegurarTablas(pool) {
       PrecioFinalL  DECIMAL(18,2) NOT NULL DEFAULT 0
     );
   `);
+  await pool.request().query(`IF COL_LENGTH('dbo.C_Cotizaciones', 'IdTienda') IS NULL ALTER TABLE dbo.C_Cotizaciones ADD IdTienda INT NULL;`);
+  await pool.request().query(`IF COL_LENGTH('dbo.C_CotizacionDetalle', 'IdDetallePedido') IS NULL ALTER TABLE dbo.C_CotizacionDetalle ADD IdDetallePedido INT NULL;`);
   tablasListas = true;
 }
 
 const err = (res, e, code = 500) => res.status(code).json({ ok: false, error: e.message || String(e) });
 
-/* Valores por defecto: última tasa de cambio usada y última tarifa por casillero */
+/* Valores por defecto:
+   - casilleros con su tarifa: A_Casilleros.PrecioLibra
+   - impuesto de cada tienda:  A_Empresas.ValorImpuesto
+   - última tasa de cambio usada */
 const getDefaults = async (req, res) => {
   try {
     const pool = await poolPromise; await asegurarTablas(pool);
@@ -60,13 +65,16 @@ const getDefaults = async (req, res) => {
       SELECT TOP 1 TasaCambio FROM C_Pedidos WHERE TasaCambio IS NOT NULL AND TasaCambio > 0 ORDER BY IdPedido DESC`);
     const tc = await pool.request().query(`
       SELECT TOP 1 TasaCambio FROM C_Cotizaciones WHERE TasaCambio > 0 ORDER BY IdCotizacion DESC`);
-    const tarifas = await pool.request().query(`
-      SELECT c.IdCasillero, c.TarifaLibra FROM C_Cotizaciones c
-      WHERE c.IdCasillero IS NOT NULL AND c.TarifaLibra > 0
-        AND c.IdCotizacion = (SELECT MAX(x.IdCotizacion) FROM C_Cotizaciones x WHERE x.IdCasillero = c.IdCasillero AND x.TarifaLibra > 0)`);
+    const cas = await pool.request().query(`
+      SELECT C.IdCasillero, C.IdEmpresa, C.NombreCasillero, E.NombreEmpresa, CAST(C.PrecioLibra AS DECIMAL(18,2)) AS PrecioLibra
+      FROM A_Casilleros C LEFT JOIN A_Empresas E ON E.IdEmpresa = C.IdEmpresa
+      ORDER BY E.NombreEmpresa, C.NombreCasillero`);
+    const imp = await pool.request().query(`
+      SELECT IdEmpresa, NombreEmpresa, CAST(ValorImpuesto AS DECIMAL(18,4)) AS ValorImpuesto FROM A_Empresas WHERE ValorImpuesto IS NOT NULL`);
     res.json({ ok: true, data: {
       tasaCambio: (tc.recordset[0] || t.recordset[0] || {}).TasaCambio || null,
-      tarifas: tarifas.recordset
+      casilleros: cas.recordset,
+      impuestos: imp.recordset
     }});
   } catch (e) { err(res, e); }
 };
@@ -119,6 +127,7 @@ const guardar = async (req, res) => {
       .input('Telefono',        sql.NVarChar(40),   (b.telefono || '').substring(0, 40))
       .input('IdVendedor',      sql.Int,            b.idVendedor ? parseInt(b.idVendedor) : null)
       .input('IdCasillero',     sql.Int,            b.idCasillero ? parseInt(b.idCasillero) : null)
+      .input('IdTienda',        sql.Int,            b.idTienda ? parseInt(b.idTienda) : null)
       .input('TarifaLibra',     sql.Decimal(18,2),  parseFloat(b.tarifaLibra) || 0)
       .input('ImpuestoPct',     sql.Decimal(9,2),   parseFloat(b.impuestoPct) || 0)
       .input('MargenPct',       sql.Decimal(9,2),   parseFloat(b.margenPct) || 0)
@@ -132,7 +141,7 @@ const guardar = async (req, res) => {
     if (id) {
       const r = await cab(new sql.Request(tx)).input('Id', sql.Int, id).query(`
         UPDATE C_Cotizaciones SET IdCliente=@IdCliente, NombreCliente=@NombreCliente, Telefono=@Telefono, IdVendedor=@IdVendedor,
-          IdCasillero=@IdCasillero, TarifaLibra=@TarifaLibra, ImpuestoPct=@ImpuestoPct, MargenPct=@MargenPct, TasaCambio=@TasaCambio,
+          IdCasillero=@IdCasillero, IdTienda=@IdTienda, TarifaLibra=@TarifaLibra, ImpuestoPct=@ImpuestoPct, MargenPct=@MargenPct, TasaCambio=@TasaCambio,
           RedondearLibras=@RedondearLibras, TotalUSD=@TotalUSD, TotalLempiras=@TotalLempiras, Notas=@Notas
         WHERE IdCotizacion=@Id AND Estado <> 'Convertida';
         SELECT @@ROWCOUNT AS n;`);
@@ -140,9 +149,9 @@ const guardar = async (req, res) => {
       await new sql.Request(tx).input('Id', sql.Int, id).query('DELETE FROM C_CotizacionDetalle WHERE IdCotizacion=@Id');
     } else {
       const r = await cab(new sql.Request(tx)).query(`
-        INSERT INTO C_Cotizaciones (IdCliente, NombreCliente, Telefono, IdVendedor, IdCasillero, TarifaLibra, ImpuestoPct, MargenPct, TasaCambio, RedondearLibras, TotalUSD, TotalLempiras, Notas)
+        INSERT INTO C_Cotizaciones (IdCliente, NombreCliente, Telefono, IdVendedor, IdCasillero, IdTienda, TarifaLibra, ImpuestoPct, MargenPct, TasaCambio, RedondearLibras, TotalUSD, TotalLempiras, Notas)
         OUTPUT INSERTED.IdCotizacion
-        VALUES (@IdCliente, @NombreCliente, @Telefono, @IdVendedor, @IdCasillero, @TarifaLibra, @ImpuestoPct, @MargenPct, @TasaCambio, @RedondearLibras, @TotalUSD, @TotalLempiras, @Notas);`);
+        VALUES (@IdCliente, @NombreCliente, @Telefono, @IdVendedor, @IdCasillero, @IdTienda, @TarifaLibra, @ImpuestoPct, @MargenPct, @TasaCambio, @RedondearLibras, @TotalUSD, @TotalLempiras, @Notas);`);
       id = r.recordset[0].IdCotizacion;
       await new sql.Request(tx).input('Id', sql.Int, id).query(`
         UPDATE C_Cotizaciones SET NumeroCotizacion = 'COT-' + FORMAT(Fecha, 'yyMMdd') + '-' + RIGHT('000' + CAST(IdCotizacion AS VARCHAR(10)), 4) WHERE IdCotizacion=@Id`);
@@ -161,8 +170,9 @@ const guardar = async (req, res) => {
         .input('PesoLb',       sql.Decimal(18,3), parseFloat(l.pesoLb) || 0)
         .input('IdArticulo',   sql.Int,           l.idArticulo ? parseInt(l.idArticulo) : null)
         .input('PrecioFinalL', sql.Decimal(18,2), parseFloat(l.precioFinalL) || 0)
-        .query(`INSERT INTO C_CotizacionDetalle (IdCotizacion, Nombre, Link, Foto, Sku, TallaColor, PrecioUSD, Cantidad, PesoLb, IdArticulo, PrecioFinalL)
-                VALUES (@Id, @Nombre, @Link, @Foto, @Sku, @TallaColor, @PrecioUSD, @Cantidad, @PesoLb, @IdArticulo, @PrecioFinalL)`);
+        .input('IdDetallePedido', sql.Int,        l.idDetallePedido ? parseInt(l.idDetallePedido) : null)
+        .query(`INSERT INTO C_CotizacionDetalle (IdCotizacion, Nombre, Link, Foto, Sku, TallaColor, PrecioUSD, Cantidad, PesoLb, IdArticulo, PrecioFinalL, IdDetallePedido)
+                VALUES (@Id, @Nombre, @Link, @Foto, @Sku, @TallaColor, @PrecioUSD, @Cantidad, @PesoLb, @IdArticulo, @PrecioFinalL, @IdDetallePedido)`);
     }
     await tx.commit();
     const n = await pool.request().input('Id', sql.Int, id).query('SELECT NumeroCotizacion FROM C_Cotizaciones WHERE IdCotizacion=@Id');
@@ -175,12 +185,12 @@ const guardar = async (req, res) => {
 
 const cambiarEstado = async (req, res) => {
   try {
-    const ok = ['Borrador', 'Enviada', 'Aceptada', 'Rechazada'];
+    const ok = ['Borrador', 'Enviada', 'Aceptada', 'Rechazada'];   // 'Parcial' y 'Convertida' los pone el sistema
     const estado = req.body.estado;
     if (!ok.includes(estado)) return err(res, 'Estado no válido', 400);
     const pool = await poolPromise; await asegurarTablas(pool);
     await pool.request().input('Id', sql.Int, parseInt(req.params.id)).input('Estado', sql.NVarChar(20), estado)
-      .query("UPDATE C_Cotizaciones SET Estado=@Estado WHERE IdCotizacion=@Id AND Estado <> 'Convertida'");
+      .query("UPDATE C_Cotizaciones SET Estado=@Estado WHERE IdCotizacion=@Id AND Estado NOT IN ('Convertida','Parcial')");
     res.json({ ok: true });
   } catch (e) { err(res, e); }
 };
@@ -189,8 +199,8 @@ const eliminar = async (req, res) => {
   try {
     const pool = await poolPromise; await asegurarTablas(pool);
     const r = await pool.request().input('Id', sql.Int, parseInt(req.params.id))
-      .query("DELETE FROM C_Cotizaciones WHERE IdCotizacion=@Id AND Estado <> 'Convertida'; SELECT @@ROWCOUNT AS n;");
-    if (!r.recordset[0].n) return err(res, 'No se puede eliminar una cotización ya convertida en pedido', 400);
+      .query("DELETE FROM C_Cotizaciones WHERE IdCotizacion=@Id AND Estado NOT IN ('Convertida','Parcial'); SELECT @@ROWCOUNT AS n;");
+    if (!r.recordset[0].n) return err(res, 'No se puede eliminar: la cotización ya tiene productos en un pedido', 400);
     res.json({ ok: true });
   } catch (e) { err(res, e); }
 };
@@ -201,12 +211,15 @@ const convertir = async (req, res) => {
   try {
     const pool = await poolPromise; await asegurarTablas(pool);
     const id = parseInt(req.params.id);
-    const { idPedido, articulos, noPedidoTienda } = req.body || {};   // articulos: { IdDetalle: IdArticulo }
+    const { idPedido, articulos, noPedidoTienda, posiciones } = req.body || {};   // posiciones: índices (0,1,2…) de las líneas a convertir
     if (!idPedido) return err(res, 'Elige el pedido', 400);
     const c = (await pool.request().input('Id', sql.Int, id).query('SELECT * FROM C_Cotizaciones WHERE IdCotizacion=@Id')).recordset[0];
     if (!c) return err(res, 'La cotización no existe', 404);
     if (c.Estado === 'Convertida') return err(res, 'Esta cotización ya se convirtió en pedido', 400);
-    const lineas = (await pool.request().input('Id', sql.Int, id).query('SELECT * FROM C_CotizacionDetalle WHERE IdCotizacion=@Id ORDER BY IdDetalle')).recordset;
+    const todas = (await pool.request().input('Id', sql.Int, id).query('SELECT * FROM C_CotizacionDetalle WHERE IdCotizacion=@Id ORDER BY IdDetalle')).recordset;
+    const elegidas = Array.isArray(posiciones) && posiciones.length ? todas.filter((l, i) => posiciones.includes(i)) : todas;
+    const lineas = elegidas.filter(l => !l.IdDetallePedido);
+    if (!lineas.length) return err(res, 'Esos productos ya están en un pedido', 400);
     const falta = lineas.filter(l => !(articulos && articulos[l.IdDetalle]) && !l.IdArticulo);
     if (falta.length) return err(res, `Falta elegir el artículo del catálogo en ${falta.length} línea(s)`, 400);
 
@@ -239,11 +252,16 @@ const convertir = async (req, res) => {
       if (c.IdVendedor) await pool.request().input('IdDetalleCliente', sql.Int, idDet).input('IdVendedor', sql.Int, c.IdVendedor).execute('Up_DetallesPedidosIdVendedor');
       if (l.PrecioFinalL > 0) await pool.request().input('IdDetalleCliente', sql.Int, idDet).input('ValorCobro', sql.Decimal(18,2), l.PrecioFinalL)
         .execute('Up_ValorVentaDetallesPedidos');
+      await pool.request().input('Det', sql.Int, idDet).input('Id', sql.Int, l.IdDetalle)
+        .query('UPDATE C_CotizacionDetalle SET IdDetallePedido=@Det WHERE IdDetalle=@Id');
       creados++;
     }
-    await pool.request().input('Id', sql.Int, id).input('IdPedido', sql.Int, parseInt(idPedido))
-      .query("UPDATE C_Cotizaciones SET Estado='Convertida', IdPedido=@IdPedido WHERE IdCotizacion=@Id");
-    res.json({ ok: true, creados });
+    const pend = (await pool.request().input('Id', sql.Int, id)
+      .query('SELECT COUNT(*) AS n FROM C_CotizacionDetalle WHERE IdCotizacion=@Id AND IdDetallePedido IS NULL')).recordset[0].n;
+    const estado = pend ? 'Parcial' : 'Convertida';
+    await pool.request().input('Id', sql.Int, id).input('IdPedido', sql.Int, parseInt(idPedido)).input('Estado', sql.NVarChar(20), estado)
+      .query("UPDATE C_Cotizaciones SET Estado=@Estado, IdPedido=@IdPedido WHERE IdCotizacion=@Id");
+    res.json({ ok: true, creados, pendientes: pend, estado });
   } catch (e) { err(res, e); }
 };
 
@@ -262,4 +280,81 @@ const imagen = async (req, res) => {
   } catch (e) { res.status(400).end(); }
 };
 
-module.exports = { getDefaults, listar, obtener, guardar, cambiarEstado, eliminar, convertir, imagen };
+/* ════════ Leer un link de producto desde el servidor ════════
+   El navegador no puede abrir páginas de SHEIN/Amazon por seguridad (CORS); el servidor sí lo intenta.
+   Algunas tiendas bloquean a los servidores: en ese caso se avisa y se usa el marcador 📦. */
+const HOSTS_TIENDA = /(^|\.)(shein\.com|shein\.top|sheinlink\.com|amazon\.com|amzn\.to|a\.co|temu\.com|aliexpress\.com|aliexpress\.us|walmart\.com|ebay\.com)$/i;
+const decodificar = t => String(t || '').replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => String.fromCharCode(parseInt(h, 16))).replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\\u002F/g, '/').replace(/\\\//g, '/').trim();
+function metaDe(html, prop) {
+  const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]*content=["']([^"']*)["']`, 'i'))
+         || html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*(?:property|name)=["']${prop}["']`, 'i'));
+  return m ? decodificar(m[1]) : '';
+}
+function aLibras(t) {
+  const m = String(t || '').toLowerCase().replace(/,/g, '.').match(/(\d+(?:\.\d+)?)\s*(libras?|lbs?|pounds?|onzas?|oz|ounces?|kilogramos?|kg|kilograms?|gramos?|grams?|g)\b/);
+  if (!m) return 0;
+  const v = parseFloat(m[1]), u = m[2];
+  if (/^(onza|oz|ounce)/.test(u)) return v / 16;
+  if (/^(kilo|kg)/.test(u)) return v * 2.20462;
+  if (/^(gramo|gram|g$)/.test(u)) return v / 453.592;
+  return v;
+}
+const leerLink = async (req, res) => {
+  let u;
+  try { u = new URL(String(req.query.url || '')); } catch (e) { return err(res, 'Link no válido', 400); }
+  if (!/^https?:$/.test(u.protocol) || !HOSTS_TIENDA.test(u.hostname)) return err(res, 'Solo se leen links de SHEIN, Amazon, Temu, AliExpress, Walmart o eBay', 400);
+  try {
+    const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 12000);
+    const r = await fetch(u.href, { signal: ctrl.signal, redirect: 'follow', headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'es-419,es;q=0.9,en;q=0.8' } });
+    clearTimeout(tm);
+    const html = (await r.text()).substring(0, 3000000);
+    const final = new URL(r.url || u.href);
+    const d = { nombre: '', precio: 0, foto: '', talla: '', pesoLb: 0, sku: '', link: final.origin + final.pathname, tienda: '' };
+
+    // Datos estándar (JSON-LD / OpenGraph)
+    const lds = [...html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)];
+    for (const m of lds) {
+      try {
+        const j = JSON.parse(m[1]); const arr = [].concat(j['@graph'] || j);
+        const p = arr.find(x => x && /Product/i.test(x['@type']));
+        if (p) {
+          d.nombre = d.nombre || p.name || '';
+          d.sku = d.sku || p.sku || '';
+          const img = [].concat(p.image || [])[0]; d.foto = d.foto || (typeof img === 'string' ? img : (img && img.url) || '');
+          const of = [].concat(p.offers || [])[0] || {};
+          d.precio = d.precio || parseFloat(of.price || of.lowPrice) || 0;
+        }
+      } catch (e) {}
+    }
+    d.nombre = d.nombre || metaDe(html, 'og:title');
+    d.foto = d.foto || metaDe(html, 'og:image');
+    d.precio = d.precio || parseFloat(metaDe(html, 'product:price:amount') || metaDe(html, 'og:price:amount')) || 0;
+
+    if (/shein/i.test(final.hostname)) {
+      d.tienda = 'SHEIN';
+      const sp = html.match(/"salePrice"\s*:\s*\{[^}]*?"amount"\s*:\s*"?([\d.]+)/) || html.match(/"sale_price"\s*:\s*\{[^}]*?"amount"\s*:\s*"?([\d.]+)/);
+      if (sp) d.precio = parseFloat(sp[1]) || d.precio;
+      const gn = html.match(/"goods_name"\s*:\s*"([^"]{10,400})"/); if (gn) d.nombre = decodificar(gn[1]);
+      const gi = html.match(/"goods_img"\s*:\s*"([^"]+)"/); if (gi) d.foto = decodificar(gi[1]);
+      const gs = html.match(/"goods_sn"\s*:\s*"([^"]+)"/); if (gs) d.sku = gs[1];
+      const gid = final.pathname.match(/-p-(\d+)/); if (gid) d.link = final.origin + '/p-' + gid[1] + '.html';
+      d.foto = d.foto.replace(/_thumbnail_\d+x\d*/, '');
+    } else if (/amazon|amzn|a\.co/i.test(final.hostname)) {
+      d.tienda = 'Amazon';
+      const t = html.match(/id="productTitle"[^>]*>([\s\S]*?)<\/span>/); if (t) d.nombre = decodificar(t[1].replace(/<[^>]+>/g, ''));
+      const p = html.match(/class="a-offscreen">\s*(?:US)?\$\s*([\d,]+\.\d{2})/); if (p) d.precio = parseFloat(p[1].replace(/,/g, '')) || d.precio;
+      const im = html.match(/data-old-hires="([^"]+)"/) || html.match(/"hiRes"\s*:\s*"([^"]+)"/); if (im) d.foto = im[1];
+      const asin = (final.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/) || [])[1]; if (asin) { d.sku = asin; d.link = 'https://www.amazon.com/dp/' + asin; }
+      const pw = html.match(/(Shipping Weight|Peso del env[ií]o|Item Weight|Peso del art[ií]culo)[\s\S]{0,300}?(\d+(?:[.,]\d+)?\s*(?:libras?|pounds?|onzas?|ounces?|kilogramos?|kilograms?|gramos?|grams?))/i);
+      if (pw) d.pesoLb = aLibras(pw[2]);
+    }
+    if (d.foto && d.foto.startsWith('//')) d.foto = 'https:' + d.foto;
+    d.nombre = decodificar(d.nombre).replace(/\s*[|\-–]\s*(SHEIN|Amazon\.com).*$/i, '').substring(0, 300);
+    if (/captcha|robot check|verify you are human|access denied/i.test(html) && !d.precio) return res.json({ ok: false, bloqueado: true, error: 'La tienda bloqueó la lectura automática' });
+    res.json({ ok: !!(d.nombre || d.precio || d.foto), data: d, error: (d.nombre || d.precio || d.foto) ? undefined : 'No encontré datos del producto en la página' });
+  } catch (e) { res.json({ ok: false, error: e.name === 'AbortError' ? 'La tienda tardó demasiado' : 'No se pudo abrir la página' }); }
+};
+
+module.exports = { getDefaults, listar, obtener, guardar, cambiarEstado, eliminar, convertir, imagen, leerLink };

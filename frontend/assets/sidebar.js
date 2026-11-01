@@ -135,8 +135,8 @@
       <div class="sidebar-logo">
         <img src="/assets/Recurso 3.png" alt="Logo" onerror="this.style.display='none'">
         <div class="sidebar-logo-text">Multi<span>Store</span></div>
-        <button class="sb-pin" id="sb-pin" onclick="fijarMenu()" title="Dejar el menú fijo">📌</button>
-        <button class="sb-close" onclick="cerrarMenu()" title="Cerrar menú">✕</button>
+        <button class="sb-pin" id="sb-pin" onclick="fijarMenu()" title="Dejar el menú fijo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+        <button class="sb-close" onclick="cerrarMenu()" title="Cerrar menú"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
       <div class="sidebar-user">
         <div class="avatar" id="avatar">${ini}</div>
@@ -156,8 +156,8 @@
       </div>`;
   }
 
-  // ── Menú hamburguesa: el botón ☰ se ve siempre arriba; el menú se abre encima.
-  //    En pantallas grandes se puede dejar fijo con 📌 (se recuerda).
+  // ── Menú hamburguesa: el botón se ve siempre arriba; el menú se abre encima.
+  //    En pantallas grandes se puede dejar fijo con (se recuerda).
   if (!document.getElementById('sb-estilos')) {
     const st = document.createElement('style');
     st.id = 'sb-estilos';
@@ -193,7 +193,7 @@
   };
   window.abrirMenu    = function () {
     const sb = document.getElementById('sidebar');
-    if (esGrande() && document.body.classList.contains('sb-fijo')) {   // fijo: el ☰ lo oculta
+    if (esGrande() && document.body.classList.contains('sb-fijo')) {   // fijo: el lo oculta
       window.fijarMenu(); return;
     }
     if (sb.classList.contains('open')) { window.cerrarMenu(); return; }
