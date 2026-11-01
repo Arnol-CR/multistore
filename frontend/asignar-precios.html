@@ -327,6 +327,18 @@
         return cambios.has(p.IdDetallePedido) ? cambios.get(p.IdDetallePedido) : (p.ValorCobroCliente || '');
     }
 
+    function baseIndicadores() {
+        const mios = document.getElementById('f-mios').checked;
+        const fVend = document.getElementById('f-vend').value;
+        const ped = document.getElementById('f-pedido').value;
+        return datos.filter(p => {
+            if (ped && (p.NoPedidoAplicacion || p.NumeroPedido) !== ped) return false;
+            if (mios && p.IdVendedor !== usuario.id) return false;
+            if (fVend === 'sin' ? p.IdVendedor : (fVend && String(p.IdVendedor) !== fVend)) return false;
+            return true;
+        });
+    }
+
     function filtrados() {
         const q = norm(document.getElementById('buscar').value.trim());
         const sin = document.getElementById('f-sin').checked;
@@ -402,12 +414,13 @@
         const agrupar = document.getElementById('f-agrupar').checked;
         const cont = document.getElementById('lista');
 
-        // Resumen (sobre todos los datos, no solo los filtrados)
-        const sinP = datos.filter(p => !p.ValorCobroCliente).length;
+        // Resumen: sigue al vendedor, al pedido y a "Solo mis artículos" (no a la búsqueda ni a "Solo sin precio")
+        const base = baseIndicadores();
+        const sinP = base.filter(p => !p.ValorCobroCliente).length;
         document.getElementById('st-sin').textContent = sinP;
-        document.getElementById('st-con').textContent = datos.length - sinP;
-        document.getElementById('st-cli').textContent = new Set(datos.filter(p => p.IdCliente).map(p => p.IdCliente)).size;
-        document.getElementById('st-tot').textContent = L(datos.reduce((a, p) => a + (parseFloat(precioActual(p)) || 0), 0));
+        document.getElementById('st-con').textContent = base.length - sinP;
+        document.getElementById('st-cli').textContent = new Set(base.filter(p => p.IdCliente).map(p => p.IdCliente)).size;
+        document.getElementById('st-tot').textContent = L(base.reduce((a, p) => a + (parseFloat(precioActual(p)) || 0), 0));
 
         if (!lista.length) {
             cont.innerHTML = `<div class="vacio"><b></b>${datos.length ? 'No hay artículos con estos filtros' : 'No hay artículos pendientes'}</div>`;
@@ -571,7 +584,7 @@
         document.getElementById('btn-guardar').textContent = `Guardar ${n}`;
         if (sinRender) {
             // refrescar totales sin redibujar la tabla
-            document.getElementById('st-tot').textContent = L(datos.reduce((a, p) => a + (parseFloat(precioActual(p)) || 0), 0));
+            document.getElementById('st-tot').textContent = L(baseIndicadores().reduce((a, p) => a + (parseFloat(precioActual(p)) || 0), 0));
         }
     }
 
