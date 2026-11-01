@@ -1,116 +1,155 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MultiStore — Catálogo de artículos</title>
-<link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
-<style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Catálogo de artículos</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --fondo:#070910; --panel:#0d1017; --panel2:#13181f; --borde:#1e2530; --borde2:#2a3342;
+            --texto:#e2e8f0; --suave:#9ca3af; --tenue:#6b7280; --mudo:#4b5563;
+            --rosa:#E8327A; --naranja:#EF7A30; --verde:#4ade80; --rojo:#f87171; --ambar:#fbbf24; --azul:#60a5fa; --morado:#c084fc;
+        }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:var(--texto); display:flex; height:100vh; overflow:hidden; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
+        .overlay.active { display:block; }
 
-    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
-    .overlay.active { display:block; }
+        /* ── Sidebar (lo arma sidebar.js) ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
 
-    .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
-    .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
-    .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
-    .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; }
-    .sidebar-logo-text span { color:#3b82f6; }
-    .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
-    .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
-    .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
-    .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
-    .nav { flex:1; padding:12px 0; overflow-y:auto; }
-    .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
-    .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; text-decoration:none; }
-    .nav-item:hover { color:#e2e8f0; background:#13181f; }
-    .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
-    .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
-    .nav-item.active svg { opacity:1; }
-    .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
-    .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
-    .btn-salir:hover { color:#fca5a5; }
+        /* ── Main ── */
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:var(--panel); border-bottom:1px solid var(--borde); padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; flex-wrap:wrap; }
+        .btn-menu { background:none; border:none; cursor:pointer; padding:4px; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-sub { font-size:11px; color:var(--mudo); margin-top:1px; }
+        .seg { margin-left:auto; display:flex; gap:3px; background:var(--panel2); border:1px solid var(--borde); border-radius:9px; padding:3px; }
+        .seg button { background:none; border:none; color:var(--tenue); font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:7px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+        .seg button.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .seg button:hover:not(.on) { color:var(--texto); }
+        .content { flex:1; overflow-y:auto; padding:20px 22px 60px; background:var(--fondo); }
+        .vista { display:none; }
+        .vista.on { display:block; }
+        .ico { width:16px; height:16px; flex-shrink:0; }
 
-    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
-    .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
-    .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; }
-    .topbar-title { font-size:16px; font-weight:700; color:#fff; }
-    .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+        .ico { width:16px; height:16px; flex-shrink:0; }
+        .seg { margin-left:auto; display:flex; gap:3px; background:var(--panel2); border:1px solid var(--borde); border-radius:9px; padding:3px; }
+        .seg button { background:none; border:none; color:var(--tenue); font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:7px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+        .seg button.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .seg button small { background:#1e2530; color:var(--suave); border-radius:99px; padding:1px 7px; font-size:10.5px; }
+        .vista { display:none; } .vista.on { display:block; }
 
-    .content { flex:1; overflow-y:auto; padding:16px; }
+        .kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+        .kpi { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:13px 16px; position:relative; overflow:hidden; cursor:pointer; text-align:left; font-family:inherit; color:inherit; }
+        .kpi::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acento, var(--borde2)); }
+        .kpi.on { border-color:var(--acento); box-shadow:inset 0 0 0 1px var(--acento); }
+        .kpi-tit { font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .kpi-val { font-size:22px; font-weight:800; color:#fff; margin-top:6px; font-variant-numeric:tabular-nums; }
+        .kpi-pie { font-size:11.5px; color:var(--tenue); margin-top:2px; }
 
-    /* Tabs */
-    .tabs { display:flex; gap:4px; margin-bottom:16px; background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:6px; }
-    .tab { flex:1; padding:9px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:#6b7280; border:none; background:none; transition:.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
-    .tab:hover { color:#e2e8f0; background:#13181f; }
-    .tab.active { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f; }
-    .tab-badge { font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
-    .tab.active .tab-badge { background:#2563eb; color:#fff; }
-    .tab-content { display:none; }
-    .tab-content.active { display:block; }
+        .lay { display:grid; grid-template-columns:240px minmax(0,1fr); gap:14px; align-items:start; }
+        .card { background:var(--panel); border:1px solid var(--borde); border-radius:12px; min-width:0; }
+        .cats { padding:8px; position:sticky; top:0; max-height:calc(100vh - 230px); overflow-y:auto; }
+        .cats-tit { font-size:10.5px; color:var(--mudo); text-transform:uppercase; letter-spacing:1.4px; font-weight:700; padding:8px 10px 6px; }
+        .cat-it { display:flex; align-items:center; gap:9px; width:100%; background:none; border:none; color:var(--suave); font-size:12.5px; padding:7px 10px; border-radius:7px; cursor:pointer; font-family:inherit; text-align:left; }
+        .cat-it:hover { background:var(--panel2); color:#fff; }
+        .cat-it.on { background:#161d29; color:#fff; font-weight:600; }
+        .cat-it i { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+        .cat-it span { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .cat-it small { color:var(--mudo); font-size:11px; font-variant-numeric:tabular-nums; }
 
-    /* Card */
-    .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; overflow:hidden; margin-bottom:14px; }
-    .card-header { padding:12px 16px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
-    .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
-    .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; }
+        .barra { display:flex; gap:10px; align-items:center; padding:12px 14px; border-bottom:1px solid var(--borde); flex-wrap:wrap; }
+        .inp { background:var(--panel2); border:1px solid var(--borde); border-radius:8px; padding:9px 12px; color:var(--texto); font-size:13px; outline:none; font-family:inherit; }
+        .inp:focus { border-color:#3b82f6; background:#0c1525; }
+        .inp::placeholder { color:#374151; }
+        .buscar { flex:1; min-width:200px; }
+        .btn { border:1px solid var(--borde); background:var(--panel2); color:var(--suave); border-radius:8px; padding:9px 13px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; gap:7px; white-space:nowrap; }
+        .btn:hover { color:#fff; border-color:var(--borde2); }
+        .btn.prim { background:#1d4ed8; border-color:#1d4ed8; color:#fff; }
+        .btn.prim:hover { background:#2563eb; }
+        .btn:disabled { opacity:.55; cursor:wait; }
+        .cuenta { font-size:12px; color:var(--tenue); white-space:nowrap; }
 
-    /* Tabla */
-    .tbl-wrap { overflow-x:auto; }
-    .tbl { width:100%; border-collapse:collapse; font-size:12px; }
-    .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:9px 12px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
-    .tbl td { padding:9px 12px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
-    .tbl tr:last-child td { border-bottom:none; }
-    .tbl tr:hover td { background:#0a0f18; }
-    .fila-vacia td { text-align:center; padding:28px 12px; color:#4b5563; font-style:italic; }
+        .tabla-wrap { overflow-x:auto; max-height:calc(100vh - 290px); overflow-y:auto; }
+        table.t { width:100%; border-collapse:collapse; font-size:13px; }
+        .t th { text-align:left; font-size:10px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:600; padding:10px 14px; border-bottom:1px solid var(--borde); white-space:nowrap; background:var(--panel); position:sticky; top:0; z-index:1; cursor:pointer; user-select:none; }
+        .t th.no { cursor:default; }
+        .t th .fl { opacity:.5; margin-left:4px; }
+        .t td { padding:8px 14px; border-bottom:1px solid #111722; vertical-align:middle; }
+        .t tbody tr:hover td { background:#0f141c; }
+        .cod { font-family:monospace; font-size:12px; color:#60a5fa; font-weight:700; }
+        .nom { color:#f1f5f9; font-weight:600; }
+        .chip { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:99px; background:#121822; border:1px solid var(--borde); color:var(--suave); white-space:nowrap; }
+        .chip i { width:7px; height:7px; border-radius:2px; }
+        .peso { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .peso b { color:#e2e8f0; }
+        .peso small { display:block; font-size:10.5px; color:var(--mudo); }
+        .peso.mal b { color:var(--ambar); }
+        .acc { text-align:right; width:1%; }
+        .ib { width:30px; height:30px; border-radius:7px; border:1px solid var(--borde); background:var(--panel2); color:var(--suave); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+        .ib:hover { color:#60a5fa; border-color:#1e3a5f; background:#0c1525; }
+        .etq { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px; margin-left:6px; vertical-align:1px; }
+        .etq.amb { background:rgba(251,191,36,.1); color:var(--ambar); }
+        .vacio { text-align:center; color:var(--tenue); padding:40px 10px; font-size:13px; }
 
-    /* Botones */
-    .btn-primary { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
-    .btn-primary:hover { background:#2563eb; }
-    .btn-ghost { background:none; border:1px solid #1e2530; border-radius:7px; padding:9px 14px; font-size:12px; color:#6b7280; cursor:pointer; }
-    .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
-    .btn-sm { padding:5px 12px; font-size:11px; border-radius:6px; }
-    .btn-edit { background:#1e3a5f; color:#60a5fa; border:none; border-radius:6px; padding:5px 12px; font-size:11px; cursor:pointer; }
-    .btn-edit:hover { background:#2563eb; color:#fff; }
+        .cat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:12px; }
+        .cat-card { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+        .cat-card .top { display:flex; align-items:center; gap:10px; }
+        .cat-card .sw { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:13px; flex-shrink:0; }
+        .cat-card b { color:#fff; font-size:13.5px; display:block; }
+        .cat-card small { color:var(--tenue); font-size:11.5px; }
+        .cat-card .pie { display:flex; gap:6px; margin-top:auto; }
+        .cat-card .pie .btn { padding:6px 10px; font-size:12px; flex:1; }
 
-    /* Filtro */
-    .filtro-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px 16px; border-bottom:1px solid #1e2530; }
-    .filtro-input { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; width:220px; }
-    .filtro-input:focus { border-color:#3b82f6; color:#e2e8f0; }
-    select.filtro-input { width:auto; }
-
-    /* Modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; align-items:center; justify-content:center; }
-    .modal-overlay.active { display:flex; }
-    .modal { background:#0d1017; border:1px solid #1e2530; border-radius:10px; width:400px; max-width:92vw; }
-    .modal-header { padding:14px 16px; border-bottom:1px solid #1e2530; display:flex; align-items:center; justify-content:space-between; }
-    .modal-header h3 { font-size:14px; font-weight:700; color:#fff; }
-    .modal-close { cursor:pointer; color:#6b7280; font-size:20px; border:none; background:none; }
-    .modal-close:hover { color:#fff; }
-    .modal-body { padding:16px; display:flex; flex-direction:column; gap:12px; }
-    .modal-footer { padding:12px 16px; border-top:1px solid #1e2530; display:flex; justify-content:flex-end; gap:8px; }
-    .field { display:flex; flex-direction:column; gap:4px; }
-    .field label { font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-    .field input, .field select { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:9px 12px; color:#e2e8f0; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; }
-    .field input:focus, .field select:focus { border-color:#3b82f6; }
-
-    /* Toast */
-    .toast { position:fixed; bottom:20px; right:20px; background:#0d1017; border:1px solid #1e2530; border-left:4px solid #3b82f6; border-radius:8px; padding:12px 16px; font-size:12px; max-width:300px; box-shadow:0 8px 24px rgba(0,0,0,.5); z-index:300; display:none; color:#e2e8f0; }
-    .toast.error { border-left-color:#ef4444; }
-    .toast.active { display:block; }
-
-    .badge-cat { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:#1e3a5f; color:#60a5fa; white-space:nowrap; }
-
-    ::-webkit-scrollbar { width:4px; height:4px; }
-    ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
-
-    @media (max-width:768px) {
-        .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
-        .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
-        .btn-menu { display:flex; }
-    }
-</style>
+        .modal-f { display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:500; align-items:center; justify-content:center; padding:16px; }
+        .modal-f.on { display:flex; }
+        .modal { background:var(--panel); border:1px solid var(--borde); border-radius:14px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+        .modal-cab { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--borde); }
+        .modal-cab h3 { font-size:15px; color:#fff; }
+        .modal-cuerpo { padding:16px 18px; display:flex; flex-direction:column; gap:14px; }
+        .campo { display:flex; flex-direction:column; gap:6px; }
+        .campo > span { font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .campo .inp { width:100%; }
+        .fila2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .ayuda { font-size:11.5px; color:var(--tenue); }
+        .aviso { font-size:12px; border-radius:8px; padding:8px 11px; background:#1a1205; border:1px solid #3d2a0a; color:#fbbf24; display:none; line-height:1.45; }
+        .aviso.on { display:block; }
+        .modal-pie { display:flex; gap:8px; justify-content:flex-end; padding:14px 18px; border-top:1px solid var(--borde); }
+        .x { background:none; border:none; color:var(--tenue); cursor:pointer; padding:4px; border-radius:6px; display:flex; }
+        .x:hover { color:#fff; background:var(--panel2); }
+        .toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; z-index:1300; box-shadow:0 8px 30px rgba(0,0,0,.6); display:none; }
+        .toast.ok { display:block; background:#052e16; border:1px solid #14532d; color:var(--verde); }
+        .toast.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:3px; }
+        @media (max-width:980px) { .lay { grid-template-columns:1fr; } .cats { display:none; } .kpis { grid-template-columns:1fr 1fr; } }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .content { padding:14px 16px 40px; }
+            .seg { margin-left:0; width:100%; } .seg button { flex:1; justify-content:center; }
+            .col-movil-no { display:none; }
+            .tabla-wrap { max-height:none; }
+        }
+    </style>
 </head>
 <body>
 
@@ -119,347 +158,262 @@
 
 <main class="main">
     <div class="topbar">
-        <button class="btn-menu" onclick="abrirMenu()">
-            <svg width="22" height="22" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24">
-                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
+        <button class="btn-menu" onclick="abrirMenu()" aria-label="Menú">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
         </button>
         <div>
             <div class="topbar-title">Catálogo de artículos</div>
-            <div class="topbar-fecha" id="topbar-fecha"></div>
+            <div class="topbar-sub">Nombres, categorías y pesos que se usan en pedidos y cotizaciones</div>
+        </div>
+        <div class="seg" id="seg">
+            <button class="on" data-v="articulos" onclick="verVista('articulos')">Artículos <small id="n-art">0</small></button>
+            <button data-v="categorias" onclick="verVista('categorias')">Categorías <small id="n-cat">0</small></button>
         </div>
     </div>
 
     <div class="content">
-
-        <div class="tabs">
-            <button class="tab active" onclick="cambiarTab('articulos')">
-                📦 Artículos <span class="tab-badge" id="count-articulos">0</span>
-            </button>
-            <button class="tab" onclick="cambiarTab('categorias')">
-                🏷️ Categorías <span class="tab-badge" id="count-categorias">0</span>
-            </button>
-        </div>
-
-        <!-- TAB ARTÍCULOS -->
-        <div class="tab-content active" id="tab-articulos">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="dot"></span>Artículos</div>
-                    <button class="btn-primary" onclick="abrirModalArticulo()">+ Nuevo artículo</button>
-                </div>
-                <div class="filtro-bar">
-                    <input type="text" class="filtro-input" id="f-articulos" placeholder="🔍 Buscar artículo o código..." oninput="filtrarArticulos(this.value)">
-                    <select class="filtro-input" id="f-cat-articulos" onchange="filtrarArticulos(document.getElementById('f-articulos').value)">
-                        <option value="">Todas las categorías</option>
-                    </select>
-                </div>
-                <div class="tbl-wrap">
-                    <table class="tbl">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Código</th>
-                                <th>Artículo</th>
-                                <th>Categoría</th>
-                                <th>Peso (g)</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-articulos">
-                            <tr class="fila-vacia"><td colspan="6">Cargando artículos...</td></tr>
-                        </tbody>
-                    </table>
+        <!-- ARTÍCULOS -->
+        <section class="vista on" id="v-articulos">
+            <div class="kpis" id="kpis"></div>
+            <div class="lay">
+                <div class="card cats" id="cats"></div>
+                <div class="card">
+                    <div class="barra">
+                        <input class="inp buscar" id="buscar" placeholder="Buscar por nombre o código…" oninput="render()" autocomplete="off">
+                        <select class="inp" id="f-cat" onchange="filtroCat=this.value;render();pintarCats()"></select>
+                        <span class="cuenta" id="cuenta"></span>
+                        <button class="btn prim" onclick="abrirArticulo()"><span data-i="mas"></span>Nuevo artículo</button>
+                    </div>
+                    <div class="tabla-wrap">
+                        <table class="t">
+                            <thead><tr>
+                                <th data-o="codigo">Código<span class="fl"></span></th>
+                                <th data-o="nombre">Artículo<span class="fl"></span></th>
+                                <th data-o="cat" class="col-movil-no">Categoría<span class="fl"></span></th>
+                                <th data-o="peso" style="text-align:right">Peso<span class="fl"></span></th>
+                                <th class="no"></th>
+                            </tr></thead>
+                            <tbody id="tbody"><tr><td colspan="5" class="vacio">Cargando catálogo…</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- TAB CATEGORÍAS -->
-        <div class="tab-content" id="tab-categorias">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="dot"></span>Categorías</div>
-                    <button class="btn-primary" onclick="abrirModalCategoria()">+ Nueva categoría</button>
-                </div>
-                <div class="filtro-bar">
-                    <input type="text" class="filtro-input" id="f-categorias" placeholder="🔍 Buscar categoría..." oninput="filtrarCategorias(this.value)">
-                </div>
-                <div class="tbl-wrap">
-                    <table class="tbl">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Categoría</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-categorias">
-                            <tr class="fila-vacia"><td colspan="3">Cargando categorías...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- CATEGORÍAS -->
+        <section class="vista" id="v-categorias">
+            <div class="barra card" style="margin-bottom:14px;border-bottom:1px solid var(--borde)">
+                <input class="inp buscar" id="buscar-cat" placeholder="Buscar categoría…" oninput="renderCategorias()" autocomplete="off">
+                <button class="btn prim" onclick="abrirCategoria()"><span data-i="mas"></span>Nueva categoría</button>
             </div>
-        </div>
-
+            <div class="cat-grid" id="cat-grid"></div>
+        </section>
     </div>
 </main>
 
-<!-- MODAL ARTÍCULO -->
-<div class="modal-overlay" id="modal-articulo">
+<!-- Modal artículo -->
+<div class="modal-f" id="m-art" onclick="if(event.target===this)cerrar('m-art')">
     <div class="modal">
-        <div class="modal-header">
-            <h3 id="modal-art-titulo">Nuevo artículo</h3>
-            <button class="modal-close" onclick="cerrarModal('modal-articulo')">&times;</button>
+        <div class="modal-cab"><h3 id="m-art-tit">Nuevo artículo</h3><button class="x" onclick="cerrar('m-art')"><span data-i="x"></span></button></div>
+        <div class="modal-cuerpo">
+            <input type="hidden" id="a-id">
+            <div class="campo"><span>Nombre *</span><input class="inp" id="a-nombre" placeholder="Ej. Camiseta manga corta (mujer)" oninput="revisarNombre()" autocomplete="off"></div>
+            <div class="aviso" id="a-aviso"></div>
+            <div class="fila2">
+                <div class="campo"><span>Categoría *</span><select class="inp" id="a-cat"></select></div>
+                <div class="campo"><span>Peso (g) *</span><input class="inp" id="a-peso" type="number" min="0" step="1" placeholder="Ej. 200" oninput="ayudaPeso()"></div>
+            </div>
+            <div class="ayuda" id="a-ayuda">Peso con empaque, por unidad. Se usa para calcular el envío en las cotizaciones.</div>
+            <div class="campo" id="a-cod-wrap" style="display:none"><span>Código</span><input class="inp" id="a-cod" disabled></div>
         </div>
-        <div class="modal-body">
-            <input type="hidden" id="art-id">
-            <div class="field">
-                <label>Nombre del artículo</label>
-                <input type="text" id="art-nombre" placeholder="Ej. Camiseta manga corta">
-            </div>
-            <div class="field">
-                <label>Categoría</label>
-                <select id="art-categoria"></select>
-            </div>
-            <div class="field">
-                <label>Peso (gramos)</label>
-                <input type="number" id="art-peso" placeholder="Ej. 200" min="0" step="1">
-            </div>
-            <div id="art-codigo-wrap" style="display:none;">
-                <div class="field">
-                    <label>Código (auto-generado)</label>
-                    <input type="text" id="art-codigo" disabled style="color:#6b7280;">
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-ghost" onclick="cerrarModal('modal-articulo')">Cancelar</button>
-            <button class="btn-primary" onclick="guardarArticulo()">Guardar</button>
-        </div>
+        <div class="modal-pie"><button class="btn" onclick="cerrar('m-art')">Cancelar</button><button class="btn prim" id="a-guardar" onclick="guardarArticulo()">Guardar</button></div>
     </div>
 </div>
 
-<!-- MODAL CATEGORÍA -->
-<div class="modal-overlay" id="modal-categoria">
+<!-- Modal categoría -->
+<div class="modal-f" id="m-cat" onclick="if(event.target===this)cerrar('m-cat')">
     <div class="modal">
-        <div class="modal-header">
-            <h3 id="modal-cat-titulo">Nueva categoría</h3>
-            <button class="modal-close" onclick="cerrarModal('modal-categoria')">&times;</button>
+        <div class="modal-cab"><h3 id="m-cat-tit">Nueva categoría</h3><button class="x" onclick="cerrar('m-cat')"><span data-i="x"></span></button></div>
+        <div class="modal-cuerpo">
+            <input type="hidden" id="c-id">
+            <div class="campo"><span>Nombre *</span><input class="inp" id="c-nombre" placeholder="Ej. Moda Mujer" autocomplete="off" onkeydown="if(event.key==='Enter')guardarCategoria()"></div>
         </div>
-        <div class="modal-body">
-            <input type="hidden" id="cat-id">
-            <div class="field">
-                <label>Nombre de la categoría</label>
-                <input type="text" id="cat-nombre" placeholder="Ej. Moda Mujer">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-ghost" onclick="cerrarModal('modal-categoria')">Cancelar</button>
-            <button class="btn-primary" onclick="guardarCategoria()">Guardar</button>
-        </div>
+        <div class="modal-pie"><button class="btn" onclick="cerrar('m-cat')">Cancelar</button><button class="btn prim" id="c-guardar" onclick="guardarCategoria()">Guardar</button></div>
     </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="/assets/sidebar.js"></script>
 <script>
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
-
     const API = '/api/catalogo';
 
-    let listaArticulos  = [];
-    let listaCategorias = [];
+    const I = {
+        mas:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+        x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+        lapiz:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+        lista:'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>'
+    };
+    const ico = (n, st = '') => `<svg class="ico" style="${st}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+    document.querySelectorAll('[data-i]').forEach(e => e.outerHTML = ico(e.dataset.i));
+    const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+    const COL = ['#E8327A', '#7c3aed', '#0891b2', '#EF7A30', '#16a34a', '#2563eb', '#db2777', '#ca8a04', '#0d9488', '#9333ea', '#dc2626', '#4f46e5'];
+    const colorCat = id => COL[(id || 0) % COL.length];
+    function toast(t, x) { const e = document.getElementById('toast'); e.className = 'toast ' + t; e.textContent = x; clearTimeout(e._h); e._h = setTimeout(() => e.className = 'toast', 3000); }
+    function cerrar(id) { document.getElementById(id).classList.remove('on'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-f.on').forEach(m => m.classList.remove('on')); });
 
-    document.getElementById('topbar-fecha').textContent = new Date().toLocaleDateString('es-HN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    let arts = [], cats = [], filtroCat = '', filtroK = '', orden = { k:'nombre', asc:true };
 
-    // ===== TABS =====
-    function cambiarTab(tab) {
-        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['articulos','categorias'][i] === tab));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active');
+    function verVista(v) {
+        document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+        document.querySelectorAll('.vista').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
     }
 
-    // ===== HELPERS =====
-    function showToast(msg, err=false){
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className = 'toast active' + (err ? ' error' : '');
-        setTimeout(() => t.classList.remove('active'), 3500);
-    }
-    function cerrarModal(id){ document.getElementById(id).classList.remove('active'); }
-    function abrirModal(id){ document.getElementById(id).classList.add('active'); }
-
-    // ===== CATEGORÍAS =====
-    async function cargarCategorias(){
-        try{
-            const res = await fetch(`${API}/categorias`);
-            const data = await res.json();
-            if(!data.ok) throw new Error(data.error);
-            listaCategorias = data.data || [];
-            document.getElementById('count-categorias').textContent = listaCategorias.length;
-            renderCategorias(listaCategorias);
-            poblarSelectCategorias();
-        }catch(e){ showToast('Error al cargar categorías: ' + e.message, true); }
+    async function cargar() {
+        try {
+            const [a, c] = await Promise.all([fetch(API + '/articulos').then(r => r.json()), fetch(API + '/categorias').then(r => r.json())]);
+            arts = a.ok ? a.data : []; cats = c.ok ? c.data : [];
+        } catch (e) { toast('err', 'No se pudo cargar el catálogo'); }
+        cats.sort((x, y) => x.CategoriaProducto.localeCompare(y.CategoriaProducto));
+        document.getElementById('n-art').textContent = arts.length;
+        document.getElementById('n-cat').textContent = cats.length;
+        const opts = cats.map(c => `<option value="${c.IdCategoria}">${esc(c.CategoriaProducto)}</option>`).join('');
+        document.getElementById('f-cat').innerHTML = '<option value="">Todas las categorías</option>' + opts;
+        document.getElementById('f-cat').value = filtroCat;
+        document.getElementById('a-cat').innerHTML = '<option value="">Elegí…</option>' + opts;
+        pintarCats(); render(); renderCategorias();
     }
 
-    function renderCategorias(lista){
-        const tbody = document.getElementById('tbody-categorias');
-        if(!lista.length){ tbody.innerHTML = '<tr class="fila-vacia"><td colspan="3">No hay categorías registradas.</td></tr>'; return; }
-        tbody.innerHTML = lista.map(c => `
-            <tr>
-                <td style="color:#4b5563;">${c.Numero}</td>
-                <td><span class="badge-cat">${c.CategoriaProducto}</span></td>
-                <td><button class="btn-edit btn-sm" onclick="abrirModalEditarCategoria(${c.IdCategoria}, '${c.CategoriaProducto.replace(/'/g,"\\'")}')">✏️ Editar</button></td>
-            </tr>
-        `).join('');
+    // Revisión rápida
+    const sinPeso = a => !(+a.PesoArticulo > 5) && !/club|saver|prime|suscrip/i.test(a.NombreArticulo);
+    const repetidos = () => { const c = {}; arts.forEach(a => { const k = norm(a.NombreArticulo); c[k] = (c[k] || 0) + 1; }); return c; };
+
+    function pintarKpis() {
+        const rep = repetidos();
+        const nRep = arts.filter(a => rep[norm(a.NombreArticulo)] > 1).length;
+        const conPeso = arts.filter(a => +a.PesoArticulo > 0);
+        const prom = conPeso.length ? Math.round(conPeso.reduce((s, a) => s + +a.PesoArticulo, 0) / conPeso.length) : 0;
+        const k = (f, ac, t, v, p) => `<button class="kpi ${filtroK === f ? 'on' : ''}" style="--acento:${ac}" onclick="filtroK=filtroK==='${f}'?'':'${f}';render()"><div class="kpi-tit">${t}</div><div class="kpi-val">${v}</div><div class="kpi-pie">${p}</div></button>`;
+        document.getElementById('kpis').innerHTML =
+            k('', 'var(--azul)', 'Artículos', arts.length, `en ${cats.length} categorías`) +
+            k('peso', arts.some(sinPeso) ? 'var(--ambar)' : 'var(--borde2)', 'Peso por revisar', arts.filter(sinPeso).length, '0 a 5 g · tocá para ver') +
+            k('rep', 'var(--rojo)', 'Nombres repetidos', nRep, 'mismo nombre · tocá para ver') +
+            k('', 'var(--verde)', 'Peso promedio', prom + ' g', (prom / 453.6).toFixed(2) + ' lb por artículo');
     }
 
-    function filtrarCategorias(q){
-        q = q.toLowerCase();
-        const filtradas = listaCategorias.filter(c => c.CategoriaProducto.toLowerCase().includes(q));
-        renderCategorias(filtradas);
+    function pintarCats() {
+        const n = {}; arts.forEach(a => n[a.IdCategoria] = (n[a.IdCategoria] || 0) + 1);
+        document.getElementById('cats').innerHTML = `<div class="cats-tit">Categorías</div>
+            <button class="cat-it ${filtroCat === '' ? 'on' : ''}" onclick="filtroCat='';document.getElementById('f-cat').value='';pintarCats();render()">${ico('lista', 'width:13px;height:13px')}<span>Todas</span><small>${arts.length}</small></button>` +
+            cats.map(c => `<button class="cat-it ${String(c.IdCategoria) === filtroCat ? 'on' : ''}" onclick="filtroCat='${c.IdCategoria}';document.getElementById('f-cat').value='${c.IdCategoria}';pintarCats();render()">
+                <i style="background:${colorCat(c.IdCategoria)}"></i><span>${esc(c.CategoriaProducto)}</span><small>${n[c.IdCategoria] || 0}</small></button>`).join('');
     }
 
-    function poblarSelectCategorias(){
-        const opts = listaCategorias.map(c => `<option value="${c.IdCategoria}">${c.CategoriaProducto}</option>`).join('');
-        document.getElementById('art-categoria').innerHTML = opts;
-        document.getElementById('f-cat-articulos').innerHTML = '<option value="">Todas las categorías</option>' + opts;
+    document.querySelectorAll('.t th[data-o]').forEach(th => th.onclick = () => { orden = { k: th.dataset.o, asc: orden.k === th.dataset.o ? !orden.asc : true }; render(); });
+
+    function render() {
+        pintarKpis();
+        const q = norm(document.getElementById('buscar').value), rep = repetidos();
+        let l = arts.filter(a => (!filtroCat || String(a.IdCategoria) === filtroCat)
+            && (!q || norm(a.NombreArticulo).includes(q) || norm(a.CodigoArticulo).includes(q))
+            && (filtroK !== 'peso' || sinPeso(a)) && (filtroK !== 'rep' || rep[norm(a.NombreArticulo)] > 1));
+        const v = { codigo: a => a.CodigoArticulo || '', nombre: a => norm(a.NombreArticulo), cat: a => norm(a.CategoriaProducto), peso: a => +a.PesoArticulo || 0 }[orden.k];
+        l.sort((a, b) => { const x = v(a), y = v(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es', { numeric:true })) * (orden.asc ? 1 : -1); });
+        document.querySelectorAll('.t th[data-o]').forEach(th => th.querySelector('.fl').textContent = th.dataset.o === orden.k ? (orden.asc ? '▲' : '▼') : '');
+        document.getElementById('cuenta').textContent = `${l.length} de ${arts.length}`;
+        const tb = document.getElementById('tbody');
+        if (!l.length) { tb.innerHTML = `<tr><td colspan="5" class="vacio">No hay artículos con este filtro.</td></tr>`; return; }
+        tb.innerHTML = l.map(a => {
+            const p = +a.PesoArticulo || 0, malP = sinPeso(a);
+            return `<tr ondblclick="abrirArticulo(${a.IdArticulo})">
+                <td class="cod">${esc(a.CodigoArticulo || '')}</td>
+                <td><span class="nom">${esc(a.NombreArticulo)}</span>${rep[norm(a.NombreArticulo)] > 1 ? '<span class="etq amb" title="Hay otro artículo con el mismo nombre">repetido</span>' : ''}</td>
+                <td class="col-movil-no"><span class="chip"><i style="background:${colorCat(a.IdCategoria)}"></i>${esc(a.CategoriaProducto || '—')}</span></td>
+                <td class="peso ${malP ? 'mal' : ''}"><b>${p.toLocaleString('es-HN')} g</b><small>${(p / 453.6).toFixed(2)} lb</small></td>
+                <td class="acc"><button class="ib" title="Editar" onclick="abrirArticulo(${a.IdArticulo})">${ico('lapiz', 'width:14px;height:14px')}</button></td></tr>`;
+        }).join('');
     }
 
-    function abrirModalCategoria(){
-        document.getElementById('cat-id').value = '';
-        document.getElementById('cat-nombre').value = '';
-        document.getElementById('modal-cat-titulo').textContent = 'Nueva categoría';
-        abrirModal('modal-categoria');
+    // ── Modal artículo ──
+    function abrirArticulo(id) {
+        const a = id ? arts.find(x => x.IdArticulo === id) : null;
+        document.getElementById('m-art-tit').textContent = a ? 'Editar artículo' : 'Nuevo artículo';
+        document.getElementById('a-id').value = a ? a.IdArticulo : '';
+        document.getElementById('a-nombre').value = a ? a.NombreArticulo.trim() : '';
+        document.getElementById('a-cat').value = a ? a.IdCategoria : (filtroCat || '');
+        document.getElementById('a-peso').value = a ? (+a.PesoArticulo || 0) : '';
+        document.getElementById('a-cod-wrap').style.display = a ? '' : 'none';
+        document.getElementById('a-cod').value = a ? a.CodigoArticulo || '' : '';
+        revisarNombre(); ayudaPeso();
+        document.getElementById('m-art').classList.add('on');
+        setTimeout(() => document.getElementById('a-nombre').focus(), 30);
+    }
+    function revisarNombre() {
+        const id = +document.getElementById('a-id').value, q = norm(document.getElementById('a-nombre').value), av = document.getElementById('a-aviso');
+        if (q.length < 3) { av.classList.remove('on'); return; }
+        const parecidos = arts.filter(a => a.IdArticulo !== id && (norm(a.NombreArticulo) === q || (q.length >= 5 && norm(a.NombreArticulo).includes(q)))).slice(0, 4);
+        if (parecidos.length) { av.innerHTML = 'Ya existe: ' + parecidos.map(a => `<b>${esc(a.NombreArticulo)}</b> (${esc(a.CodigoArticulo)} · ${esc(a.CategoriaProducto)})`).join(', ') + '. Revisá que no sea el mismo artículo.'; av.classList.add('on'); }
+        else av.classList.remove('on');
+    }
+    function ayudaPeso() {
+        const p = +document.getElementById('a-peso').value || 0;
+        document.getElementById('a-ayuda').textContent = p ? `${p} g = ${(p / 453.6).toFixed(2)} lb. Peso con empaque, por unidad; se usa para calcular el envío.` : 'Peso con empaque, por unidad. Se usa para calcular el envío en las cotizaciones.';
+    }
+    async function guardarArticulo() {
+        const id = document.getElementById('a-id').value, nombre = document.getElementById('a-nombre').value.replace(/\s+/g, ' ').trim();
+        const idCat = document.getElementById('a-cat').value, peso = parseFloat(document.getElementById('a-peso').value);
+        if (!nombre || !idCat) { toast('err', 'Nombre y categoría son obligatorios'); return; }
+        if (!(peso >= 0)) { toast('err', 'Indicá el peso en gramos'); return; }
+        const b = document.getElementById('a-guardar'); b.disabled = true;
+        try {
+            const d = await fetch(API + '/articulos', { method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(id ? { IdArticulo:+id, NombreArticulo:nombre, IdCategoria:+idCat, Peso:peso } : { Nombre:nombre, IdCategoria:+idCat, Peso:peso }) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error);
+            cerrar('m-art'); toast('ok', id ? 'Artículo actualizado' : 'Artículo creado'); await cargar();
+        } catch (e) { toast('err', 'Error: ' + e.message); }
+        b.disabled = false;
     }
 
-    function abrirModalEditarCategoria(id, nombre){
-        document.getElementById('cat-id').value = id;
-        document.getElementById('cat-nombre').value = nombre;
-        document.getElementById('modal-cat-titulo').textContent = 'Editar categoría';
-        abrirModal('modal-categoria');
+    // ── Categorías ──
+    function renderCategorias() {
+        const q = norm(document.getElementById('buscar-cat').value);
+        const n = {}, pesos = {}; arts.forEach(a => { n[a.IdCategoria] = (n[a.IdCategoria] || 0) + 1; (pesos[a.IdCategoria] = pesos[a.IdCategoria] || []).push(+a.PesoArticulo || 0); });
+        const l = cats.filter(c => !q || norm(c.CategoriaProducto).includes(q));
+        document.getElementById('cat-grid').innerHTML = l.length ? l.map(c => {
+            const ps = (pesos[c.IdCategoria] || []).filter(p => p > 0); const prom = ps.length ? Math.round(ps.reduce((s, p) => s + p, 0) / ps.length) : 0;
+            return `<div class="cat-card"><div class="top"><div class="sw" style="background:${colorCat(c.IdCategoria)}">${esc(c.CategoriaProducto.trim()[0] || '?')}</div>
+                <div><b>${esc(c.CategoriaProducto)}</b><small>${n[c.IdCategoria] || 0} artículos${prom ? ' · ' + prom + ' g promedio' : ''}</small></div></div>
+                <div class="pie"><button class="btn" onclick="filtroCat='${c.IdCategoria}';document.getElementById('f-cat').value='${c.IdCategoria}';verVista('articulos');pintarCats();render()">${ico('lista', 'width:13px;height:13px')}Ver artículos</button>
+                <button class="btn" onclick="abrirCategoria(${c.IdCategoria})">${ico('lapiz', 'width:13px;height:13px')}Editar</button></div></div>`;
+        }).join('') : '<div class="vacio">Sin categorías</div>';
+    }
+    function abrirCategoria(id) {
+        const c = id ? cats.find(x => x.IdCategoria === id) : null;
+        document.getElementById('m-cat-tit').textContent = c ? 'Editar categoría' : 'Nueva categoría';
+        document.getElementById('c-id').value = c ? c.IdCategoria : '';
+        document.getElementById('c-nombre').value = c ? c.CategoriaProducto : '';
+        document.getElementById('m-cat').classList.add('on');
+        setTimeout(() => document.getElementById('c-nombre').focus(), 30);
+    }
+    async function guardarCategoria() {
+        const id = document.getElementById('c-id').value, nombre = document.getElementById('c-nombre').value.trim();
+        if (!nombre) { toast('err', 'Escribí el nombre'); return; }
+        if (cats.some(c => norm(c.CategoriaProducto) === norm(nombre) && String(c.IdCategoria) !== id)) { toast('err', 'Ya existe una categoría con ese nombre'); return; }
+        const b = document.getElementById('c-guardar'); b.disabled = true;
+        try {
+            const d = await fetch(API + '/categorias', { method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(id ? { IdCategoria:+id, Nombre:nombre } : { Categoria:nombre }) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error);
+            cerrar('m-cat'); toast('ok', id ? 'Categoría actualizada' : 'Categoría creada'); await cargar();
+        } catch (e) { toast('err', 'Error: ' + e.message); }
+        b.disabled = false;
     }
 
-    async function guardarCategoria(){
-        const id     = document.getElementById('cat-id').value;
-        const nombre = document.getElementById('cat-nombre').value.trim();
-        if(!nombre){ showToast('El nombre es requerido.', true); return; }
-
-        try{
-            const method = id ? 'PUT' : 'POST';
-            const body   = id ? { IdCategoria: parseInt(id), Nombre: nombre } : { Categoria: nombre };
-            const res = await fetch(`${API}/categorias`, {
-                method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if(!data.ok) throw new Error(data.error);
-            showToast(data.mensaje);
-            cerrarModal('modal-categoria');
-            await cargarCategorias();
-        }catch(e){ showToast(e.message, true); }
-    }
-
-    // ===== ARTÍCULOS =====
-    async function cargarArticulos(){
-        try{
-            const res = await fetch(`${API}/articulos`);
-            const data = await res.json();
-            if(!data.ok) throw new Error(data.error);
-            listaArticulos = data.data || [];
-            document.getElementById('count-articulos').textContent = listaArticulos.length;
-            renderArticulos(listaArticulos);
-        }catch(e){ showToast('Error al cargar artículos: ' + e.message, true); }
-    }
-
-    function renderArticulos(lista){
-        const tbody = document.getElementById('tbody-articulos');
-        if(!lista.length){ tbody.innerHTML = '<tr class="fila-vacia"><td colspan="6">No hay artículos registrados.</td></tr>'; return; }
-        tbody.innerHTML = lista.map((a, i) => `
-            <tr>
-                <td style="color:#4b5563;">${i+1}</td>
-                <td style="font-family:monospace;font-size:11px;color:#60a5fa;">${a.CodigoArticulo ?? '-'}</td>
-                <td style="font-weight:600;">${a.NombreArticulo ?? '-'}</td>
-                <td><span class="badge-cat">${a.CategoriaProducto ?? a.Categoria ?? '-'}</span></td>
-                <td style="color:#9ca3af;">${a.PesoArticulo ?? a.Peso ?? '-'} g</td>
-                <td><button class="btn-edit btn-sm" onclick="abrirModalEditarArticulo(${a.IdArticulo}, '${(a.NombreArticulo||'').replace(/'/g,"\\'")}', ${a.IdCategoria}, ${a.PesoArticulo||0}, '${a.CodigoArticulo||''}')">✏️ Editar</button></td>
-            </tr>
-        `).join('');
-    }
-
-    function filtrarArticulos(q){
-        q = q.toLowerCase();
-        const cat = document.getElementById('f-cat-articulos').value;
-        const filtrados = listaArticulos.filter(a => {
-            if(cat && String(a.IdCategoria) !== cat) return false;
-            if(!q) return true;
-            return (
-                (a.NombreArticulo  || '').toLowerCase().includes(q) ||
-                (a.CodigoArticulo  || '').toLowerCase().includes(q) ||
-                (a.CategoriaProducto || a.Categoria || '').toLowerCase().includes(q)
-            );
-        });
-        renderArticulos(filtrados);
-    }
-
-    function abrirModalArticulo(){
-        document.getElementById('art-id').value = '';
-        document.getElementById('art-nombre').value = '';
-        document.getElementById('art-peso').value = '';
-        document.getElementById('art-codigo-wrap').style.display = 'none';
-        document.getElementById('modal-art-titulo').textContent = 'Nuevo artículo';
-        if(listaCategorias.length) document.getElementById('art-categoria').selectedIndex = 0;
-        abrirModal('modal-articulo');
-    }
-
-    function abrirModalEditarArticulo(id, nombre, idCat, peso, codigo){
-        document.getElementById('art-id').value = id;
-        document.getElementById('art-nombre').value = nombre;
-        document.getElementById('art-peso').value = peso;
-        document.getElementById('art-codigo').value = codigo;
-        document.getElementById('art-codigo-wrap').style.display = 'block';
-        document.getElementById('modal-art-titulo').textContent = 'Editar artículo';
-        const sel = document.getElementById('art-categoria');
-        sel.value = idCat;
-        abrirModal('modal-articulo');
-    }
-
-    async function guardarArticulo(){
-        const id      = document.getElementById('art-id').value;
-        const nombre  = document.getElementById('art-nombre').value.trim();
-        const idCat   = document.getElementById('art-categoria').value;
-        const peso    = document.getElementById('art-peso').value;
-
-        if(!nombre){ showToast('El nombre es requerido.', true); return; }
-        if(!idCat){  showToast('Selecciona una categoría.', true); return; }
-
-        try{
-            let res;
-            if(id){
-                res = await fetch(`${API}/articulos`, {
-                    method:'PUT', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ IdArticulo: parseInt(id), NombreArticulo: nombre, IdCategoria: parseInt(idCat), Peso: parseFloat(peso)||0 })
-                });
-            } else {
-                res = await fetch(`${API}/articulos`, {
-                    method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ Nombre: nombre, IdCategoria: parseInt(idCat), Peso: parseFloat(peso)||0 })
-                });
-            }
-            const data = await res.json();
-            if(!data.ok) throw new Error(data.error);
-            showToast(data.mensaje);
-            cerrarModal('modal-articulo');
-            await cargarArticulos();
-        }catch(e){ showToast(e.message, true); }
-    }
-
-    // ===== INIT =====
-    (async () => {
-        await cargarCategorias();
-        await cargarArticulos();
-    })();
+    if (usuario) cargar();
 </script>
+<script src="/assets/sidebar.js"></script>
 </body>
 </html>

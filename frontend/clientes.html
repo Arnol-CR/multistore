@@ -3,786 +3,795 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MultiStore — Clientes</title>
+    <title>MultiStore — Clientes y saldos</title>
     <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
-
-        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+        :root {
+            --fondo:#070910; --panel:#0d1017; --panel2:#13181f; --borde:#1e2530; --borde2:#2a3342;
+            --texto:#e2e8f0; --suave:#9ca3af; --tenue:#6b7280; --mudo:#4b5563;
+            --rosa:#E8327A; --naranja:#EF7A30; --verde:#4ade80; --rojo:#f87171; --ambar:#fbbf24; --azul:#60a5fa; --morado:#c084fc;
+        }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:var(--texto); display:flex; height:100vh; overflow:hidden; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
         .overlay.active { display:block; }
 
-        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        /* ── Sidebar (lo arma sidebar.js) ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; }
         .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
-        .sidebar-logo img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(30,180,220,0.3)); }
-        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
         .sidebar-logo-text span { color:#3b82f6; }
         .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
         .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
-        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
         .nav { flex:1; padding:12px 0; overflow-y:auto; }
         .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
-        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; user-select:none; text-decoration:none; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; text-decoration:none; }
         .nav-item:hover { color:#e2e8f0; background:#13181f; }
         .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
         .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
-        .nav-item.active svg { opacity:1; }
-        .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:#1e3a5f; color:#60a5fa; }
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
         .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
-        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; transition:.15s; background:none; border:none; width:100%; }
-        .btn-salir:hover { color:#fca5a5; }
-        .btn-salir svg { width:16px; height:16px; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
 
+        /* ── Main ── */
         .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
-        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; gap:10px; }
-        .topbar-left { display:flex; align-items:center; gap:12px; min-width:0; }
-        .btn-menu { display:none; background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px; flex-shrink:0; }
-        .btn-menu svg { width:22px; height:22px; stroke:#9ca3af; stroke-width:2; }
+        .topbar { background:var(--panel); border-bottom:1px solid var(--borde); padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; flex-wrap:wrap; }
+        .btn-menu { background:none; border:none; cursor:pointer; padding:4px; }
         .topbar-title { font-size:16px; font-weight:700; color:#fff; }
-        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+        .topbar-sub { font-size:11px; color:var(--mudo); margin-top:1px; }
+        .seg { margin-left:auto; display:flex; gap:3px; background:var(--panel2); border:1px solid var(--borde); border-radius:9px; padding:3px; }
+        .seg button { background:none; border:none; color:var(--tenue); font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:7px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+        .seg button.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .seg button:hover:not(.on) { color:var(--texto); }
+        .content { flex:1; overflow-y:auto; padding:20px 22px 60px; background:var(--fondo); }
+        .vista { display:none; }
+        .vista.on { display:block; }
+        .ico { width:16px; height:16px; flex-shrink:0; }
 
-        .content { flex:1; overflow-y:auto; padding:16px; }
+        /* KPIs */
+        .kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+        .kpi { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:14px 16px; position:relative; overflow:hidden; min-width:0; cursor:pointer; transition:.15s; text-align:left; font-family:inherit; color:inherit; }
+        .kpi:hover { border-color:var(--borde2); }
+        .kpi.on { border-color:var(--acento); box-shadow:inset 0 0 0 1px var(--acento); }
+        .kpi::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acento, var(--borde2)); }
+        .kpi-tit { font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .kpi-val { font-size:23px; font-weight:800; color:#fff; margin-top:7px; letter-spacing:-.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+        .kpi-val .mon { font-size:13px; color:var(--tenue); font-weight:600; margin-right:3px; }
+        .kpi-pie { font-size:11.5px; color:var(--tenue); margin-top:4px; display:flex; justify-content:space-between; gap:6px; }
+        .mio { display:inline-flex; align-items:center; gap:5px; color:var(--suave); white-space:nowrap; }
+        .mio::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--rosa); }
 
-        /* Pestañas */
-        .tabs { display:flex; gap:4px; margin-bottom:16px; background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:6px; }
-        .tab { flex:1; padding:9px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:#6b7280; border:none; background:none; transition:.15s; }
-        .tab:hover { color:#e2e8f0; background:#13181f; }
-        .tab.active { background:#1a2540; color:#60a5fa; border:1px solid #1e3a5f; }
-        .tab-content { display:none; }
-        .tab-content.active { display:block; }
+        /* Barra de herramientas */
+        .barra { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+        .inp { background:var(--panel2); border:1px solid var(--borde); border-radius:8px; padding:9px 12px; color:var(--texto); font-size:13px; outline:none; font-family:inherit; }
+        .inp:focus { border-color:#3b82f6; background:#0c1525; }
+        .inp::placeholder { color:#374151; }
+        select.inp { cursor:pointer; }
+        .buscar { flex:1; min-width:220px; }
+        .chk { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--suave); cursor:pointer; user-select:none; white-space:nowrap; }
+        .chk input { accent-color:#3b82f6; width:15px; height:15px; }
+        .btn { border:1px solid var(--borde); background:var(--panel2); color:var(--suave); border-radius:8px; padding:9px 13px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; text-decoration:none; }
+        .btn:hover { color:#fff; border-color:var(--borde2); }
+        .btn.rosa { background:var(--rosa); border-color:var(--rosa); color:#fff; }
+        .btn.rosa:hover { background:#d12a6d; }
+        .btn.verde { background:#052e16; border-color:#14532d; color:var(--verde); }
+        .btn.verde:hover { background:#064e24; }
+        .btn:disabled { opacity:.55; cursor:wait; }
+        .btn-sm { padding:6px 10px; font-size:12px; border-radius:7px; }
 
-        /* Cards stats */
-        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
-        .stat-card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:14px 16px; }
-        .stat-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-        .stat-val { font-size:22px; font-weight:800; color:#fff; }
-        .stat-sub { font-size:11px; color:#6b7280; margin-top:3px; }
+        /* Tabla de saldos */
+        .card { background:var(--panel); border:1px solid var(--borde); border-radius:12px; min-width:0; }
+        .tabla-wrap { overflow-x:auto; }
+        table.t { width:100%; border-collapse:collapse; font-size:13px; }
+        .t th { text-align:left; font-size:10px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:600; padding:12px 12px 10px; border-bottom:1px solid var(--borde); white-space:nowrap; background:var(--panel); position:sticky; top:0; z-index:1; }
+        .t td { padding:10px 12px; border-bottom:1px solid #111722; vertical-align:middle; }
+        .t tbody tr.cli:hover td { background:#0f141c; }
+        .t tbody tr.cli { cursor:pointer; }
+        .t tr.mia td:first-child { box-shadow:inset 3px 0 0 var(--rosa); }
+        .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .grupo td { background:#0a0e15; padding:9px 12px; cursor:pointer; user-select:none; }
+        .grupo .gnom { display:flex; align-items:center; gap:9px; font-weight:700; color:#fff; font-size:13px; }
+        .grupo .gnom small { color:var(--tenue); font-weight:500; font-size:11.5px; }
+        .grupo .flecha { color:var(--mudo); transition:transform .15s; display:flex; }
+        .grupo.cerrado .flecha { transform:rotate(-90deg); }
+        .c-nom { display:flex; align-items:center; gap:10px; min-width:0; }
+        .c-av { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:800; color:#fff; flex-shrink:0; }
+        .c-txt { min-width:0; }
+        .c-txt b { display:block; color:#f1f5f9; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+        .c-txt small { font-size:11px; color:var(--tenue); }
+        .barrita { width:90px; height:5px; background:var(--panel2); border-radius:99px; overflow:hidden; margin-top:5px; margin-left:auto; }
+        .barrita div { height:100%; border-radius:99px; }
+        .saldo { font-weight:800; font-size:14px; }
+        .estado { font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
+        .e-cobrar { background:rgba(248,113,113,.1); color:var(--rojo); }
+        .e-parcial { background:rgba(251,191,36,.1); color:var(--ambar); }
+        .e-camino { background:rgba(96,165,250,.1); color:var(--azul); }
+        .e-dia { background:rgba(74,222,128,.08); color:var(--verde); }
+        .e-favor { background:rgba(192,132,252,.1); color:var(--morado); }
+        .acc { display:flex; gap:6px; justify-content:flex-end; }
+        .btn-ico { background:var(--panel2); border:1px solid var(--borde); color:var(--suave); border-radius:7px; width:32px; height:30px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none; }
+        .btn-ico:hover { color:#fff; border-color:var(--borde2); }
+        .btn-ico.wa:hover { color:#25d366; border-color:#14532d; }
+        .total-fila td { background:#0a0e15; font-weight:800; color:#fff; border-bottom:none; }
+        .vacio { text-align:center; color:var(--tenue); padding:40px 10px; font-size:13px; }
 
-        /* Tabla resumen */
-        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:16px; margin-bottom:14px; }
-        .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
-        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
-        .card-title .dot { width:6px; height:6px; border-radius:50%; background:#3b82f6; flex-shrink:0; }
+        /* Estado de cuenta */
+        .ec-buscar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        .ec-cab { display:flex; align-items:center; gap:14px; padding:18px 20px; flex-wrap:wrap; }
+        .ec-av { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; flex-shrink:0; }
+        .ec-nom { font-size:19px; font-weight:800; color:#fff; letter-spacing:-.2px; }
+        .ec-meta { font-size:12px; color:var(--tenue); margin-top:3px; display:flex; gap:12px; flex-wrap:wrap; }
+        .ec-meta span { display:inline-flex; align-items:center; gap:5px; }
+        .ec-acc { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+        .ec-kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin:14px 0; }
+        .ec-kpis .kpi { cursor:default; }
+        .ec-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:14px; }
+        .card-cab { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:14px 16px 0; flex-wrap:wrap; }
+        .card-tit { font-size:13px; font-weight:700; color:#fff; }
+        .card-sub { font-size:11px; color:var(--mudo); margin-top:2px; }
+        .mov-tipo { font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; }
+        .mt-compra { background:rgba(232,50,122,.1); color:#f9a8d4; }
+        .mt-pago { background:rgba(74,222,128,.1); color:var(--verde); }
+        .mt-otro { background:rgba(251,191,36,.1); color:var(--ambar); }
+        .ref { font-family:monospace; font-size:11.5px; color:var(--suave); }
+        tr.mov.compra { cursor:pointer; }
+        tr.mov.compra:hover td { background:#0f141c; }
+        tr.detalle td { background:#0a0e15; padding:6px 12px 10px 40px; }
+        .mini-art { display:flex; align-items:center; gap:9px; padding:5px 0; font-size:12px; border-bottom:1px dashed #161c26; }
+        .mini-art:last-child { border-bottom:none; }
+        .mini-art img, .mini-art .ph { width:34px; height:34px; border-radius:6px; object-fit:contain; background:#fff; flex-shrink:0; cursor:pointer; }
+        .mini-art .ph { background:var(--panel2); }
+        .mini-art .n { flex:1; min-width:0; }
+        .mini-art .n b { display:block; color:#e2e8f0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .mini-art .n small { color:var(--tenue); font-size:11px; }
+        .lista-art { padding:8px 16px 14px; }
+        .opc { display:flex; gap:14px; flex-wrap:wrap; padding:10px 20px 14px; border-top:1px solid var(--borde); font-size:12px; color:var(--tenue); align-items:center; }
+        .opc b { color:var(--suave); font-weight:600; }
+        .ver-mas { display:block; width:calc(100% - 32px); margin:8px 16px 14px; background:none; border:1px dashed var(--borde2); color:var(--suave); border-radius:8px; padding:8px; font-size:12px; cursor:pointer; font-family:inherit; }
+        .ver-mas:hover { color:#fff; }
+        .dd { position:relative; flex:1; min-width:260px; }
+        .dd-lista { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--panel); border:1px solid var(--borde2); border-radius:10px; max-height:340px; overflow-y:auto; z-index:20; display:none; box-shadow:0 14px 40px rgba(0,0,0,.6); }
+        .dd-lista.on { display:block; }
+        .dd-item { display:flex; align-items:center; gap:10px; padding:9px 12px; cursor:pointer; border-bottom:1px solid #111722; }
+        .dd-item:hover, .dd-item.sel { background:#131a25; }
+        .dd-item .s { margin-left:auto; font-weight:700; font-size:12.5px; font-variant-numeric:tabular-nums; }
 
-        .tbl-wrap { overflow-x:auto; }
-        .tbl { width:100%; border-collapse:collapse; font-size:12px; }
-        .tbl th { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:8px; text-align:left; border-bottom:1px solid #1e2530; white-space:nowrap; }
-        .tbl td { padding:9px 8px; border-bottom:1px solid #111827; color:#d1d5db; vertical-align:middle; }
-        .tbl tr:last-child td { border-bottom:none; }
-        .tbl tr:hover td { background:#0a0f18; }
+        /* Nuevo cliente */
+        .form { max-width:620px; padding:20px; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .form label { font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:5px; font-weight:600; }
+        .form .inp { width:100%; }
+        .full { grid-column:1 / -1; }
+        .msg { margin-top:12px; font-size:13px; padding:10px 14px; border-radius:8px; display:none; }
+        .msg.ok { display:block; background:#052e16; border:1px solid #14532d; color:var(--verde); }
+        .msg.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
 
-        
-        /* Fila vendedor (grupo) */
-        .fila-vendedor td { background:#0d1520; color:#60a5fa; font-weight:700; font-size:12px; cursor:pointer; }
-        .fila-vendedor td:first-child { padding-left:12px; }
-        .fila-vendedor:hover td { background:#111e2e; }
-        .fila-cliente td { padding-left:32px; }
-        .fila-cliente.oculto { display:none; }
-        .fila-total td { background:#0a0f18; font-weight:700; color:#34d399; border-top:2px solid #1e2530; }
+        .toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; z-index:1300; box-shadow:0 8px 30px rgba(0,0,0,.6); display:none; }
+        .toast.ok { display:block; background:#052e16; border:1px solid #14532d; color:var(--verde); }
+        .toast.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
+        .cargando { color:var(--tenue); padding:30px; text-align:center; font-size:13px; }
 
-        /* Saldo colores */
-        .saldo-positivo { color:#ef4444; font-weight:700; }
-        .saldo-cero { color:#34d399; font-weight:700; }
-        .saldo-negativo { color:#60a5fa; font-weight:700; }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:3px; }
 
-        /* Historial */
-        .buscar-cliente-wrap { display:flex; gap:10px; margin-bottom:16px; align-items:flex-end; flex-wrap:wrap; }
-        .buscar-input { flex:1; min-width:200px; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; }
-        .buscar-input:focus { border-color:#3b82f6; }
-        .buscar-resultados { position:absolute; background:#0d1017; border:1px solid #1e2530; border-radius:8px; z-index:50; width:100%; max-height:200px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
-        .buscar-item { padding:10px 14px; cursor:pointer; font-size:13px; color:#d1d5db; border-bottom:1px solid #111827; }
-        .buscar-item:hover { background:#13181f; color:#fff; }
-        .buscar-item:last-child { border-bottom:none; }
-        .buscar-wrap-rel { position:relative; flex:1; min-width:200px; }
-        .cliente-info-card { background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; gap:20px; flex-wrap:wrap; }
-        .cliente-info-item { font-size:12px; }
-        .cliente-info-item span { color:#4b5563; font-size:10px; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:2px; }
-
-        /* Historial tabla */
-        .mov-pago td { background:#0a100e; }
-        .mov-devolucion td { background:#0a0e18; }
-        .mov-tipo { font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; white-space:nowrap; }
-        .tipo-compra { background:#2d1f0a; color:#f59e0b; }
-        .tipo-pago { background:#0f2318; color:#34d399; }
-        .tipo-devolucion { background:#0c1f3d; color:#60a5fa; }
-
-        .btn-primary { background:#1d4ed8; color:#fff; border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; white-space:nowrap; }
-        .btn-primary:hover { background:#2563eb; }
-        .btn-ghost { background:none; border:1px solid #1e2530; border-radius:7px; padding:9px 14px; font-size:12px; color:#6b7280; cursor:pointer; transition:.15s; white-space:nowrap; }
-        .btn-ghost:hover { border-color:#3b82f6; color:#60a5fa; }
-
-        /* Buscador filtro resumen */
-        .filtro-resumen { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-        .filtro-resumen input { background:#13181f; border:1px solid #1e2530; border-radius:7px; padding:8px 12px; color:#9ca3af; font-size:12px; outline:none; font-family:'Segoe UI',sans-serif; width:220px; }
-        .filtro-resumen input:focus { border-color:#3b82f6; color:#e2e8f0; }
-
-        ::-webkit-scrollbar { width:4px; height:4px; }
-        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
-
-        @media (max-width:480px) {
-            .stats-grid { grid-template-columns:1fr; }
-            .tabs { flex-direction:column; }
-            .tab { padding:8px; font-size:12px; }
-            .tbl { font-size:11px; }
-            .tbl th, .tbl td { padding:6px 4px; }
-            .filtro-resumen input { width:100%; }
-            .buscar-cliente-wrap { flex-direction:column; }
-            .form-grid { grid-template-columns:1fr !important; }
-        }
+        @media (max-width:1250px) { .kpis { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+        @media (max-width:1000px) { .ec-grid { grid-template-columns:1fr; } .ec-kpis { grid-template-columns:1fr 1fr; } }
         @media (max-width:768px) {
             .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
-            .btn-menu { display:flex; }
-            .stats-grid { grid-template-columns:1fr 1fr; }
+            .content { padding:14px 16px 40px; }
+            .kpis { grid-template-columns:1fr 1fr; gap:10px; }
+            .kpi-val { font-size:19px; }
+            .seg { margin-left:0; width:100%; }
+            .seg button { flex:1; justify-content:center; padding:7px 6px; font-size:12px; }
+            .col-movil-no { display:none; }
+            .c-txt b { max-width:140px; }
+            .form-grid { grid-template-columns:1fr; }
+            .ec-acc { margin-left:0; width:100%; }
+            .ec-acc .btn { flex:1; justify-content:center; }
         }
     </style>
-    
 </head>
-
 <body>
 
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
-
 <aside class="sidebar" id="sidebar"></aside>
 
 <main class="main">
     <div class="topbar">
-        <div class="topbar-left">
-            <button class="btn-menu" id="btn-menu" onclick="abrirMenu()">
-                <svg fill="none" viewBox="0 0 24 24">
-                    <line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/>
-                    <line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/>
-                    <line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/>
-                </svg>
-            </button>
-            <div>
-                <div class="topbar-title">Clientes</div>
-                <div class="topbar-fecha" id="topbar-fecha"></div>
-            </div>
+        <button class="btn-menu" onclick="abrirMenu()" aria-label="Menú">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        </button>
+        <div>
+            <div class="topbar-title">Clientes y saldos</div>
+            <div class="topbar-sub">Quién debe, cuánto se puede cobrar ya y el estado de cuenta de cada cliente</div>
+        </div>
+        <div class="seg" id="seg">
+            <button class="on" data-v="saldos" onclick="verVista('saldos')"></button>
+            <button data-v="estado" onclick="verVista('estado')"></button>
+            <button data-v="nuevo" onclick="verVista('nuevo')"></button>
         </div>
     </div>
 
     <div class="content">
 
-        <!-- Pestañas -->
-        <div class="tabs">
-            <button class="tab active" onclick="cambiarTab('resumen')">📊 Resumen de Saldos</button>
-            <button class="tab" onclick="cambiarTab('historial')">📋 Historial</button>
-            <button class="tab" onclick="cambiarTab('nuevo')">➕ Nuevo Cliente</button>
-        </div>
+        <!-- ═════════ SALDOS ═════════ -->
+        <section class="vista on" id="v-saldos">
+            <div class="kpis" id="kpis"></div>
 
-        <!-- ===== TAB RESUMEN ===== -->
-        <div class="tab-content active" id="tab-resumen">
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total clientes</div>
-                    <div class="stat-val" id="stat-total-clientes">--</div>
-                    <div class="stat-sub">Registrados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total por cobrar</div>
-                    <div class="stat-val" id="stat-total-saldo" style="color:#ef4444;">--</div>
-                    <div class="stat-sub">Saldo pendiente</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Clientes al día</div>
-                    <div class="stat-val" id="stat-al-dia" style="color:#34d399;">--</div>
-                    <div class="stat-sub">Saldo ≤ 0</div>
-                </div>
+            <div class="barra">
+                <input class="inp buscar" id="buscar" placeholder="Buscar cliente, código, teléfono o vendedor…" oninput="render()" autocomplete="off">
+                <select class="inp" id="f-vendedor" onchange="render()"><option value="">Todos los vendedores</option></select>
+                <select class="inp" id="f-orden" onchange="render()">
+                    <option value="saldo">Mayor saldo</option>
+                    <option value="cobrable">Más por cobrar ya</option>
+                    <option value="nombre">Nombre</option>
+                </select>
+                <label class="chk"><input type="checkbox" id="f-agrupar" onchange="render()"> Agrupar por vendedor</label>
+                <label class="chk"><input type="checkbox" id="f-mios" onchange="render()"> Solo mis clientes</label>
+                <button class="btn" onclick="exportarExcel()" title="Descargar la lista en Excel"><span data-i="excel"></span>Excel</button>
             </div>
 
-            <!-- Filtro -->
-            <div class="filtro-resumen">
-                <input type="text" id="f-buscar-cliente" placeholder="🔍 Buscar cliente o vendedor..." oninput="filtrarResumen(this.value)">
-                <button class="btn-primary" onclick="descargarExcelResumen()">📥 Excel</button>
-            </div>
-
-            <!-- Tabla agrupada -->
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="dot"></span>Clientes por vendedor</div>
-                    <span style="font-size:12px;color:#4b5563;" id="resumen-count"></span>
-                </div>
-                <div class="tbl-wrap">
-                    <table class="tbl" id="tabla-resumen">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Cliente</th>
-                                <th style="text-align:right;">Saldo (L)</th>
-                                <th style="text-align:right;">% x Entregar</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-resumen">
-                            <tr><td colspan="5" style="color:#374151;text-align:center;padding:30px;">Cargando...</td></tr>
-                        </tbody>
+                <div class="tabla-wrap">
+                    <table class="t">
+                        <thead><tr>
+                            <th>Cliente</th>
+                            <th class="col-movil-no" id="th-vend">Vendedor</th>
+                            <th class="num col-movil-no">Comprado</th>
+                            <th class="num col-movil-no">Pagado</th>
+                            <th class="num col-movil-no">En camino</th>
+                            <th class="num">Saldo</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr></thead>
+                        <tbody id="tbody"><tr><td colspan="8" class="cargando">Cargando clientes…</td></tr></tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- ===== TAB HISTORIAL ===== -->
-        <div class="tab-content" id="tab-historial">
-            <!-- Buscador -->
-            <div class="card" style="margin-bottom:14px;">
-                <div style="font-size:11px;color:#4b5563;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Buscar cliente</div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                    <div class="buscar-wrap-rel">
-                        <input class="buscar-input" id="input-buscar-hist" type="text"
-                            placeholder="Escribe el nombre del cliente..."
-                            oninput="buscarClienteHistorial(this.value)"
-                            autocomplete="off">
-                        <div class="buscar-resultados" id="resultados-hist" style="display:none;"></div>
-                    </div>
-                    <button class="btn-ghost" onclick="limpiarHistorial()">✕ Limpiar</button>
-                    <button class="btn-primary" onclick="descargarExcelHistorial()" id="btn-excel-hist" style="display:none;">📥 Excel</button>
+        <!-- ═════════ ESTADO DE CUENTA ═════════ -->
+        <section class="vista" id="v-estado">
+            <div class="ec-buscar">
+                <div class="dd">
+                    <input class="inp" id="ec-buscar" style="width:100%" placeholder="Buscar cliente para ver su estado de cuenta…" autocomplete="off"
+                           oninput="ddFiltrar()" onfocus="ddFiltrar()" onkeydown="ddTecla(event)">
+                    <div class="dd-lista" id="dd-lista"></div>
                 </div>
             </div>
+            <div id="ec"><div class="card vacio">Elegí un cliente para ver su estado de cuenta.</div></div>
+        </section>
 
-            <!-- Info cliente seleccionado -->
-            <div class="cliente-info-card" id="cliente-info-card" style="display:none;flex-wrap:wrap;gap:16px;">
-                <div class="cliente-info-item">
-                    <span>Cliente</span>
-                    <strong id="hist-nombre" style="color:#fff;font-size:14px;"></strong>
+        <!-- ═════════ NUEVO CLIENTE ═════════ -->
+        <section class="vista" id="v-nuevo">
+            <div class="card form">
+                <div class="card-tit" style="margin-bottom:4px">Registrar nuevo cliente</div>
+                <div class="card-sub" style="margin-bottom:16px">Los campos con * son obligatorios</div>
+                <div class="form-grid">
+                    <div><label>Nombre *</label><input class="inp" id="nc-nombre" placeholder="Nombre"></div>
+                    <div><label>Apellido *</label><input class="inp" id="nc-apellido" placeholder="Apellido"></div>
+                    <div><label>Teléfono</label><input class="inp" id="nc-telefono" placeholder="8 dígitos" maxlength="8" inputmode="numeric"></div>
+                    <div><label>Correo</label><input class="inp" id="nc-correo" type="email" placeholder="correo@ejemplo.com"></div>
+                    <div class="full"><label>Dirección</label><input class="inp" id="nc-direccion" placeholder="Dirección de entrega"></div>
+                    <div class="full"><label>Vendedor *</label><select class="inp" id="nc-vendedor"><option value="">Elegí un vendedor…</option></select></div>
                 </div>
-                <div class="cliente-info-item">
-                    <span>Código</span>
-                    <strong id="hist-codigo" style="color:#9ca3af;"></strong>
+                <div style="display:flex;gap:10px;margin-top:18px">
+                    <button class="btn" onclick="limpiarForm()">Limpiar</button>
+                    <button class="btn verde" style="flex:1;justify-content:center" id="nc-guardar" onclick="guardarCliente()"><span data-i="check"></span>Registrar cliente</button>
                 </div>
-                <div class="cliente-info-item">
-                    <span>Teléfono</span>
-                    <strong id="hist-telefono" style="color:#9ca3af;"></strong>
-                </div>
-                <div class="cliente-info-item">
-                    <span>Correo</span>
-                    <strong id="hist-correo" style="color:#9ca3af;"></strong>
-                </div>
-                <div class="cliente-info-item">
-                    <span>Dirección</span>
-                    <strong id="hist-direccion" style="color:#9ca3af;max-width:200px;display:block;"></strong>
-                </div>
-                <div class="cliente-info-item">
-                    <span>Vendedor</span>
-                    <strong id="hist-vendedor" style="color:#c084fc;"></strong>
-                </div>
-                <div class="cliente-info-item" style="margin-left:auto;">
-                    <span>Saldo actual</span>
-                    <strong id="hist-saldo" style="font-size:18px;"></strong>
-                </div>
+                <div class="msg" id="nc-msg"></div>
             </div>
-
-            <!-- Tabla historial -->
-            <div class="card" id="card-historial" style="display:none;">
-                <div class="card-header">
-                    <div class="card-title"><span class="dot" style="background:#f59e0b;"></span>Movimientos</div>
-                    <span style="font-size:12px;color:#4b5563;" id="hist-count"></span>
-                </div>
-                <div class="tbl-wrap">
-                    <table class="tbl">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Transacción</th>
-                                <th>N° Referencia</th>
-                                <th style="text-align:right;">Monto (L)</th>
-                                <th style="text-align:right;">Saldo (L)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-historial">
-                            <tr><td colspan="6" style="color:#374151;text-align:center;padding:30px;">Selecciona un cliente</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== TAB NUEVO CLIENTE ===== -->
-        <div class="tab-content" id="tab-nuevo">
-            <div class="card" style="max-width:560px;">
-                <div class="card-header">
-                    <div class="card-title"><span class="dot" style="background:#34d399;"></span>Registrar nuevo cliente</div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="form-nuevo-cliente">
-                    <div>
-                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Nombre *</label>
-                        <input id="nc-nombre" type="text" placeholder="Nombre" class="buscar-input" style="width:100%;">
-                    </div>
-                    <div>
-                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Apellido *</label>
-                        <input id="nc-apellido" type="text" placeholder="Apellido" class="buscar-input" style="width:100%;">
-                    </div>
-                    <div>
-                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Teléfono</label>
-                        <input id="nc-telefono" type="text" placeholder="88001122 (8 dígitos)" class="buscar-input" style="width:100%;" maxlength="8">
-                    </div>
-                    <div>
-                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Correo</label>
-                        <input id="nc-correo" type="email" placeholder="correo@ejemplo.com" class="buscar-input" style="width:100%;">
-                    </div>
-                    <div style="grid-column:span 2;">
-                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Dirección</label>
-                        <input id="nc-direccion" type="text" placeholder="Dirección del cliente" class="buscar-input" style="width:100%;">
-                    </div>
-                    <div style="grid-column:span 2;">
-                        <label style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Vendedor *</label>
-                        <select id="nc-vendedor" class="buscar-input" style="width:100%;background:#13181f;color:#9ca3af;">
-                            <option value="">Selecciona un vendedor...</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="display:flex;gap:10px;margin-top:16px;">
-                    <button onclick="limpiarFormCliente()" class="btn-ghost">✕ Limpiar</button>
-                    <button onclick="guardarNuevoCliente()" class="btn-primary" style="flex:1;">✅ Registrar Cliente</button>
-                </div>
-                <div id="nc-mensaje" style="margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:8px;"></div>
-            </div>
-        </div>
-
+        </section>
     </div>
 </main>
 
-<script src="/assets/sidebar.js"></script>
-    <script>
-    // ===== AUTH =====
+<div class="toast" id="toast"></div>
+
+<script src="/assets/ver-articulo.js"></script>
+<script>
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
 
-    
-    
-    
-        // ===== MENÚ =====
-    
-    
-    
+    // ── Íconos de trazo ──
+    const I = {
+        lista:'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+        doc:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+        mas:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+        excel:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="m8 13 4 4"/><path d="m12 13-4 4"/>',
+        check:'<path d="M20 6 9 17l-5-5"/>',
+        flecha:'<path d="m6 9 6 6 6-6"/>',
+        copiar:'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+        bajar:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+        msg:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+        tel:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+        usuario:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+        cobro:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
+        camion:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+        alerta:'<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>'
+    };
+    const ico = (n, st = '') => `<svg class="ico" style="${st}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+    const WA = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35zM12.05 21.8h-.01a9.85 9.85 0 0 1-5.02-1.38l-.36-.21-3.73.98 1-3.64-.24-.37a9.83 9.83 0 0 1-1.51-5.26c0-5.44 4.43-9.87 9.88-9.87 2.64 0 5.12 1.03 6.98 2.9a9.8 9.8 0 0 1 2.89 6.98c0 5.45-4.43 9.87-9.88 9.87zm8.41-18.28A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.14 1.59 5.94L.06 24l6.3-1.65a11.87 11.87 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.18-1.24-6.17-3.48-8.42z"/></svg>';
+    document.querySelectorAll('[data-i]').forEach(e => e.outerHTML = ico(e.dataset.i));
+    const seg = { saldos:['lista', 'Saldos'], estado:['doc', 'Estado de cuenta'], nuevo:['mas', 'Nuevo cliente'] };
+    document.querySelectorAll('#seg button').forEach(b => b.innerHTML = ico(seg[b.dataset.v][0], 'width:14px;height:14px') + seg[b.dataset.v][1]);
 
-    // ===== PESTAÑAS =====
-    function cambiarTab(tab) {
-        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['resumen','historial','nuevo'][i] === tab));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active');
+    // ── Utilidades ──
+    const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    const num = v => { if (typeof v === 'number') return v; const n = parseFloat(String(v ?? '').replace(/[^0-9.-]/g, '')); return isFinite(n) ? n : 0; };
+    const L = (n, dec = 2) => 'L ' + Number(n || 0).toLocaleString('es-HN', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    const Lk = n => `<span class="mon">L</span>${Math.round(n || 0).toLocaleString('es-HN')}`;
+    const fecha = f => { if (!f) return ''; const d = new Date(f); return isNaN(d) ? '' : d.toLocaleDateString('es-HN', { timeZone:'UTC', day:'2-digit', month:'2-digit', year:'numeric' }); };
+    const iniciales = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const COLORES = ['#7c3aed', '#E8327A', '#0891b2', '#EF7A30', '#16a34a', '#2563eb', '#db2777', '#9333ea'];
+    const colorDe = id => COLORES[(id || 0) % COLORES.length];
+    const telWa = t => { const d = String(t || '').replace(/\D/g, ''); return d.length === 8 ? '504' + d : (d.length >= 10 ? d : ''); };
+    function toast(tipo, txt) { const t = document.getElementById('toast'); t.className = 'toast ' + tipo; t.textContent = txt; clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 3200); }
+
+    // Estado de cobro de un cliente
+    function estadoDe(c) {
+        const s = num(c.SaldoCalculado), p = num(c.MontoPendienteEntrega);
+        if (s < -0.5) return { k:'favor', t:'A favor', cls:'e-favor', cobrable:0 };
+        if (s <= 0.5) return { k:'dia', t:'Al día', cls:'e-dia', cobrable:0 };
+        const cobrable = Math.max(0, s - p);
+        if (p <= 0.5) return { k:'cobrar', t:'Cobrar ya', cls:'e-cobrar', cobrable };
+        if (cobrable > 0.5) return { k:'parcial', t:'Cobrar ' + L(cobrable, 0), cls:'e-parcial', cobrable };
+        return { k:'camino', t:'Paga al entregar', cls:'e-camino', cobrable:0 };
     }
 
-    // ===== FORMATO =====
-    function fmtSaldo(val) {
-        if (val === null || val === undefined) return '—';
-        const n = parseFloat(val);
-        return 'L ' + Math.abs(n).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
-    }
-    function fmtFecha(f) {
-        if (!f) return '';
-        const p = (f.substring ? f.substring(0,10) : String(f).substring(0,10)).split('-');
-        return `${p[2]}/${p[1]}/${p[0]}`;
-    }
-    function claseSaldo(val) {
-        const n = parseFloat(val);
-        if (n > 0) return 'saldo-positivo';
-        if (n < 0) return 'saldo-negativo';
-        return 'saldo-cero';
+    // ── Vistas ──
+    function verVista(v) {
+        document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+        document.querySelectorAll('.vista').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+        const u = new URL(location.href); u.searchParams.set('v', v); if (v !== 'estado') u.searchParams.delete('cliente'); history.replaceState(null, '', u);
     }
 
-    // ===== RESUMEN =====
-    let todosClientes = [];
-    let clientesFiltrados = [];
-
-    async function cargarResumen() {
+    // ═════════ SALDOS ═════════
+    let clientes = [], filtroEstado = 'deben', cuentas = [];
+    async function cargar() {
         try {
-            const res  = await fetch('/api/clientes/todos');
-            const json = await res.json();
-            if (!json.ok) return;
-            todosClientes = json.data;
-            clientesFiltrados = todosClientes;
-            actualizarStats();
-            renderizarResumen(todosClientes);
-        } catch(e) { console.error(e); }
+            const d = await fetch('/api/clientes/todos').then(r => r.json());
+            clientes = d.ok ? d.data : [];
+        } catch (e) { clientes = []; toast('err', 'No se pudieron cargar los clientes'); }
+        const vends = [...new Map(clientes.filter(c => c.IdVendedor).map(c => [c.IdVendedor, c.NombreVendedor])).entries()];
+        document.getElementById('f-vendedor').innerHTML = '<option value="">Todos los vendedores</option>' + vends.map(([id, n]) => `<option value="${id}">${esc(n)}</option>`).join('');
+        render();
+        const q = new URLSearchParams(location.search);
+        if (q.get('cliente')) abrirEstado(parseInt(q.get('cliente')));
+        else if (q.get('v')) verVista(q.get('v'));
+        if (q.get('f')) { filtroEstado = q.get('f'); render(); }
     }
 
-    function actualizarStats() {
-        const total  = todosClientes.length;
-        const suma   = todosClientes.reduce((acc,c) => acc + (parseFloat(c.SaldoCalculado)||0), 0);
-        const alDia  = todosClientes.filter(c => (parseFloat(c.SaldoCalculado)||0) <= 0).length;
-        document.getElementById('stat-total-clientes').textContent = total;
-        document.getElementById('stat-total-saldo').textContent = 'L ' + suma.toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
-        document.getElementById('stat-al-dia').textContent = alDia;
+    function base() {
+        const mios = document.getElementById('f-mios').checked;
+        const ven = document.getElementById('f-vendedor').value;
+        return clientes.filter(c => (!mios || c.IdVendedor === usuario.id) && (!ven || String(c.IdVendedor) === ven));
     }
 
-    function filtrarResumen(texto) {
-        const q = texto.trim().toLowerCase();
-        clientesFiltrados = q
-            ? todosClientes.filter(c =>
-                (c.NombreCompleto  || '').toLowerCase().includes(q) ||
-                (c.CodigoCliente   || '').toLowerCase().includes(q) ||
-                (c.NombreVendedor  || '').toLowerCase().includes(q) ||
-                (c.CodigoVendedor  || '').toLowerCase().includes(q) ||
-                (c.Telefeno        || '').toLowerCase().includes(q)
-              )
-            : todosClientes;
-        renderizarResumen(clientesFiltrados);
+    function pintarKpis(lista) {
+        const deben = lista.filter(c => num(c.SaldoCalculado) > 0.5);
+        const tot = deben.reduce((a, c) => a + num(c.SaldoCalculado), 0);
+        const cob = lista.map(c => ({ c, e: estadoDe(c) })).filter(x => x.e.cobrable > 0.5);
+        const cobTot = cob.reduce((a, x) => a + x.e.cobrable, 0);
+        const camino = deben.reduce((a, c) => a + Math.min(num(c.SaldoCalculado), num(c.MontoPendienteEntrega)), 0);
+        const favor = lista.filter(c => num(c.SaldoCalculado) < -0.5);
+        const alDia = lista.filter(c => Math.abs(num(c.SaldoCalculado)) <= 0.5).length;
+        const mio = deben.filter(c => c.IdVendedor === usuario.id).reduce((a, c) => a + num(c.SaldoCalculado), 0);
+        const k = (f, acento, tit, val, pie) => `<button class="kpi ${filtroEstado === f ? 'on' : ''}" style="--acento:${acento}" onclick="filtroEstado='${f}';render()">
+            <div class="kpi-tit">${tit}</div><div class="kpi-val">${val}</div><div class="kpi-pie">${pie}</div></button>`;
+        document.getElementById('kpis').innerHTML =
+            k('deben', 'var(--rosa)', 'Por cobrar', Lk(tot), `<span>${deben.length} clientes deben</span>${mio ? `<span class="mio" title="De tus clientes">${L(mio, 0)}</span>` : ''}`) +
+            k('cobrable', 'var(--rojo)', 'Cobrable ya', Lk(cobTot), `<span>${cob.length} clientes · ya entregado</span>`) +
+            k('camino', 'var(--azul)', 'Se cobra al entregar', Lk(camino), `<span>artículos en camino</span>`) +
+            k('favor', 'var(--morado)', 'Saldo a favor', Lk(Math.abs(favor.reduce((a, c) => a + num(c.SaldoCalculado), 0))), `<span>${favor.length} clientes</span>`) +
+            k('todos', 'var(--verde)', 'Clientes', String(lista.length), `<span>${alDia} al día</span>`);
     }
 
-    function renderizarResumen(clientes) {
-        const tbody = document.getElementById('tbody-resumen');
-        document.getElementById('resumen-count').textContent = clientes.length + ' clientes';
-
-        if (clientes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="color:#374151;text-align:center;padding:24px;">Sin resultados</td></tr>';
-            return;
-        }
-
-        // Agrupar por vendedor
-        const grupos = {};
-        clientes.forEach(c => {
-            const key = c.IdVendedor || 'sin';
-            const nom = c.NombreVendedor ? c.NombreVendedor.trim() : 'Sin vendedor';
-            const cod = c.CodigoVendedor || '';
-            if (!grupos[key]) grupos[key] = { nombre: nom, codigo: cod, clientes: [] };
-            grupos[key].clientes.push(c);
+    function filtrados() {
+        const q = norm(document.getElementById('buscar').value);
+        let l = base();
+        pintarKpis(l);
+        l = l.filter(c => {
+            const e = estadoDe(c), s = num(c.SaldoCalculado);
+            if (filtroEstado === 'deben' && !(s > 0.5)) return false;
+            if (filtroEstado === 'cobrable' && !(e.cobrable > 0.5)) return false;
+            if (filtroEstado === 'camino' && !(s > 0.5 && num(c.MontoPendienteEntrega) > 0.5)) return false;
+            if (filtroEstado === 'favor' && !(s < -0.5)) return false;
+            if (q && ![c.NombreCompleto, c.CodigoCliente, c.Telefeno, c.NombreVendedor, c.CodigoVendedor].some(x => norm(x).includes(q))) return false;
+            return true;
         });
+        const orden = document.getElementById('f-orden').value;
+        l.sort(orden === 'nombre' ? (a, b) => norm(a.NombreCompleto).localeCompare(norm(b.NombreCompleto))
+             : orden === 'cobrable' ? (a, b) => estadoDe(b).cobrable - estadoDe(a).cobrable || num(b.SaldoCalculado) - num(a.SaldoCalculado)
+             : (a, b) => num(b.SaldoCalculado) - num(a.SaldoCalculado));
+        return l;
+    }
 
-        let html = '';
-        let numGlobal = 1;
-        let totalGlobal = 0;
-
-        Object.entries(grupos).forEach(([key, grupo]) => {
-            // Filtrar clientes con saldo 0
-            grupo.clientes = grupo.clientes.filter(c => (parseFloat(c.SaldoCalculado)||0) !== 0);
-            if (grupo.clientes.length === 0) return;
-            const totalGrupo = grupo.clientes.reduce((acc,c) => acc + (parseFloat(c.SaldoCalculado)||0), 0);
-            totalGlobal += totalGrupo;
-            const grupoId = 'grupo-' + key;
-
-            // Fila vendedor
-            html += `<tr class="fila-vendedor" onclick="toggleGrupo('${grupoId}')">
-                <td colspan="2">
-                    <span style="margin-right:8px;" id="ico-${grupoId}">▼</span>
-                    👤 ${grupo.nombre} <span style="color:#4b5563;font-size:11px;margin-left:6px;">${grupo.codigo}</span>
-                    <span style="color:#4b5563;font-size:11px;margin-left:8px;">(${grupo.clientes.length} cliente${grupo.clientes.length !== 1 ? 's' : ''})</span>
-                </td>
-                <td class="${claseSaldo(totalGrupo)}" style="text-align:right;">${fmtSaldo(totalGrupo)}</td>
-                <td></td>
-            </tr>`;
-
-            // Filas clientes
-            grupo.clientes.forEach(c => {
-                const pct      = parseFloat(c.PorcentajePagado) || 0;
-                const pctColor = pct >= 100 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#ef4444';
-
-                // % Pendiente entrega con lógica de alertas
-                const saldo        = parseFloat(c.SaldoCalculado) || 0;
-                const pctPend      = parseFloat(c.PorcentajePendienteEntrega) || 0;
-                const montoPend    = parseFloat(c.MontoPendienteEntrega) || 0;
-                const artPend      = parseInt(c.ArticulosPendienteEntrega) || 0;
-
-                let pctPendColor, pctPendBg, pctPendIcon;
-                if (saldo <= 0) {
-                    // No debe nada — verde sin importar pendiente
-                    pctPendColor = '#34d399'; pctPendBg = '#0f2318'; pctPendIcon = '✓';
-                } else if (pctPend === 0 && saldo > 0) {
-                    // Debe dinero y nada por entregar — ¡cobrar ya!
-                    pctPendColor = '#ef4444'; pctPendBg = '#2d0a0a'; pctPendIcon = '⚠️';
-                } else if (pctPend >= 100) {
-                    // Todo lo que debe está en camino
-                    pctPendColor = '#60a5fa'; pctPendBg = '#0c1f3d'; pctPendIcon = '📦';
-                } else {
-                    // Algo por entregar, normal
-                    pctPendColor = '#f59e0b'; pctPendBg = '#2d1f0a'; pctPendIcon = '🚚';
-                }
-
-                const pctPendLabel = saldo <= 0
-                    ? '<span style="color:#34d399;font-size:11px;">Al día ✓</span>'
-                    : `<span style="background:${pctPendBg};color:${pctPendColor};font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;" title="${artPend} art. · L ${montoPend.toFixed(2)}">${pctPendIcon} ${c.PorcentajePendienteEntrega || '0%'}</span>`;
-
-                html += `<tr class="fila-cliente ${grupoId}">
-                    <td style="color:#4b5563;font-size:11px;">${numGlobal++}</td>
-                    <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.NombreCompleto||''}">${c.NombreCompleto || '—'}</td>
-                    <td class="${claseSaldo(c.SaldoCalculado)}" style="text-align:right;white-space:nowrap;">${fmtSaldo(c.SaldoCalculado)}</td>
-                    <td style="text-align:right;white-space:nowrap;">${pctPendLabel}</td>
-                    <td>
-                        <button onclick="verHistorialCliente(${c.IdCliente}, '${(c.NombreCompleto||'').replace(/'/g,"\\'")}', '${c.CodigoCliente||''}', '${(c.NombreVendedor||'').replace(/'/g,"\\'")} ${c.CodigoVendedor||''}', ${c.SaldoCalculado||0})"
-                            style="background:#1a2540;color:#60a5fa;border:1px solid #1e3a5f;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;">
-                            📋 Historial
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        });
-
-        // Fila total global
-        html += `<tr class="fila-total">
-            <td colspan="2" style="text-align:right;font-size:12px;color:#9ca3af;">TOTAL GENERAL</td>
-            <td class="${claseSaldo(totalGlobal)}" style="text-align:right;">${fmtSaldo(totalGlobal)}</td>
-            <td></td>
+    const cerrados = new Set();
+    function fila(c) {
+        const e = estadoDe(c), s = num(c.SaldoCalculado), comp = num(c.TotalCompras), pag = num(c.TotalPagado);
+        const pct = comp > 0 ? Math.min(100, pag * 100 / comp) : 0;
+        const pend = num(c.MontoPendienteEntrega), nPend = parseInt(c.ArticulosPendienteEntrega) || 0;
+        const wa = telWa(c.Telefeno);
+        return `<tr class="cli ${c.IdVendedor === usuario.id ? 'mia' : ''}" onclick="abrirEstado(${c.IdCliente})">
+            <td><div class="c-nom"><div class="c-av" style="background:${colorDe(c.IdCliente)}">${esc(iniciales(c.NombreCompleto))}</div>
+                <div class="c-txt"><b title="${esc(c.NombreCompleto)}">${esc(c.NombreCompleto || '—')}</b><small>${esc(c.CodigoCliente || '')}${c.Telefeno ? ' · ' + esc(c.Telefeno) : ''}</small></div></div></td>
+            <td class="col-movil-no col-vend" style="color:var(--suave);font-size:12px;white-space:nowrap">${esc(c.NombreVendedor || '—')}</td>
+            <td class="num col-movil-no">${L(comp, 0)}<div style="font-size:11px;color:var(--mudo)">${parseInt(c.CantidadArticulos) || 0} artículos</div></td>
+            <td class="num col-movil-no">${L(pag, 0)}<div class="barrita" title="${pct.toFixed(0)}% pagado"><div style="width:${pct}%;background:${pct >= 100 ? 'var(--verde)' : pct >= 70 ? 'var(--azul)' : 'var(--ambar)'}"></div></div></td>
+            <td class="num col-movil-no">${pend > 0.5 ? L(pend, 0) + `<div style="font-size:11px;color:var(--mudo)">${nPend} artículo${nPend === 1 ? '' : 's'}</div>` : '<span style="color:var(--mudo)">—</span>'}</td>
+            <td class="num saldo" style="color:${s > 0.5 ? '#fff' : s < -0.5 ? 'var(--morado)' : 'var(--verde)'}">${L(s)}</td>
+            <td><span class="estado ${e.cls}">${esc(e.t)}</span></td>
+            <td><div class="acc" onclick="event.stopPropagation()">
+                ${wa ? `<a class="btn-ico wa" href="https://wa.me/${wa}" target="_blank" rel="noopener" title="Abrir chat de WhatsApp">${WA}</a>` : ''}
+                <button class="btn btn-sm" onclick="abrirEstado(${c.IdCliente})">${ico('doc', 'width:14px;height:14px')}Estado de cuenta</button>
+            </div></td>
         </tr>`;
-
-        tbody.innerHTML = html;
     }
 
-    function toggleGrupo(grupoId) {
-        const filas = document.querySelectorAll('.' + grupoId);
-        const ico = document.getElementById('ico-' + grupoId);
-        let oculto = false;
-        filas.forEach(f => {
-            f.classList.toggle('oculto');
-            oculto = f.classList.contains('oculto');
-        });
-        if (ico) ico.textContent = oculto ? '▶' : '▼';
-    }
-
-    // ===== HISTORIAL =====
-    let buscarTimeout = null;
-    let clienteHistorialActual = null;
-
-    function buscarClienteHistorial(texto) {
-        const drop = document.getElementById('resultados-hist');
-        if (texto.length < 2) { drop.style.display = 'none'; return; }
-        const q = texto.trim().toLowerCase();
-        const resultados = todosClientes.filter(c =>
-            (c.NombreCompleto || '').toLowerCase().includes(q) ||
-            (c.CodigoCliente  || '').toLowerCase().includes(q)
-        ).slice(0, 10);
-        if (resultados.length > 0) {
-            drop.innerHTML = resultados.map(c => {
-                const nom = (c.NombreCompleto||'').replace(/'/g,"\'");
-                const cod = c.CodigoCliente||'';
-                const codV = (c.CodigoVendedor||'').replace(/'/g,"\'");
-                const nomV = (c.NombreVendedor||'').replace(/'/g,"\'");
-                const tel  = (c.Telefeno||'').replace(/'/g,"\'");
-                const mail = (c.CorreoElectronico||'').replace(/'/g,"\'");
-                const dir  = (c.Direccion||'').replace(/'/g,"\'");
-                return `<div class="buscar-item" onclick="seleccionarClienteHistorial(${c.IdCliente},'${nom}','${cod}','${codV}','${nomV}','${tel}','${mail}','${dir}')">
-                    <strong>${c.NombreCompleto}</strong>
-                    <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
-                    ${c.CodigoVendedor ? '<span style="color:#c084fc;font-size:11px;margin-left:6px;">'+c.CodigoVendedor+'</span>' : ''}
-                </div>`;
-            }).join('');
-            drop.style.display = 'block';
-        } else {
-            drop.innerHTML = '<div class="buscar-item" style="color:#4b5563;">Sin resultados</div>';
-            drop.style.display = 'block';
-        }
-    }
-    
-
-    async function seleccionarClienteHistorial(idCliente, nombre, codigo, codigoVend, nombreVend, telefono, correo, direccion) {
-        document.getElementById('input-buscar-hist').value = nombre;
-        document.getElementById('resultados-hist').style.display = 'none';
-
-        // Buscar saldo actualizado desde todosClientes
-        const clienteData = todosClientes.find(c => c.IdCliente === idCliente);
-        const saldo = clienteData ? parseFloat(clienteData.SaldoCalculado) || 0 : 0;
-        clienteHistorialActual = { idCliente, nombre, codigo, vendedor: codigoVend, saldo };
-
-        // Info card
-        document.getElementById('hist-nombre').textContent    = nombre;
-        document.getElementById('hist-codigo').textContent    = codigo;
-        document.getElementById('hist-telefono').textContent  = telefono || '—';
-        document.getElementById('hist-correo').textContent    = correo || '—';
-        document.getElementById('hist-direccion').textContent = direccion || '—';
-        document.getElementById('hist-vendedor').textContent  = codigoVend ? `${codigoVend} · ${nombreVend||''}` : '—';
-        const saldoEl = document.getElementById('hist-saldo');
-        saldoEl.textContent = fmtSaldo(saldo);
-        saldoEl.className   = claseSaldo(saldo);
-        document.getElementById('cliente-info-card').style.display = 'flex';
-
-        // Cargar historial
-        document.getElementById('card-historial').style.display = 'block';
-        document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="6" style="color:#374151;text-align:center;padding:20px;">Cargando...</td></tr>';
-
-        try {
-            const res  = await fetch(`/api/clientes/historial?idCliente=${idCliente}`);
-            const json = await res.json();
-            if (json.ok) renderizarHistorial(json.data);
-        } catch(e) { console.error(e); }
-    }
-
-    function verHistorialCliente(idCliente, nombre, codigo, vendedor, saldo) {
-        cambiarTab('historial');
-        const c = todosClientes.find(x => x.IdCliente === idCliente) || {};
-        seleccionarClienteHistorial(
-            idCliente, nombre, codigo,
-            c.CodigoVendedor || vendedor || '',
-            c.NombreVendedor || '',
-            c.Telefeno || '',
-            c.CorreoElectronico || '',
-            c.Direccion || ''
-        );
-    }
-
-    function renderizarHistorial(data) {
-        const tbody = document.getElementById('tbody-historial');
-        document.getElementById('hist-count').textContent = data.length + ' movimientos';
-        document.getElementById('btn-excel-hist').style.display = data.length > 0 ? 'block' : 'none';
-
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="color:#374151;text-align:center;padding:24px;">Sin movimientos</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = data.map(m => {
-            const tipo = m.TipoMovimiento || '';
-            const claseRow = tipo === 'Pago' ? 'mov-pago' : tipo === 'Devolución' ? 'mov-devolucion' : 'mov-compra';
-            const claseTipo = tipo === 'Pago' ? 'tipo-pago' : tipo === 'Devolución' ? 'tipo-devolucion' : 'tipo-compra';
-            return `<tr class="${claseRow}">
-                <td style="color:#4b5563;font-size:11px;">${m.NumeroFila}</td>
-                <td style="font-size:11px;color:#9ca3af;white-space:nowrap;">${fmtFecha(m.FechaMovimiento)}</td>
-                <td><span class="mov-tipo ${claseTipo}">${tipo}</span></td>
-                <td style="font-size:11px;font-family:monospace;color:#6b7280;">${m.NumeroReferencia || '—'}</td>
-                <td style="text-align:right;font-size:12px;color:${tipo==='Pago'?'#34d399':'#d1d5db'};font-weight:600;">${m.Monto || '—'}</td>
-                <td style="text-align:right;font-size:12px;font-weight:700;color:${parseFloat((m.SaldoFecha||'').replace(/[^0-9.-]/g,''))>0?'#ef4444':'#34d399'};">${m.SaldoFecha || '—'}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    function limpiarHistorial() {
-        document.getElementById('input-buscar-hist').value = '';
-        document.getElementById('resultados-hist').style.display = 'none';
-        document.getElementById('cliente-info-card').style.display = 'none';
-        document.getElementById('card-historial').style.display = 'none';
-        document.getElementById('btn-excel-hist').style.display = 'none';
-        clienteHistorialActual = null;
-    }
-
-    // ===== EXCEL RESUMEN =====
-    function descargarExcelResumen() {
-        if (clientesFiltrados.length === 0) { alert('Sin datos'); return; }
-        const cols = ['Cliente','Código','Vendedor','Código Vendedor','Teléfono','Correo','Saldo (L)'];
-        const filas = clientesFiltrados.map(c => [
-            c.NombreCompleto || '',
-            c.CodigoCliente || '',
-            c.NombreVendedor || '',
-            c.CodigoVendedor || '',
-            c.Telefeno || '',
-            c.CantidadArticulos || 0,
-            parseFloat(c.TotalCompras||0).toFixed(2),
-            parseFloat(c.TotalPagado||0).toFixed(2),
-            c.PorcentajePagado || '0%',
-            parseFloat(c.SaldoCalculado||0).toFixed(2)
-        ]);
-        descargarCSV([cols,...filas], `saldos_clientes_${hoy()}.xls`);
-    }
-
-    // ===== EXCEL HISTORIAL =====
-    function descargarExcelHistorial() {
-        const rows = document.querySelectorAll('#tbody-historial tr');
-        if (!clienteHistorialActual || rows.length === 0) return;
-        const cols = ['#','Fecha','Transacción','N° Referencia','Monto (L)','Saldo (L)'];
-        const filas = [];
-        rows.forEach(r => {
-            const tds = r.querySelectorAll('td');
-            if (tds.length >= 6) filas.push([...tds].map(td => td.textContent.trim()));
-        });
-        descargarCSV([cols,...filas], `historial_${clienteHistorialActual.codigo}_${hoy()}.xls`);
-    }
-
-    function descargarCSV(rows, filename) {
-        // Generar Excel XML (abre directo en Excel sin problemas de encoding)
-        const xlsFilename = filename.replace('.csv', '.xls');
-        let xls = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-        xls += '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Datos</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>';
-        rows.forEach((row, i) => {
-            xls += '<tr>';
-            row.forEach(v => {
-                const tag = i === 0 ? 'th' : 'td';
-                xls += `<${tag}>${String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</${tag}>`;
+    function render() {
+        const l = filtrados();
+        const tb = document.getElementById('tbody');
+        const agrupar = document.getElementById('f-agrupar').checked;
+        document.querySelectorAll('#th-vend, .col-vend').forEach(x => x.style.display = agrupar ? 'none' : '');
+        if (!l.length) { tb.innerHTML = `<tr><td colspan="8" class="vacio">${clientes.length ? 'No hay clientes con este filtro.' : 'No hay clientes registrados.'}</td></tr>`; return; }
+        const tot = l.reduce((a, c) => a + num(c.SaldoCalculado), 0);
+        let html = '';
+        if (agrupar) {
+            const g = new Map();
+            l.forEach(c => { const k = c.IdVendedor || 0; if (!g.has(k)) g.set(k, []); g.get(k).push(c); });
+            [...g.entries()].sort((a, b) => b[1].reduce((s, c) => s + num(c.SaldoCalculado), 0) - a[1].reduce((s, c) => s + num(c.SaldoCalculado), 0)).forEach(([k, cs]) => {
+                const st = cs.reduce((s, c) => s + num(c.SaldoCalculado), 0);
+                const cerrado = cerrados.has(k);
+                html += `<tr class="grupo ${cerrado ? 'cerrado' : ''}" onclick="cerrados.has(${k}) ? cerrados.delete(${k}) : cerrados.add(${k}); render()">
+                    <td colspan="5"><div class="gnom"><span class="flecha">${ico('flecha', 'width:14px;height:14px')}</span>${esc(cs[0].NombreVendedor || 'Sin vendedor')} <small>${esc(cs[0].CodigoVendedor || '')} · ${cs.length} cliente${cs.length === 1 ? '' : 's'}</small>${k === usuario.id ? '<span class="mio" style="margin-left:4px">tuyos</span>' : ''}</div></td>
+                    <td class="num saldo" style="color:#fff">${L(st)}</td><td colspan="2"></td></tr>`;
+                if (!cerrado) html += cs.map(fila).join('');
             });
-            xls += '</tr>';
-        });
-        xls += '</table></body></html>';
-        const a = Object.assign(document.createElement('a'), {
-            href: URL.createObjectURL(new Blob([xls], {type:'application/vnd.ms-excel;charset=utf-8;'})),
-            download: xlsFilename
-        });
-        a.click();
+        } else html = l.map(fila).join('');
+        html += `<tr class="total-fila"><td colspan="${agrupar ? 4 : 5}" class="num" style="color:var(--suave);font-weight:600">Total de ${l.length} cliente${l.length === 1 ? '' : 's'}</td><td class="num">${L(tot)}</td><td colspan="2"></td></tr>`;
+        tb.innerHTML = html;
     }
 
-    function hoy() { return new Date().toISOString().substring(0,10); }
+    function exportarExcel() {
+        const l = filtrados();
+        if (!l.length) { toast('err', 'No hay datos para exportar'); return; }
+        const filas = [['Cliente', 'Código', 'Teléfono', 'Vendedor', 'Artículos', 'Comprado (L)', 'Pagado (L)', 'En camino (L)', 'Saldo (L)', 'Estado']]
+            .concat(l.map(c => [c.NombreCompleto, c.CodigoCliente, c.Telefeno, c.NombreVendedor, c.CantidadArticulos, num(c.TotalCompras).toFixed(2), num(c.TotalPagado).toFixed(2), num(c.MontoPendienteEntrega).toFixed(2), num(c.SaldoCalculado).toFixed(2), estadoDe(c).t]));
+        descargarXls(filas, `saldos_clientes_${new Date().toISOString().slice(0, 10)}.xls`);
+    }
+    function descargarXls(rows, nombre) {
+        let x = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>';
+        rows.forEach((r, i) => { x += '<tr>' + r.map(v => `<${i ? 'td' : 'th'}>${esc(v ?? '')}</${i ? 'td' : 'th'}>`).join('') + '</tr>'; });
+        x += '</table></body></html>';
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([x], { type:'application/vnd.ms-excel;charset=utf-8' })); a.download = nombre; a.click();
+    }
 
-    // Cerrar dropdown al click fuera
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.buscar-wrap-rel')) {
-            document.getElementById('resultados-hist').style.display = 'none';
-        }
-    });
+    // ═════════ ESTADO DE CUENTA ═════════
+    let EC = null, ecMovTodos = false, ddSel = 0;
+    const opc = { movs:true, camino:true, cuentas:true };
 
-    // ===== NUEVO CLIENTE =====
-    async function cargarVendedoresSelect() {
+    function ddFiltrar() {
+        const q = norm(document.getElementById('ec-buscar').value);
+        const l = clientes.filter(c => !q || [c.NombreCompleto, c.CodigoCliente, c.Telefeno].some(x => norm(x).includes(q)))
+            .sort((a, b) => num(b.SaldoCalculado) - num(a.SaldoCalculado)).slice(0, 30);
+        ddSel = 0;
+        const el = document.getElementById('dd-lista');
+        el.innerHTML = l.length ? l.map((c, i) => `<div class="dd-item ${i === 0 ? 'sel' : ''}" data-id="${c.IdCliente}" onmousedown="abrirEstado(${c.IdCliente})">
+            <div class="c-av" style="background:${colorDe(c.IdCliente)};width:28px;height:28px;font-size:10.5px">${esc(iniciales(c.NombreCompleto))}</div>
+            <div class="c-txt"><b>${esc(c.NombreCompleto)}</b><small>${esc(c.CodigoCliente || '')} · ${esc(c.NombreVendedor || '')}</small></div>
+            <span class="s" style="color:${num(c.SaldoCalculado) > 0.5 ? '#fff' : 'var(--verde)'}">${L(num(c.SaldoCalculado), 0)}</span></div>`).join('')
+            : '<div class="dd-item" style="color:var(--tenue)">Sin resultados</div>';
+        el.classList.add('on');
+    }
+    function ddTecla(e) {
+        const it = [...document.querySelectorAll('#dd-lista .dd-item[data-id]')];
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); ddSel = Math.max(0, Math.min(it.length - 1, ddSel + (e.key === 'ArrowDown' ? 1 : -1))); it.forEach((x, i) => x.classList.toggle('sel', i === ddSel)); it[ddSel]?.scrollIntoView({ block:'nearest' }); }
+        else if (e.key === 'Enter' && it[ddSel]) { e.preventDefault(); abrirEstado(parseInt(it[ddSel].dataset.id)); }
+        else if (e.key === 'Escape') document.getElementById('dd-lista').classList.remove('on');
+    }
+    document.addEventListener('click', e => { if (!e.target.closest('.dd')) document.getElementById('dd-lista').classList.remove('on'); });
+
+    async function abrirEstado(id) {
+        verVista('estado');
+        const u = new URL(location.href); u.searchParams.set('cliente', id); history.replaceState(null, '', u);
+        document.getElementById('dd-lista').classList.remove('on');
+        const c0 = clientes.find(c => c.IdCliente === id);
+        document.getElementById('ec-buscar').value = c0 ? c0.NombreCompleto : '';
+        document.getElementById('ec').innerHTML = '<div class="card cargando">Cargando estado de cuenta…</div>';
+        ecMovTodos = false;
         try {
-            const res  = await fetch('/api/vendedores');
-            const json = await res.json();
-            const sel  = document.getElementById('nc-vendedor');
-            if (!sel || !json.ok) return;
-            json.data.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.IdVendedor;
-                opt.textContent = `${v.Nombres} ${v.Apellidos||''} (${v.CodigoVendedor})`;
-                sel.appendChild(opt);
-            });
-            // Si el usuario no es admin, preseleccionar su propio vendedor
-            if (!usuario.esAdmin) sel.value = usuario.id;
-        } catch(e) { console.error('Error cargando vendedores:', e); }
-    }
-
-    function limpiarFormCliente() {
-        ['nc-nombre','nc-apellido','nc-telefono','nc-correo','nc-direccion'].forEach(id => {
-            document.getElementById(id).value = '';
-        });
-        document.getElementById('nc-vendedor').value = '';
-        const msg = document.getElementById('nc-mensaje');
-        msg.style.display = 'none';
-    }
-
-    async function guardarNuevoCliente() {
-        const nombre   = document.getElementById('nc-nombre').value.trim();
-        const apellido = document.getElementById('nc-apellido').value.trim();
-        const telefono = document.getElementById('nc-telefono').value.trim();
-        const correo   = document.getElementById('nc-correo').value.trim();
-        const direccion= document.getElementById('nc-direccion').value.trim();
-        const vendedor = document.getElementById('nc-vendedor').value;
-        const msg      = document.getElementById('nc-mensaje');
-
-        if (!nombre || !apellido || !vendedor) {
-            msg.style.display = 'block';
-            msg.style.background = '#2d0a0a';
-            msg.style.color = '#ef4444';
-            msg.style.border = '1px solid #7f1d1d';
-            msg.textContent = '⚠️ Nombre, apellido y vendedor son obligatorios';
-            return;
+            const [d, cu] = await Promise.all([
+                fetch('/api/clientes/estado-cuenta?idCliente=' + id).then(r => r.json()),
+                cuentas.length ? Promise.resolve({ ok:true, data:cuentas }) : fetch('/api/pagos/cuentas').then(r => r.json()).catch(() => ({ ok:false }))
+            ]);
+            if (!d.ok) throw new Error(d.error || 'Error');
+            if (cu.ok) cuentas = cu.data || [];
+            EC = { cliente: d.cliente || c0 || {}, movimientos: d.movimientos || [], articulos: d.articulos || [] };
+            if (c0) EC.cliente = { ...c0, ...EC.cliente };
+            pintarEstado();
+        } catch (e) {
+            document.getElementById('ec').innerHTML = `<div class="card vacio">No se pudo cargar el estado de cuenta: ${esc(e.message)}${/404|Cannot GET/i.test(e.message) ? '. Reiniciá el backend.' : ''}</div>`;
         }
+    }
 
+    function cuentasDe(c) {
+        const propias = cuentas.filter(x => x.IdVendedor === c.IdVendedor);
+        return (propias.length ? propias : cuentas).map(x => ({ Banco:x.Banco, NombreCuenta:x.NombreCuenta, NumeroCuenta:x.NumeroCuenta }));   // nunca el Capital
+    }
+
+    function pintarEstado() {
+        const c = EC.cliente, s = num(c.SaldoCalculado), e = estadoDe(c);
+        const mov = [...EC.movimientos].sort((a, b) => num(b.NumeroFila) - num(a.NumeroFila));
+        const camino = EC.articulos.filter(a => !a.Entregado);
+        const wa = telWa(c.Telefeno);
+        const movs = ecMovTodos ? mov : mov.slice(0, 12);
+        const artPorPedido = new Map(); EC.articulos.forEach(a => { const k = String(a.NumeroPedido || '').trim(); if (!artPorPedido.has(k)) artPorPedido.set(k, []); artPorPedido.get(k).push(a); });
+
+        document.getElementById('ec').innerHTML = `
+        <div class="card">
+            <div class="ec-cab">
+                <div class="ec-av" style="background:${colorDe(c.IdCliente)}">${esc(iniciales(c.NombreCompleto))}</div>
+                <div>
+                    <div class="ec-nom">${esc(c.NombreCompleto || 'Cliente')}</div>
+                    <div class="ec-meta">
+                        <span>${esc(c.CodigoCliente || '')}</span>
+                        ${c.Telefeno ? `<span>${ico('tel', 'width:13px;height:13px')}${esc(c.Telefeno)}</span>` : ''}
+                        <span>${ico('usuario', 'width:13px;height:13px')}${esc(c.NombreVendedor || 'Sin vendedor')}</span>
+                        <span class="estado ${e.cls}">${esc(e.t)}</span>
+                    </div>
+                </div>
+                <div class="ec-acc">
+                    <button class="btn rosa" id="btn-copiar" onclick="copiarEstado(this)" title="Copia la imagen del estado de cuenta para pegarla en WhatsApp">${ico('copiar')}Copiar imagen</button>
+                    <button class="btn" onclick="descargarEstado(this)">${ico('bajar')}Descargar</button>
+                    <button class="btn" onclick="copiarMensaje()" title="Copia un mensaje de texto con el saldo">${ico('msg')}Copiar mensaje</button>
+                    ${wa ? `<a class="btn" href="https://wa.me/${wa}?text=${encodeURIComponent(mensaje())}" target="_blank" rel="noopener" style="color:#25d366">${WA}WhatsApp</a>` : ''}
+                    <a class="btn" href="/pagos.html?cliente=${c.IdCliente}" title="Registrar un pago de este cliente">${ico('cobro')}Registrar pago</a>
+                </div>
+            </div>
+            <div class="opc"><b>La imagen incluye:</b>
+                <label class="chk"><input type="checkbox" ${opc.movs ? 'checked' : ''} onchange="opc.movs=this.checked"> Últimos movimientos</label>
+                <label class="chk"><input type="checkbox" ${opc.camino ? 'checked' : ''} onchange="opc.camino=this.checked"> Artículos en camino</label>
+                <label class="chk"><input type="checkbox" ${opc.cuentas ? 'checked' : ''} onchange="opc.cuentas=this.checked"> Cuentas para depositar</label>
+            </div>
+        </div>
+
+        <div class="ec-kpis">
+            <div class="kpi" style="--acento:var(--borde2)"><div class="kpi-tit">Total comprado</div><div class="kpi-val">${Lk(num(c.TotalCompras))}</div><div class="kpi-pie"><span>${parseInt(c.CantidadArticulos) || EC.articulos.length} artículos</span></div></div>
+            <div class="kpi" style="--acento:var(--verde)"><div class="kpi-tit">Total pagado</div><div class="kpi-val">${Lk(num(c.TotalPagado))}</div><div class="kpi-pie"><span>${parseInt(c.CantidadPagos) || mov.filter(m => m.TipoMovimiento === 'Pago').length} pagos · ${esc(c.PorcentajePagado || '')}</span></div></div>
+            <div class="kpi" style="--acento:var(--rosa)"><div class="kpi-tit">${s < -0.5 ? 'Saldo a favor' : 'Saldo pendiente'}</div><div class="kpi-val" style="color:${s > 0.5 ? '#fff' : s < -0.5 ? 'var(--morado)' : 'var(--verde)'}">${Lk(Math.abs(s))}</div><div class="kpi-pie"><span>${e.cobrable > 0.5 ? L(e.cobrable, 0) + ' cobrable ya' : s > 0.5 ? 'se cobra al entregar' : 'al día'}</span></div></div>
+            <div class="kpi" style="--acento:var(--azul)"><div class="kpi-tit">En camino</div><div class="kpi-val">${Lk(num(c.MontoPendienteEntrega) || camino.reduce((a, x) => a + num(x.Venta), 0))}</div><div class="kpi-pie"><span>${camino.length} artículo${camino.length === 1 ? '' : 's'} sin entregar</span></div></div>
+        </div>
+
+        <div class="ec-grid">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Movimientos</div><div class="card-sub">Del más reciente al más antiguo · tocá una compra para ver sus artículos</div></div>
+                    <button class="btn btn-sm" onclick="exportarMovs()">${ico('excel', 'width:14px;height:14px')}Excel</button></div>
+                <div class="tabla-wrap" style="margin-top:8px">
+                    <table class="t">
+                        <thead><tr><th>Fecha</th><th>Concepto</th><th class="num">Cargo</th><th class="num">Abono</th><th class="num">Saldo</th></tr></thead>
+                        <tbody>${movs.length ? movs.map((m, i) => {
+                            const comp = m.TipoMovimiento === 'Compra', pago = m.TipoMovimiento === 'Pago';
+                            const ref = String(m.NumeroReferencia || '').trim();
+                            const arts = comp ? (artPorPedido.get(ref) || []) : [];
+                            return `<tr class="mov ${comp && arts.length ? 'compra' : ''}" ${comp && arts.length ? `onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'"` : ''}>
+                                <td style="white-space:nowrap;color:var(--suave);font-size:12px">${fecha(m.FechaMovimiento)}</td>
+                                <td><span class="mov-tipo ${comp ? 'mt-compra' : pago ? 'mt-pago' : 'mt-otro'}">${esc(m.TipoMovimiento)}</span> <span class="ref">${esc(ref)}</span>${arts.length ? ` <small style="color:var(--mudo)">· ${arts.length} art.</small>` : ''}</td>
+                                <td class="num">${comp ? L(num(m.Monto)) : ''}</td>
+                                <td class="num" style="color:var(--verde)">${!comp ? L(num(m.Monto)) : ''}</td>
+                                <td class="num" style="font-weight:700;color:${num(m.SaldoFecha) > 0.5 ? '#fff' : 'var(--verde)'}">${L(num(m.SaldoFecha))}</td></tr>
+                                ${arts.length ? `<tr class="detalle" style="display:none"><td colspan="5">${arts.map(miniArt).join('')}</td></tr>` : ''}`;
+                        }).join('') : '<tr><td colspan="5" class="vacio">Sin movimientos</td></tr>'}</tbody>
+                    </table>
+                </div>
+                ${mov.length > 12 ? `<button class="ver-mas" onclick="ecMovTodos=!ecMovTodos;pintarEstado()">${ecMovTodos ? 'Ver solo los recientes' : `Ver los ${mov.length} movimientos`}</button>` : '<div style="height:10px"></div>'}
+            </div>
+            <div class="card" style="align-self:start">
+                <div class="card-cab"><div><div class="card-tit">Artículos en camino</div><div class="card-sub">Comprados y aún sin entregar</div></div></div>
+                <div class="lista-art">${camino.length ? camino.map(miniArt).join('') : '<div class="vacio" style="padding:20px">No tiene artículos en camino.</div>'}</div>
+            </div>
+        </div>`;
+    }
+
+    function miniArt(a) {
+        return `<div class="mini-art">
+            ${a.Fotografia ? `<img src="${esc(a.Fotografia)}" loading="lazy" alt="" onclick="verArt(${a.IdDetallePedido})" onerror="this.outerHTML='<div class=\\'ph\\'></div>'">` : `<div class="ph" onclick="verArt(${a.IdDetallePedido})"></div>`}
+            <div class="n"><b title="${esc(a.NombreArticulo || a.DescripcionArticulo)}">${esc(a.NombreArticulo || a.DescripcionArticulo || 'Artículo')}</b>
+                <small>${a.TallaColor ? esc(a.TallaColor) + ' · ' : ''}${fecha(a.FechaPedido)} · ${a.Entregado ? 'Entregado' : 'En camino'}</small></div>
+            <div class="num" style="font-weight:700">${num(a.Venta) ? L(num(a.Venta), 0) : '<span style="color:var(--mudo);font-weight:400">sin precio</span>'}</div></div>`;
+    }
+    function verArt(id) {
+        const a = EC.articulos.find(x => x.IdDetallePedido === id); if (!a) return;
+        verArticuloModal({ ...a, ValorCobroCliente:a.Venta, CantidadArticulos:a.Cantidad, NombreCliente:EC.cliente.NombreCompleto, NombreVendedor:EC.cliente.NombreVendedor });
+    }
+
+    function exportarMovs() {
+        const mov = [...EC.movimientos].sort((a, b) => num(a.NumeroFila) - num(b.NumeroFila));
+        descargarXls([['Fecha', 'Tipo', 'Referencia', 'Cargo (L)', 'Abono (L)', 'Saldo (L)']].concat(mov.map(m => [fecha(m.FechaMovimiento), m.TipoMovimiento, String(m.NumeroReferencia || '').trim(),
+            m.TipoMovimiento === 'Compra' ? num(m.Monto).toFixed(2) : '', m.TipoMovimiento !== 'Compra' ? num(m.Monto).toFixed(2) : '', num(m.SaldoFecha).toFixed(2)])),
+            `estado_cuenta_${(EC.cliente.CodigoCliente || EC.cliente.IdCliente)}_${new Date().toISOString().slice(0, 10)}.xls`);
+    }
+
+    function mensaje() {
+        const c = EC.cliente, s = num(c.SaldoCalculado), camino = EC.articulos.filter(a => !a.Entregado);
+        const nombre = String(c.NombreCompleto || '').split(/\s+/)[0];
+        const hoy = new Date().toLocaleDateString('es-HN', { day:'2-digit', month:'2-digit', year:'numeric' });
+        let t = `Hola ${nombre}, te saluda ShopAholic.\n\n`;
+        if (s > 0.5) {
+            t += `Tu saldo pendiente al ${hoy} es de *${L(s)}*.\n`;
+            const cob = estadoDe(c).cobrable;
+            if (camino.length) t += `Tenés ${camino.length} artículo${camino.length === 1 ? '' : 's'} en camino.\n`;
+            if (cob > 0.5 && camino.length) t += `De ese saldo, ${L(cob)} corresponde a artículos ya entregados.\n`;
+        } else if (s < -0.5) t += `Tenés un saldo a favor de *${L(Math.abs(s))}* al ${hoy}.\n`;
+        else t += `Tu cuenta está al día al ${hoy}. ¡Gracias!\n`;
+        t += `\nTotal comprado: ${L(num(c.TotalCompras))}\nTotal pagado: ${L(num(c.TotalPagado))}\n`;
+        const cu = cuentasDe(c);
+        if (s > 0.5 && cu.length) t += `\nPodés depositar en:\n` + cu.map(x => `• ${x.Banco || ''} · ${x.NombreCuenta || ''} · ${x.NumeroCuenta || ''}`).join('\n') + '\n';
+        return t + `\n¡Gracias por comprar con nosotros!`;
+    }
+    async function copiarMensaje() {
+        try { await navigator.clipboard.writeText(mensaje()); toast('ok', 'Mensaje copiado'); }
+        catch (e) { toast('err', 'No se pudo copiar el mensaje'); }
+    }
+
+    // ── Imagen del estado de cuenta (canvas) ──
+    function cargarImg(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; }); }
+    function rr(x, X, Y, W, H, R) { x.beginPath(); x.moveTo(X + R, Y); x.arcTo(X + W, Y, X + W, Y + H, R); x.arcTo(X + W, Y + H, X, Y + H, R); x.arcTo(X, Y + H, X, Y, R); x.arcTo(X, Y, X + W, Y, R); x.closePath(); }
+    function recortar(x, t, w) { t = String(t || ''); if (x.measureText(t).width <= w) return t; while (t && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }
+
+    async function lienzo() {
+        const c = EC.cliente, s = num(c.SaldoCalculado), e = estadoDe(c);
+        const mov = [...EC.movimientos].sort((a, b) => num(b.NumeroFila) - num(a.NumeroFila)).slice(0, 10);
+        const camino = EC.articulos.filter(a => !a.Entregado).slice(0, 8);
+        const cu = cuentasDe(c).slice(0, 4);
+        const W = 1080, M = 64, F = "'Segoe UI', Arial, sans-serif";
+        let H = 640;
+        if (opc.movs && mov.length) H += 120 + mov.length * 58;
+        if (opc.camino && camino.length) H += 110 + camino.length * 50;
+        if (opc.cuentas && cu.length && s > 0.5) H += 110 + cu.length * 54;
+        H += 130;
+        const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+        const x = cv.getContext('2d');
+        x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+        const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#E8327A'); g.addColorStop(1, '#EF7A30');
+        x.fillStyle = g; x.fillRect(0, 0, W, 12);
+        const logo = await cargarImg('/assets/shopaholic-logo.png');
+        let y = 52;
+        if (logo) { const lh = 84; x.drawImage(logo, M, y, logo.width * lh / logo.height, lh); }
+        x.textAlign = 'right'; x.textBaseline = 'top';
+        x.fillStyle = '#111827'; x.font = `800 40px ${F}`; x.fillText('ESTADO DE CUENTA', W - M, y + 6);
+        x.fillStyle = '#6b7280'; x.font = `500 24px ${F}`; x.fillText('Al ' + new Date().toLocaleDateString('es-HN', { day:'2-digit', month:'long', year:'numeric' }), W - M, y + 56);
+        x.textAlign = 'left';
+        y = 178;
+        // cliente
+        rr(x, M, y, W - 2 * M, 112, 18); x.fillStyle = '#f8fafc'; x.fill(); x.strokeStyle = '#eef0f3'; x.lineWidth = 2; x.stroke();
+        x.fillStyle = '#9ca3af'; x.font = `700 20px ${F}`; x.fillText('CLIENTE', M + 28, y + 20);
+        x.fillStyle = '#111827'; x.font = `800 36px ${F}`; x.fillText(recortar(x, c.NombreCompleto, 620), M + 28, y + 48);
+        x.textAlign = 'right'; x.fillStyle = '#6b7280'; x.font = `500 24px ${F}`;
+        x.fillText([c.CodigoCliente, c.Telefeno].filter(Boolean).join(' · '), W - M - 28, y + 56); x.textAlign = 'left';
+        y += 140;
+        // totales
+        const bw = (W - 2 * M - 32) / 3;
+        const caja = (i, tit, val, color, fondo) => {
+            const bx = M + i * (bw + 16);
+            rr(x, bx, y, bw, 150, 18); x.fillStyle = fondo; x.fill();
+            x.fillStyle = '#6b7280'; x.font = `700 20px ${F}`; x.fillText(tit, bx + 24, y + 26);
+            x.fillStyle = color; x.font = `800 ${val.length > 11 ? 34 : 40}px ${F}`; x.fillText(val, bx + 24, y + 70);
+        };
+        caja(0, 'TOTAL COMPRADO', L(num(c.TotalCompras)), '#111827', '#f8fafc');
+        caja(1, 'TOTAL PAGADO', L(num(c.TotalPagado)), '#15803d', '#f0fdf4');
+        caja(2, s < -0.5 ? 'SALDO A FAVOR' : 'SALDO PENDIENTE', L(Math.abs(s)), s > 0.5 ? '#E8327A' : '#15803d', s > 0.5 ? '#fdf2f8' : '#f0fdf4');
+        y += 186;
+        const titulo = t => { x.fillStyle = '#111827'; x.font = `800 28px ${F}`; x.fillText(t, M, y); y += 50; x.strokeStyle = '#eef0f3'; x.lineWidth = 2; x.beginPath(); x.moveTo(M, y - 8); x.lineTo(W - M, y - 8); x.stroke(); };
+        if (opc.movs && mov.length) {
+            titulo('Últimos movimientos');
+            x.fillStyle = '#9ca3af'; x.font = `700 19px ${F}`;
+            x.fillText('FECHA', M, y + 4); x.fillText('CONCEPTO', M + 190, y + 4);
+            x.textAlign = 'right'; x.fillText('MONTO', W - M - 230, y + 4); x.fillText('SALDO', W - M, y + 4); x.textAlign = 'left';
+            y += 42;
+            mov.forEach((m, i) => {
+                const comp = m.TipoMovimiento === 'Compra';
+                if (i % 2 === 0) { x.fillStyle = '#fafafa'; x.fillRect(M - 12, y - 10, W - 2 * M + 24, 54); }
+                x.fillStyle = '#4b5563'; x.font = `500 23px ${F}`; x.fillText(fecha(m.FechaMovimiento), M, y + 4);
+                x.fillStyle = comp ? '#be185d' : '#15803d'; x.font = `700 23px ${F}`; x.fillText(m.TipoMovimiento, M + 190, y + 4);
+                x.fillStyle = '#9ca3af'; x.font = `500 20px ${F}`; x.fillText(recortar(x, String(m.NumeroReferencia || '').trim(), 210), M + 310, y + 7);
+                x.textAlign = 'right';
+                x.fillStyle = comp ? '#111827' : '#15803d'; x.font = `700 23px ${F}`; x.fillText((comp ? '' : '− ') + L(num(m.Monto)), W - M - 230, y + 4);
+                x.fillStyle = '#111827'; x.font = `800 23px ${F}`; x.fillText(L(num(m.SaldoFecha)), W - M, y + 4);
+                x.textAlign = 'left'; y += 58;
+            });
+            y += 34;
+        }
+        if (opc.camino && camino.length) {
+            titulo(`Artículos en camino (${EC.articulos.filter(a => !a.Entregado).length})`);
+            camino.forEach(a => {
+                x.fillStyle = '#E8327A'; x.beginPath(); x.arc(M + 8, y + 15, 6, 0, 7); x.fill();
+                x.fillStyle = '#111827'; x.font = `600 24px ${F}`;
+                x.fillText(recortar(x, (a.NombreArticulo || a.DescripcionArticulo || 'Artículo') + (a.TallaColor ? ' · ' + a.TallaColor : ''), 700), M + 30, y);
+                x.textAlign = 'right'; x.font = `700 24px ${F}`; x.fillText(num(a.Venta) ? L(num(a.Venta), 0) : '—', W - M, y); x.textAlign = 'left';
+                y += 50;
+            });
+            y += 34;
+        }
+        if (opc.cuentas && cu.length && s > 0.5) {
+            titulo('Cuentas para depositar');
+            cu.forEach(k => {
+                x.fillStyle = '#111827'; x.font = `700 24px ${F}`; x.fillText(recortar(x, k.Banco || '', 300), M, y);
+                x.fillStyle = '#4b5563'; x.font = `500 24px ${F}`; x.fillText(recortar(x, k.NombreCuenta || '', 380), M + 310, y);
+                x.textAlign = 'right'; x.fillStyle = '#111827'; x.font = `700 26px ${F}`; x.fillText(k.NumeroCuenta || '', W - M, y); x.textAlign = 'left';
+                y += 54;
+            });
+            y += 30;
+        }
+        // pie: recortar el lienzo a lo que realmente se dibujó
+        const HF = Math.max(y + 24, 760) + 96;
+        const fin = document.createElement('canvas'); fin.width = W; fin.height = HF;
+        const f = fin.getContext('2d');
+        f.drawImage(cv, 0, 0);
+        f.fillStyle = g; f.fillRect(0, HF - 96, W, 96);
+        f.fillStyle = '#fff'; f.font = `700 28px ${F}`; f.textAlign = 'center'; f.textBaseline = 'middle';
+        f.fillText('¡Gracias por comprar con nosotros!', W / 2, HF - 48);
+        return fin;
+    }
+    const aBlob = cv => new Promise(r => cv.toBlob(r, 'image/png'));
+    const nombreArchivo = () => ('estado-cuenta-' + (EC.cliente.NombreCompleto || EC.cliente.IdCliente)).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '.png';
+    async function descargarEstado(btn) {
+        btn.disabled = true;
+        try { const b = await aBlob(await lienzo()); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nombreArchivo(); a.click(); }
+        catch (e) { toast('err', 'No se pudo generar la imagen'); }
+        btn.disabled = false;
+    }
+    async function copiarEstado(btn) {
+        const txt = btn.innerHTML; btn.disabled = true; btn.textContent = 'Generando…';
         try {
-            const res  = await fetch('/api/clientes/nuevo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, apellido, telefono, correo, direccion, idVendedor: parseInt(vendedor) })
-            });
-            const json = await res.json();
-            if (json.ok) {
-                msg.style.display = 'block';
-                msg.style.background = '#0f2318';
-                msg.style.color = '#34d399';
-                msg.style.border = '1px solid #1a3d28';
-                msg.textContent = `✅ Cliente registrado correctamente — Código: ${json.codigo || ''}`;
-                limpiarFormCliente();
-                cargarResumen(); // Refrescar lista
-            } else {
-                msg.style.display = 'block';
-                msg.style.background = '#2d0a0a';
-                msg.style.color = '#ef4444';
-                msg.style.border = '1px solid #7f1d1d';
-                msg.textContent = '❌ Error: ' + json.error;
-            }
-        } catch(e) {
-            msg.style.display = 'block';
-            msg.style.textContent = '❌ Error de conexión';
-        }
+            const cv = await lienzo();
+            if (!navigator.clipboard || !window.ClipboardItem) throw new Error('sin');
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': aBlob(cv) })]);
+            toast('ok', 'Estado de cuenta copiado. Pegalo en WhatsApp con Ctrl+V');
+        } catch (e) { await descargarEstado(btn); toast('err', 'El navegador no dejó copiar; se descargó la imagen.'); }
+        btn.disabled = false; btn.innerHTML = txt;
     }
 
-    // ===== INIT =====
-    cargarResumen();
-    cargarVendedoresSelect();
+    // ═════════ NUEVO CLIENTE ═════════
+    async function cargarVendedores() {
+        try {
+            const d = await fetch('/api/vendedores').then(r => r.json());
+            const sel = document.getElementById('nc-vendedor');
+            (d.ok ? d.data : []).forEach(v => { const o = document.createElement('option'); o.value = v.IdVendedor; o.textContent = `${v.Nombres} ${v.Apellidos || ''} (${v.CodigoVendedor || ''})`; sel.appendChild(o); });
+            if (!usuario.esAdmin) { sel.value = usuario.id; sel.disabled = true; }
+        } catch (e) {}
+    }
+    function limpiarForm() {
+        ['nc-nombre', 'nc-apellido', 'nc-telefono', 'nc-correo', 'nc-direccion'].forEach(i => document.getElementById(i).value = '');
+        if (usuario.esAdmin) document.getElementById('nc-vendedor').value = '';
+        document.getElementById('nc-msg').className = 'msg';
+    }
+    async function guardarCliente() {
+        const v = i => document.getElementById(i).value.trim();
+        const msg = document.getElementById('nc-msg');
+        const tel = v('nc-telefono').replace(/\D/g, '');
+        if (!v('nc-nombre') || !v('nc-apellido') || !v('nc-vendedor')) { msg.className = 'msg err'; msg.textContent = 'Nombre, apellido y vendedor son obligatorios.'; return; }
+        if (tel && tel.length !== 8) { msg.className = 'msg err'; msg.textContent = 'El teléfono debe tener 8 dígitos.'; return; }
+        const b = document.getElementById('nc-guardar'); b.disabled = true;
+        try {
+            const d = await fetch('/api/clientes/nuevo', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ nombre:v('nc-nombre'), apellido:v('nc-apellido'), telefono:tel, correo:v('nc-correo'), direccion:v('nc-direccion'), idVendedor:parseInt(v('nc-vendedor')) }) }).then(r => r.json());
+            if (d.ok) { msg.className = 'msg ok'; msg.textContent = `Cliente ${v('nc-nombre')} ${v('nc-apellido')} registrado.`; limpiarForm(); msg.className = 'msg ok'; cargar(); }
+            else { msg.className = 'msg err'; msg.textContent = 'Error: ' + d.error; }
+        } catch (e) { msg.className = 'msg err'; msg.textContent = 'Error de conexión.'; }
+        b.disabled = false;
+    }
+
+    // ── Inicio ──
+    if (usuario) {
+        if (!usuario.esAdmin) document.getElementById('f-mios').checked = true;
+        else document.getElementById('f-agrupar').checked = false;
+        cargar();
+        cargarVendedores();
+    }
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>

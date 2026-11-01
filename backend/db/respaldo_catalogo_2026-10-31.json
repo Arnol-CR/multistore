@@ -1,0 +1,3036 @@
+{
+ "fecha": "2026-10-31",
+ "articulos": [
+  {
+   "IdArticulo": 366,
+   "NombreArticulo": " Juego de Taladro Eléctrico para Resina",
+   "CodigoArticulo": "PAP13",
+   "Peso": 310,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 381,
+   "NombreArticulo": "1 par de zapatos de patinaje",
+   "CodigoArticulo": "INF23",
+   "Peso": 450,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 385,
+   "NombreArticulo": "1 pieza Esmerilar de uñas eléctrico recargable",
+   "CodigoArticulo": "BEL42",
+   "Peso": 220,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 415,
+   "NombreArticulo": "1 Set Máscara para Dormir",
+   "CodigoArticulo": "BEL45",
+   "Peso": 200,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 383,
+   "NombreArticulo": "10 piezas, Atomizadores de perfume recargables de 5ml",
+   "CodigoArticulo": "BOL22",
+   "Peso": 250,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 378,
+   "NombreArticulo": "2 piezas Gafas de moda con marco cuadrado",
+   "CodigoArticulo": "BOL20",
+   "Peso": 200,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 382,
+   "NombreArticulo": "30 piezas Juego de Manicura",
+   "CodigoArticulo": "BEL41",
+   "Peso": 600,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 370,
+   "NombreArticulo": "30 piezas/set de Ligas para el Cabello",
+   "CodigoArticulo": "MOD72",
+   "Peso": 100,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 379,
+   "NombreArticulo": "4 piezas Gafas de moda cuadradas",
+   "CodigoArticulo": "MOD76",
+   "Peso": 120,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 371,
+   "NombreArticulo": "40 pares de calcetines de colores",
+   "CodigoArticulo": "ZAP14",
+   "Peso": 1600,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 403,
+   "NombreArticulo": "Accesorios para cabello",
+   "CodigoArticulo": "BEL44",
+   "Peso": 150,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 297,
+   "NombreArticulo": "Acesorios de costura",
+   "CodigoArticulo": "BEL34",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 299,
+   "NombreArticulo": "Acesorios para manicuristas",
+   "CodigoArticulo": "BEL35",
+   "Peso": 200,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 343,
+   "NombreArticulo": "Adaptador de carga",
+   "CodigoArticulo": "TEC21",
+   "Peso": 120,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 431,
+   "NombreArticulo": "Adaptador HDMI",
+   "CodigoArticulo": "TEC30",
+   "Peso": 90,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 99,
+   "NombreArticulo": "Adaptador hembra OTG",
+   "CodigoArticulo": "TEC11",
+   "Peso": 60,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 287,
+   "NombreArticulo": "Agarres de goma",
+   "CodigoArticulo": "DEP11",
+   "Peso": 30,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 216,
+   "NombreArticulo": "Alfombra",
+   "CodigoArticulo": "HOG23",
+   "Peso": 900,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 262,
+   "NombreArticulo": "Almohadilla",
+   "CodigoArticulo": "AUT12",
+   "Peso": 40,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 206,
+   "NombreArticulo": "Almohadillas de Pulido",
+   "CodigoArticulo": "AUT07",
+   "Peso": 120,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 137,
+   "NombreArticulo": "Almohadillas para calzado",
+   "CodigoArticulo": "ZAP08",
+   "Peso": 150,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 200,
+   "NombreArticulo": "AmazonPrime",
+   "CodigoArticulo": "SUS03",
+   "Peso": 0,
+   "IdCategoria": 26
+  },
+  {
+   "IdArticulo": 388,
+   "NombreArticulo": "Ambientadores",
+   "CodigoArticulo": "AUT16",
+   "Peso": 80,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 41,
+   "NombreArticulo": "Ambientadores para coche",
+   "CodigoArticulo": "HOG03",
+   "Peso": 90,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 222,
+   "NombreArticulo": "Anillo",
+   "CodigoArticulo": "JOY14",
+   "Peso": 60,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 110,
+   "NombreArticulo": "Anillo de pie digital",
+   "CodigoArticulo": "MAS03",
+   "Peso": 2,
+   "IdCategoria": 11
+  },
+  {
+   "IdArticulo": 374,
+   "NombreArticulo": "Anillos para el Cabello",
+   "CodigoArticulo": "MOD74",
+   "Peso": 110,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 223,
+   "NombreArticulo": "Antideslizante de peluca",
+   "CodigoArticulo": "BEL24",
+   "Peso": 100,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 52,
+   "NombreArticulo": "Aretes",
+   "CodigoArticulo": "JOY04",
+   "Peso": 5,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 316,
+   "NombreArticulo": "Arte de hierro",
+   "CodigoArticulo": "HOG31",
+   "Peso": 100,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 390,
+   "NombreArticulo": "Asa de techo para carro",
+   "CodigoArticulo": "AUT18",
+   "Peso": 100,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 380,
+   "NombreArticulo": "Atomizador de perfume recargable de viaje",
+   "CodigoArticulo": "BOL21",
+   "Peso": 200,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 28,
+   "NombreArticulo": "Auriculares Inalámbricos",
+   "CodigoArticulo": "TEC05",
+   "Peso": 300,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 285,
+   "NombreArticulo": "Banda de reloj + Estuche",
+   "CodigoArticulo": "BOL14",
+   "Peso": 75,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 377,
+   "NombreArticulo": "Bata de laboratorio",
+   "CodigoArticulo": "MOD75",
+   "Peso": 350,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 101,
+   "NombreArticulo": "Bikini",
+   "CodigoArticulo": "MOD28",
+   "Peso": 170,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 29,
+   "NombreArticulo": "Billetera",
+   "CodigoArticulo": "BOL01",
+   "Peso": 150,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 192,
+   "NombreArticulo": "Blazer",
+   "CodigoArticulo": "MOD45",
+   "Peso": 165,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 9,
+   "NombreArticulo": "Blusa",
+   "CodigoArticulo": "MOD05",
+   "Peso": 100,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 86,
+   "NombreArticulo": "Blusa con botones",
+   "CodigoArticulo": "MOD26",
+   "Peso": 160,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 422,
+   "NombreArticulo": "Bolsa Almacenamiento Paraguas",
+   "CodigoArticulo": "BOL29",
+   "Peso": 100,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 210,
+   "NombreArticulo": "Bolsa de almacenamiento de controlador",
+   "CodigoArticulo": "VID03",
+   "Peso": 356,
+   "IdCategoria": 24
+  },
+  {
+   "IdArticulo": 392,
+   "NombreArticulo": "Bolsa de Herramientas de Barbero",
+   "CodigoArticulo": "BOL24",
+   "Peso": 250,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 318,
+   "NombreArticulo": "Bolsa de lavado de zapatos",
+   "CodigoArticulo": "BOL16",
+   "Peso": 40,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 426,
+   "NombreArticulo": "Bolsa de maquillaje",
+   "CodigoArticulo": "BOL30",
+   "Peso": 50,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 136,
+   "NombreArticulo": "Bolsa de regalo",
+   "CodigoArticulo": "HOG18",
+   "Peso": 200,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 408,
+   "NombreArticulo": "Bolsa para GYM",
+   "CodigoArticulo": "BOL27",
+   "Peso": 150,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 134,
+   "NombreArticulo": "Bolsas de mantenimiento al vacio",
+   "CodigoArticulo": "BOL06",
+   "Peso": 400,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 173,
+   "NombreArticulo": "Bolsas para almacenar leche materna",
+   "CodigoArticulo": "BOL09",
+   "Peso": 40,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 138,
+   "NombreArticulo": "Bolso para hombre",
+   "CodigoArticulo": "BOL07",
+   "Peso": 800,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 119,
+   "NombreArticulo": "Bolsos de mano",
+   "CodigoArticulo": "BOL04",
+   "Peso": 250,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 104,
+   "NombreArticulo": "Bomba eléctrica para globos",
+   "CodigoArticulo": "HOG13",
+   "Peso": 950,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 141,
+   "NombreArticulo": "Bomba para bolsa de almacenamiento",
+   "CodigoArticulo": "HER07",
+   "Peso": 300,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 25,
+   "NombreArticulo": "Bombilla Led",
+   "CodigoArticulo": "AUT01",
+   "Peso": 120,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 194,
+   "NombreArticulo": "Bote Plastico",
+   "CodigoArticulo": "DEP06",
+   "Peso": 160,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 384,
+   "NombreArticulo": "Botella cuentagotas de vidrio esmerilado",
+   "CodigoArticulo": "BOL23",
+   "Peso": 150,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 342,
+   "NombreArticulo": "Botes de permufes",
+   "CodigoArticulo": "MAQ18",
+   "Peso": 40,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 4,
+   "NombreArticulo": "Boxer",
+   "CodigoArticulo": "MOD02",
+   "Peso": 90,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 102,
+   "NombreArticulo": "Bragas",
+   "CodigoArticulo": "MOD29",
+   "Peso": 35,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 32,
+   "NombreArticulo": "Brasier con Aros",
+   "CodigoArticulo": "MOD12",
+   "Peso": 180,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 294,
+   "NombreArticulo": "Brat invisibles",
+   "CodigoArticulo": "MOD63",
+   "Peso": 50,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 135,
+   "NombreArticulo": "Brazalete ",
+   "CodigoArticulo": "JOY09",
+   "Peso": 150,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 145,
+   "NombreArticulo": "Brillo Labial",
+   "CodigoArticulo": "MAQ03",
+   "Peso": 60,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 98,
+   "NombreArticulo": "Brocas de destornillador",
+   "CodigoArticulo": "HER06",
+   "Peso": 40,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 97,
+   "NombreArticulo": "Brocas imantadas",
+   "CodigoArticulo": "HER05",
+   "Peso": 30,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 131,
+   "NombreArticulo": "Brochas de maquillaje ",
+   "CodigoArticulo": "MAQ02",
+   "Peso": 200,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 305,
+   "NombreArticulo": "Broche",
+   "CodigoArticulo": "ANI07",
+   "Peso": 20,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 151,
+   "NombreArticulo": "Broches",
+   "CodigoArticulo": "HOG19",
+   "Peso": 35,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 347,
+   "NombreArticulo": "Buceo para piscina",
+   "CodigoArticulo": "JUE07",
+   "Peso": 80,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 348,
+   "NombreArticulo": "Cable de carga",
+   "CodigoArticulo": "TEC22",
+   "Peso": 60,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 15,
+   "NombreArticulo": "Cadenas pequeñas ",
+   "CodigoArticulo": "JOY01",
+   "Peso": 75,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 209,
+   "NombreArticulo": "Cafetera",
+   "CodigoArticulo": "COC02",
+   "Peso": 396,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 133,
+   "NombreArticulo": "Caja de regalo estilo mariposa",
+   "CodigoArticulo": "BOL05",
+   "Peso": 200,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 44,
+   "NombreArticulo": "Caja Led Tulipan Luz Nocturna",
+   "CodigoArticulo": "HOG05",
+   "Peso": 200,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 139,
+   "NombreArticulo": "Cajas organizadora para joyeria",
+   "CodigoArticulo": "JOY10",
+   "Peso": 400,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 193,
+   "NombreArticulo": "Calcetines",
+   "CodigoArticulo": "MOD46",
+   "Peso": 25,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 183,
+   "NombreArticulo": "Calcetines",
+   "CodigoArticulo": "INF11",
+   "Peso": 30,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 3,
+   "NombreArticulo": "Calzoneta",
+   "CodigoArticulo": "MOD01",
+   "Peso": 100,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 430,
+   "NombreArticulo": "Camara de Seguridad",
+   "CodigoArticulo": "TEC29",
+   "Peso": 200,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 140,
+   "NombreArticulo": "Camisa manga corta",
+   "CodigoArticulo": "MOD38",
+   "Peso": 350,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 289,
+   "NombreArticulo": "camisa manga corta",
+   "CodigoArticulo": "MOD61",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 127,
+   "NombreArticulo": "Camisa Manga Larga",
+   "CodigoArticulo": "MOD36",
+   "Peso": 140,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 77,
+   "NombreArticulo": "Camisa manga larga",
+   "CodigoArticulo": "MOD23",
+   "Peso": 200,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 1,
+   "NombreArticulo": "Camiseta",
+   "CodigoArticulo": "CAMI",
+   "Peso": 150,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 105,
+   "NombreArticulo": "Camiseta de cuello alto",
+   "CodigoArticulo": "MOD30",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 8,
+   "NombreArticulo": "Camiseta manga corta",
+   "CodigoArticulo": "MOD04",
+   "Peso": 100,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 228,
+   "NombreArticulo": "Camison",
+   "CodigoArticulo": "MOD51",
+   "Peso": 30,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 291,
+   "NombreArticulo": "capa de peluqueria",
+   "CodigoArticulo": "BEL31",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 399,
+   "NombreArticulo": "Cápsulas de Adaptógeno de Raíz Dorada",
+   "CodigoArticulo": "SAL16",
+   "Peso": 250,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 328,
+   "NombreArticulo": "Cardigan Largo",
+   "CodigoArticulo": "MOD67",
+   "Peso": 150,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 2,
+   "NombreArticulo": "Cargador Tipo C",
+   "CodigoArticulo": "TEC01",
+   "Peso": 100,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 68,
+   "NombreArticulo": "Cartera de pop it",
+   "CodigoArticulo": "INF05",
+   "Peso": 150,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 335,
+   "NombreArticulo": "Cepillo Dental",
+   "CodigoArticulo": "SAL07",
+   "Peso": 100,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 57,
+   "NombreArticulo": "Cepillo masajeador",
+   "CodigoArticulo": "MAS01",
+   "Peso": 100,
+   "IdCategoria": 11
+  },
+  {
+   "IdArticulo": 214,
+   "NombreArticulo": "Cepillo para baño",
+   "CodigoArticulo": "HER08",
+   "Peso": 50,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 386,
+   "NombreArticulo": "Cepillo rizador",
+   "CodigoArticulo": "BEL43",
+   "Peso": 100,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 350,
+   "NombreArticulo": "Cepillos de hilo dental",
+   "CodigoArticulo": "SAL08",
+   "Peso": 60,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 204,
+   "NombreArticulo": "Cepillos para lavar",
+   "CodigoArticulo": "AUT06",
+   "Peso": 180,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 184,
+   "NombreArticulo": "Cera para neumáticos",
+   "CodigoArticulo": "AUT05",
+   "Peso": 50,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 300,
+   "NombreArticulo": "Chaleco sin mangas",
+   "CodigoArticulo": "MOD65",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 290,
+   "NombreArticulo": "Chaqueta manga larga",
+   "CodigoArticulo": "MOD62",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 180,
+   "NombreArticulo": "Chupetes para bebe",
+   "CodigoArticulo": "INF09",
+   "Peso": 40,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 124,
+   "NombreArticulo": "Cinta Decorativa",
+   "CodigoArticulo": "HOG17",
+   "Peso": 150,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 360,
+   "NombreArticulo": "Cintas Dentales",
+   "CodigoArticulo": "SAL12",
+   "Peso": 100,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 220,
+   "NombreArticulo": "Cinturon",
+   "CodigoArticulo": "JOY13",
+   "Peso": 70,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 258,
+   "NombreArticulo": "Cinturón de entrenamiento unisex",
+   "CodigoArticulo": "MOD54",
+   "Peso": 200,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 125,
+   "NombreArticulo": "Clips para el cabello",
+   "CodigoArticulo": "JOY07",
+   "Peso": 180,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 327,
+   "NombreArticulo": "Cojin para auto",
+   "CodigoArticulo": "AUT14",
+   "Peso": 240,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 373,
+   "NombreArticulo": "Colas para cabello",
+   "CodigoArticulo": "MOD73",
+   "Peso": 125,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 167,
+   "NombreArticulo": "Collar",
+   "CodigoArticulo": "JOY12",
+   "Peso": 80,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 50,
+   "NombreArticulo": "Collar con diseño de aro",
+   "CodigoArticulo": "JOY03",
+   "Peso": 20,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 123,
+   "NombreArticulo": "Collar con pendientes",
+   "CodigoArticulo": "JOY06",
+   "Peso": 140,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 251,
+   "NombreArticulo": "Conjunto 4 piezas",
+   "CodigoArticulo": "MOD53",
+   "Peso": 100,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 227,
+   "NombreArticulo": "Conjunto bata y pantalones",
+   "CodigoArticulo": "MOD50",
+   "Peso": 200,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 45,
+   "NombreArticulo": "Conjunto Camisa y Short de Algodon",
+   "CodigoArticulo": "MOD17",
+   "Peso": 350,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 266,
+   "NombreArticulo": "Conjunto de 2 piezas de Tobilleras",
+   "CodigoArticulo": "MOD56",
+   "Peso": 25,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 78,
+   "NombreArticulo": "Conjunto de 3 piezas",
+   "CodigoArticulo": "MOD24",
+   "Peso": 420,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 280,
+   "NombreArticulo": "Conjunto de bebé",
+   "CodigoArticulo": "INF19",
+   "Peso": 170,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 148,
+   "NombreArticulo": "Conjunto de dos piezas",
+   "CodigoArticulo": "MOD41",
+   "Peso": 150,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 111,
+   "NombreArticulo": "Conjunto de dos piezas de playa",
+   "CodigoArticulo": "MOD32",
+   "Peso": 250,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 51,
+   "NombreArticulo": "Conjunto de niña",
+   "CodigoArticulo": "INF03",
+   "Peso": 350,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 55,
+   "NombreArticulo": "Conjunto de niño",
+   "CodigoArticulo": "INF04",
+   "Peso": 250,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 128,
+   "NombreArticulo": "Conjunto de ropa casual",
+   "CodigoArticulo": "MOD37",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 157,
+   "NombreArticulo": "Contorneador",
+   "CodigoArticulo": "MAQ06",
+   "Peso": 80,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 236,
+   "NombreArticulo": "Control para videojuegos",
+   "CodigoArticulo": "VID06",
+   "Peso": 250,
+   "IdCategoria": 24
+  },
+  {
+   "IdArticulo": 82,
+   "NombreArticulo": "Control remoto TV",
+   "CodigoArticulo": "TEC08",
+   "Peso": 150,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 274,
+   "NombreArticulo": "Cordones elasticos para zapatos",
+   "CodigoArticulo": "ZAP12",
+   "Peso": 50,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 284,
+   "NombreArticulo": "Correa De Amarre Reutilizable",
+   "CodigoArticulo": "HOG29",
+   "Peso": 50,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 277,
+   "NombreArticulo": "Correa de reloj deportivo de silicona",
+   "CodigoArticulo": "BOL13",
+   "Peso": 80,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 308,
+   "NombreArticulo": "Correas de reloj",
+   "CodigoArticulo": "TEC17",
+   "Peso": 50,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 337,
+   "NombreArticulo": "Corrector",
+   "CodigoArticulo": "MAQ13",
+   "Peso": 90,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 409,
+   "NombreArticulo": "Corrector de postura",
+   "CodigoArticulo": "DEP12",
+   "Peso": 180,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 425,
+   "NombreArticulo": "Cortador de galletas",
+   "CodigoArticulo": "COC14",
+   "Peso": 90,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 90,
+   "NombreArticulo": "Cortauñas",
+   "CodigoArticulo": "BEL07",
+   "Peso": 80,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 118,
+   "NombreArticulo": "Cortinas de fiestas",
+   "CodigoArticulo": "HOG16",
+   "Peso": 100,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 234,
+   "NombreArticulo": "Cosplay",
+   "CodigoArticulo": "ANI03",
+   "Peso": 454,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 196,
+   "NombreArticulo": "Crema",
+   "CodigoArticulo": "BEL21",
+   "Peso": 150,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 226,
+   "NombreArticulo": "Cubierta ",
+   "CodigoArticulo": "AUT09",
+   "Peso": 50,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 189,
+   "NombreArticulo": "Cubierta de cuello contra el sol",
+   "CodigoArticulo": "DEP05",
+   "Peso": 140,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 263,
+   "NombreArticulo": "Cubierta de palanca",
+   "CodigoArticulo": "AUT13",
+   "Peso": 60,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 27,
+   "NombreArticulo": "Cubierta frontal para Nintendo Switch",
+   "CodigoArticulo": "VID01",
+   "Peso": 100,
+   "IdCategoria": 24
+  },
+  {
+   "IdArticulo": 221,
+   "NombreArticulo": "Cubrecalzado de goma",
+   "CodigoArticulo": "ZAP11",
+   "Peso": 60,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 401,
+   "NombreArticulo": "Cuchillo",
+   "CodigoArticulo": "COC10",
+   "Peso": 300,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 315,
+   "NombreArticulo": "Cuchillo falso",
+   "CodigoArticulo": "INF20",
+   "Peso": 100,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 389,
+   "NombreArticulo": "Decoracion para auto",
+   "CodigoArticulo": "AUT17",
+   "Peso": 80,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 341,
+   "NombreArticulo": "Delineador de labios",
+   "CodigoArticulo": "MAQ17",
+   "Peso": 80,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 339,
+   "NombreArticulo": "Delineador de ojos",
+   "CodigoArticulo": "MAQ15",
+   "Peso": 60,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 313,
+   "NombreArticulo": "Depiladora Laser",
+   "CodigoArticulo": "BEL37",
+   "Peso": 500,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 130,
+   "NombreArticulo": "Diadema ",
+   "CodigoArticulo": "JOY08",
+   "Peso": 150,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 174,
+   "NombreArticulo": "Diademas",
+   "CodigoArticulo": "INF08",
+   "Peso": 25,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 319,
+   "NombreArticulo": "Dispensado de huevos",
+   "CodigoArticulo": "COC07",
+   "Peso": 100,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 100,
+   "NombreArticulo": "Dispensador superficie de espejo aluminio Botella de spray",
+   "CodigoArticulo": "BOL02",
+   "Peso": 50,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 93,
+   "NombreArticulo": "Doblado de esquina ",
+   "CodigoArticulo": "HER01",
+   "Peso": 150,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 18,
+   "NombreArticulo": "Dr. Martens",
+   "CodigoArticulo": "ZAP01",
+   "Peso": 650,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 395,
+   "NombreArticulo": "Dron",
+   "CodigoArticulo": "TEC26",
+   "Peso": 640,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 428,
+   "NombreArticulo": "Eldulcorante",
+   "CodigoArticulo": "COC16",
+   "Peso": 1640,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 336,
+   "NombreArticulo": "Escamas de lamina de oro",
+   "CodigoArticulo": "JOY22",
+   "Peso": 100,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 21,
+   "NombreArticulo": "Escaner",
+   "CodigoArticulo": "TEC03",
+   "Peso": 300,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 233,
+   "NombreArticulo": "Esferas para Arbol",
+   "CodigoArticulo": "HOG25",
+   "Peso": 25,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 326,
+   "NombreArticulo": "Esmalte para uñas",
+   "CodigoArticulo": "MAQ12",
+   "Peso": 120,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 129,
+   "NombreArticulo": "Espada de anime para Cosplay",
+   "CodigoArticulo": "ANI01",
+   "Peso": 2000,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 47,
+   "NombreArticulo": "Espada de Bambu",
+   "CodigoArticulo": "INF02",
+   "Peso": 454,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 400,
+   "NombreArticulo": "Espejo adhesivo retrovisor de coche",
+   "CodigoArticulo": "AUT20",
+   "Peso": 80,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 207,
+   "NombreArticulo": "Esponja",
+   "CodigoArticulo": "MAQ11",
+   "Peso": 40,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 359,
+   "NombreArticulo": "Esposas",
+   "CodigoArticulo": "JUG03",
+   "Peso": 80,
+   "IdCategoria": 14
+  },
+  {
+   "IdArticulo": 429,
+   "NombreArticulo": "Espuma Limpiadora",
+   "CodigoArticulo": "MAQ22",
+   "Peso": 190,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 424,
+   "NombreArticulo": "Estanque pequeño",
+   "CodigoArticulo": "COC13",
+   "Peso": 100,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 176,
+   "NombreArticulo": "Estuche para toallitas húmedas",
+   "CodigoArticulo": "BOL10",
+   "Peso": 120,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 69,
+   "NombreArticulo": "Etiquetas decorativas",
+   "CodigoArticulo": "HOG09",
+   "Peso": 200,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 94,
+   "NombreArticulo": "Extensión de taladro",
+   "CodigoArticulo": "HER02",
+   "Peso": 100,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 74,
+   "NombreArticulo": "Extensiones De Cola De Caballo",
+   "CodigoArticulo": "MOD22",
+   "Peso": 250,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 362,
+   "NombreArticulo": "Extensores de tirantes de sujetador",
+   "CodigoArticulo": "MOD71",
+   "Peso": 40,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 186,
+   "NombreArticulo": "Extesion de cabello",
+   "CodigoArticulo": "BEL19",
+   "Peso": 300,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 91,
+   "NombreArticulo": "Faja",
+   "CodigoArticulo": "MOD27",
+   "Peso": 150,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 10,
+   "NombreArticulo": "Faja Moldeadora",
+   "CodigoArticulo": "MOD06",
+   "Peso": 400,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 85,
+   "NombreArticulo": "Fajas",
+   "CodigoArticulo": "MOD25",
+   "Peso": 130,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 71,
+   "NombreArticulo": "Falda",
+   "CodigoArticulo": "MOD20",
+   "Peso": 180,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 283,
+   "NombreArticulo": "Falda para árbol de Navidad",
+   "CodigoArticulo": "HOG28",
+   "Peso": 250,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 288,
+   "NombreArticulo": "FALDA SHORTS",
+   "CodigoArticulo": "MOD60",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 304,
+   "NombreArticulo": "Figura acrilica 2d",
+   "CodigoArticulo": "ANI06",
+   "Peso": 20,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 218,
+   "NombreArticulo": "Figura de accion",
+   "CodigoArticulo": "ANI02",
+   "Peso": 150,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 181,
+   "NombreArticulo": "Figura de accion",
+   "CodigoArticulo": "INF10",
+   "Peso": 80,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 310,
+   "NombreArticulo": "Figura decorativa adorno par hogar ",
+   "CodigoArticulo": "HOG30",
+   "Peso": 50,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 170,
+   "NombreArticulo": "Fijadores para camas",
+   "CodigoArticulo": "HOG21",
+   "Peso": 35,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 286,
+   "NombreArticulo": "flotador para exteriores",
+   "CodigoArticulo": "DEP10",
+   "Peso": 0,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 14,
+   "NombreArticulo": "Funda de telefeno",
+   "CodigoArticulo": "TEC02",
+   "Peso": 75,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 205,
+   "NombreArticulo": "Funda para cargador",
+   "CodigoArticulo": "TEC13",
+   "Peso": 50,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 330,
+   "NombreArticulo": "Funda para Tablet",
+   "CodigoArticulo": "TEC20",
+   "Peso": 230,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 231,
+   "NombreArticulo": "Funda Pasaporte",
+   "CodigoArticulo": "BOL11",
+   "Peso": 90,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 213,
+   "NombreArticulo": "Funda Protectora",
+   "CodigoArticulo": "VID05",
+   "Peso": 70,
+   "IdCategoria": 24
+  },
+  {
+   "IdArticulo": 372,
+   "NombreArticulo": "Fundas de Asiento para Coche",
+   "CodigoArticulo": "AUT15",
+   "Peso": 1000,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 201,
+   "NombreArticulo": "Gafas",
+   "CodigoArticulo": "MOD48",
+   "Peso": 53,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 56,
+   "NombreArticulo": "Gafas con marco de metal",
+   "CodigoArticulo": "MOD19",
+   "Peso": 40,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 34,
+   "NombreArticulo": "Gafas cuadradas de metal",
+   "CodigoArticulo": "MOD14",
+   "Peso": 50,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 281,
+   "NombreArticulo": "Gafas de natación ",
+   "CodigoArticulo": "DEP09",
+   "Peso": 100,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 48,
+   "NombreArticulo": "Gafas deportivas",
+   "CodigoArticulo": "MOD18",
+   "Peso": 50,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 420,
+   "NombreArticulo": "Gel Delineador de Uñas",
+   "CodigoArticulo": "MAQ20",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 81,
+   "NombreArticulo": "Girasoles de simulación",
+   "CodigoArticulo": "HOG11",
+   "Peso": 2,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 117,
+   "NombreArticulo": "Globos",
+   "CodigoArticulo": "HOG15",
+   "Peso": 5,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 142,
+   "NombreArticulo": "Gorra",
+   "CodigoArticulo": "MOD39",
+   "Peso": 130,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 346,
+   "NombreArticulo": "Gorritos",
+   "CodigoArticulo": "INF22",
+   "Peso": 20,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 172,
+   "NombreArticulo": "Gorro",
+   "CodigoArticulo": "INF07",
+   "Peso": 80,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 178,
+   "NombreArticulo": "Gorro para baño",
+   "CodigoArticulo": "BEL17",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 53,
+   "NombreArticulo": "Gorro para pesca",
+   "CodigoArticulo": "JAR01",
+   "Peso": 250,
+   "IdCategoria": 3
+  },
+  {
+   "IdArticulo": 247,
+   "NombreArticulo": "Guantes",
+   "CodigoArticulo": "SAL04",
+   "Peso": 120,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 273,
+   "NombreArticulo": "Guantes gruesos y calientes para hombre",
+   "CodigoArticulo": "MOD58",
+   "Peso": 160,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 208,
+   "NombreArticulo": "Guantes para motocicleta",
+   "CodigoArticulo": "AUT08",
+   "Peso": 150,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 376,
+   "NombreArticulo": "Herramientas de maquillaje profesionales ",
+   "CodigoArticulo": "MAQ19",
+   "Peso": 250,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 338,
+   "NombreArticulo": "Hidratante para labios",
+   "CodigoArticulo": "MAQ14",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 62,
+   "NombreArticulo": "Imanes Para Nevera",
+   "CodigoArticulo": "HOG08",
+   "Peso": 10,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 73,
+   "NombreArticulo": "Jeans PETITE ",
+   "CodigoArticulo": "MOD21",
+   "Peso": 500,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 58,
+   "NombreArticulo": "Juego de arcilla para modelar de horneado y polímero",
+   "CodigoArticulo": "HOG06",
+   "Peso": 680,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 219,
+   "NombreArticulo": "Juego de Cartas",
+   "CodigoArticulo": "JUE01",
+   "Peso": 100,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 190,
+   "NombreArticulo": "Juego de cuidado y aseo del bebé",
+   "CodigoArticulo": "BEL20",
+   "Peso": 160,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 26,
+   "NombreArticulo": "Juego de destornilladores JCD",
+   "CodigoArticulo": "AUT02",
+   "Peso": 150,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 252,
+   "NombreArticulo": "Juego de joyería de 2 piezas de plata",
+   "CodigoArticulo": "JOY17",
+   "Peso": 100,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 243,
+   "NombreArticulo": "Juego de mesa",
+   "CodigoArticulo": "JUE03",
+   "Peso": 200,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 270,
+   "NombreArticulo": "Juego de tren eléctrico",
+   "CodigoArticulo": "JUE05",
+   "Peso": 1000,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 414,
+   "NombreArticulo": "Juguete",
+   "CodigoArticulo": "INF25",
+   "Peso": 200,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 103,
+   "NombreArticulo": "Juguete colgante de gato",
+   "CodigoArticulo": "MAS02",
+   "Peso": 80,
+   "IdCategoria": 11
+  },
+  {
+   "IdArticulo": 394,
+   "NombreArticulo": "Kit herramientas",
+   "CodigoArticulo": "HER10",
+   "Peso": 300,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 365,
+   "NombreArticulo": "Lámina dorada para manualidades de resina",
+   "CodigoArticulo": "PAP12",
+   "Peso": 80,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 257,
+   "NombreArticulo": "Lampara de uñas led",
+   "CodigoArticulo": "BOL12",
+   "Peso": 190,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 158,
+   "NombreArticulo": "Lapiz para ojos",
+   "CodigoArticulo": "MAQ07",
+   "Peso": 70,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 309,
+   "NombreArticulo": "Lapiz Tactil",
+   "CodigoArticulo": "TEC18",
+   "Peso": 30,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 177,
+   "NombreArticulo": "Lazo para cabello",
+   "CodigoArticulo": "BEL16",
+   "Peso": 90,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 113,
+   "NombreArticulo": "Lazos elasticos",
+   "CodigoArticulo": "BEL10",
+   "Peso": 0,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 235,
+   "NombreArticulo": "Libro: 5 x 0.5 x 8.3 pulg.",
+   "CodigoArticulo": "LEC01",
+   "Peso": 300,
+   "IdCategoria": 34
+  },
+  {
+   "IdArticulo": 324,
+   "NombreArticulo": "Limas para uñas",
+   "CodigoArticulo": "BEL38",
+   "Peso": 150,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 244,
+   "NombreArticulo": "Limpia dientes",
+   "CodigoArticulo": "BEL26",
+   "Peso": 70,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 314,
+   "NombreArticulo": "Limpia Vidrios",
+   "CodigoArticulo": "COC06",
+   "Peso": 100,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 351,
+   "NombreArticulo": "Limpiador de dientes",
+   "CodigoArticulo": "SAL09",
+   "Peso": 60,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 433,
+   "NombreArticulo": "Limpiador de poros",
+   "CodigoArticulo": "MAQ23",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 65,
+   "NombreArticulo": "Limpiador electrico oral",
+   "CodigoArticulo": "BEL04",
+   "Peso": 400,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 39,
+   "NombreArticulo": "Llavero",
+   "CodigoArticulo": "HOG02",
+   "Peso": 40,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 112,
+   "NombreArticulo": "Luces de cortina",
+   "CodigoArticulo": "HOG14",
+   "Peso": 180,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 59,
+   "NombreArticulo": "Luces de cuerda led",
+   "CodigoArticulo": "HOG07",
+   "Peso": 454,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 92,
+   "NombreArticulo": "Luces de tiras LED",
+   "CodigoArticulo": "TEC10",
+   "Peso": 300,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 412,
+   "NombreArticulo": "Mameluco",
+   "CodigoArticulo": "INF24",
+   "Peso": 150,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 292,
+   "NombreArticulo": "Mantel para mesa de uñas",
+   "CodigoArticulo": "BEL32",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 311,
+   "NombreArticulo": "Maquina electrica par cortar pelo",
+   "CodigoArticulo": "HER09",
+   "Peso": 1000,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 427,
+   "NombreArticulo": "Maquina para cafe",
+   "CodigoArticulo": "COC15",
+   "Peso": 4200,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 306,
+   "NombreArticulo": "Marcador de pagina de personaje",
+   "CodigoArticulo": "ANI08",
+   "Peso": 20,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 149,
+   "NombreArticulo": "Marcadores",
+   "CodigoArticulo": "PAP06",
+   "Peso": 20,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 322,
+   "NombreArticulo": "Marco para fotos",
+   "CodigoArticulo": "PAP09",
+   "Peso": 100,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 248,
+   "NombreArticulo": "Masajeador",
+   "CodigoArticulo": "SAL05",
+   "Peso": 30,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 264,
+   "NombreArticulo": "Mascara",
+   "CodigoArticulo": "ANI04",
+   "Peso": 200,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 356,
+   "NombreArticulo": "Mascarilla de ojos",
+   "CodigoArticulo": "BEL39",
+   "Peso": 70,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 349,
+   "NombreArticulo": "Maya para piscina",
+   "CodigoArticulo": "JUE08",
+   "Peso": 100,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 298,
+   "NombreArticulo": "Medias",
+   "CodigoArticulo": "MOD64",
+   "Peso": 100,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 317,
+   "NombreArticulo": "Microfono Inalambrico",
+   "CodigoArticulo": "TEC19",
+   "Peso": 120,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 323,
+   "NombreArticulo": "Mini bolso",
+   "CodigoArticulo": "BOL17",
+   "Peso": 150,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 49,
+   "NombreArticulo": "Mini Botella Portátil De Salsa Y Aderezo",
+   "CodigoArticulo": "COC01",
+   "Peso": 25,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 241,
+   "NombreArticulo": "MiniFalda",
+   "CodigoArticulo": "MOD52",
+   "Peso": 90,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 72,
+   "NombreArticulo": "Mix de bolsas de empaque",
+   "CodigoArticulo": "PAP05",
+   "Peso": 300,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 108,
+   "NombreArticulo": "Mochila escolar",
+   "CodigoArticulo": "BOL03",
+   "Peso": 500,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 334,
+   "NombreArticulo": "Molde de Silicona",
+   "CodigoArticulo": "HOG33",
+   "Peso": 100,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 320,
+   "NombreArticulo": "Moldes para resina",
+   "CodigoArticulo": "HOG32",
+   "Peso": 45,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 122,
+   "NombreArticulo": "Mono",
+   "CodigoArticulo": "MOD35",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 162,
+   "NombreArticulo": "Mouse",
+   "CodigoArticulo": "TEC12",
+   "Peso": 280,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 6,
+   "NombreArticulo": "Mouse",
+   "CodigoArticulo": "PAP02",
+   "Peso": 100,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 406,
+   "NombreArticulo": "Mouse Pads",
+   "CodigoArticulo": "PAP14",
+   "Peso": 130,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 153,
+   "NombreArticulo": "Navaja de afeitar",
+   "CodigoArticulo": "BEL12",
+   "Peso": 25,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 152,
+   "NombreArticulo": "Nevera Portatil",
+   "CodigoArticulo": "BOL08",
+   "Peso": 500,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 5,
+   "NombreArticulo": "Notas adhesivas",
+   "CodigoArticulo": "PAP01",
+   "Peso": 100,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 22,
+   "NombreArticulo": "Organizador Cables",
+   "CodigoArticulo": "TEC04",
+   "Peso": 30,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 279,
+   "NombreArticulo": "Organizador de cables de escritorio",
+   "CodigoArticulo": "TEC15",
+   "Peso": 2,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 419,
+   "NombreArticulo": "Organizador de ollas",
+   "CodigoArticulo": "COC12",
+   "Peso": 800,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 329,
+   "NombreArticulo": "Pajitas de metal con punta de silicona para el vaso Stanley ",
+   "CodigoArticulo": "BOL18",
+   "Peso": 40,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 80,
+   "NombreArticulo": "Paleta De Sombras De Ojos",
+   "CodigoArticulo": "MAQ01",
+   "Peso": 200,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 259,
+   "NombreArticulo": "Pantalon",
+   "CodigoArticulo": "MOD55",
+   "Peso": 300,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 202,
+   "NombreArticulo": "Pantalon Elastico",
+   "CodigoArticulo": "MOD49",
+   "Peso": 250,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 13,
+   "NombreArticulo": "Pantalon Jeans",
+   "CodigoArticulo": "MOD09",
+   "Peso": 600,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 423,
+   "NombreArticulo": "Pantalon Modelador",
+   "CodigoArticulo": "MOD79",
+   "Peso": 90,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 198,
+   "NombreArticulo": "Pantalon Ribete de Malla",
+   "CodigoArticulo": "MOD47",
+   "Peso": 160,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 211,
+   "NombreArticulo": "Pantuflas",
+   "CodigoArticulo": "ZAP10",
+   "Peso": 150,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 79,
+   "NombreArticulo": "Papel pintado autoadhesivo",
+   "CodigoArticulo": "HOG10",
+   "Peso": 200,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 265,
+   "NombreArticulo": "Paquete de 2 organizadores de sombreros",
+   "CodigoArticulo": "HOG27",
+   "Peso": 320,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 42,
+   "NombreArticulo": "Par de adornos de pato amarillo",
+   "CodigoArticulo": "HOG04",
+   "Peso": 100,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 40,
+   "NombreArticulo": "Par de calcetin",
+   "CodigoArticulo": "MOD16",
+   "Peso": 50,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 278,
+   "NombreArticulo": "Parche auricular, Parche de semillas de masaje",
+   "CodigoArticulo": "MOD59",
+   "Peso": 120,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 116,
+   "NombreArticulo": "Parches corporales",
+   "CodigoArticulo": "BEL11",
+   "Peso": 70,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 203,
+   "NombreArticulo": "Parches para ojos",
+   "CodigoArticulo": "BEL22",
+   "Peso": 40,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 43,
+   "NombreArticulo": "Parches para suecos",
+   "CodigoArticulo": "INF01",
+   "Peso": 5,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 240,
+   "NombreArticulo": "Pasador de pelo",
+   "CodigoArticulo": "JOY15",
+   "Peso": 100,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 246,
+   "NombreArticulo": "Pasadores de cabello",
+   "CodigoArticulo": "BEL28",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 397,
+   "NombreArticulo": "Pedal Automotriz",
+   "CodigoArticulo": "AUT19",
+   "Peso": 900,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 242,
+   "NombreArticulo": "Pegamento de uñas",
+   "CodigoArticulo": "BEL25",
+   "Peso": 100,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 268,
+   "NombreArticulo": "Pegamento y sellador de pestañas",
+   "CodigoArticulo": "BEL30",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 352,
+   "NombreArticulo": "Pelador de ajo",
+   "CodigoArticulo": "COC09",
+   "Peso": 20,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 61,
+   "NombreArticulo": "Película clara antigua lluvia para lentes traseros",
+   "CodigoArticulo": "AUT03",
+   "Peso": 15,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 143,
+   "NombreArticulo": "Pelota de tennis",
+   "CodigoArticulo": "DEP02",
+   "Peso": 80,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 276,
+   "NombreArticulo": "Pendiente colgante de cadena",
+   "CodigoArticulo": "JOY19",
+   "Peso": 20,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 232,
+   "NombreArticulo": "Perfume  50 ml (1,7 oz)",
+   "CodigoArticulo": "PER03",
+   "Peso": 150,
+   "IdCategoria": 28
+  },
+  {
+   "IdArticulo": 407,
+   "NombreArticulo": "Perfume 100 ml (3,3 oz)",
+   "CodigoArticulo": "PER05",
+   "Peso": 250,
+   "IdCategoria": 28
+  },
+  {
+   "IdArticulo": 63,
+   "NombreArticulo": "Perfume en spray 10 ml",
+   "CodigoArticulo": "PER01",
+   "Peso": 50,
+   "IdCategoria": 28
+  },
+  {
+   "IdArticulo": 64,
+   "NombreArticulo": "Perfume en spray 12 ml",
+   "CodigoArticulo": "PER02",
+   "Peso": 60,
+   "IdCategoria": 28
+  },
+  {
+   "IdArticulo": 20,
+   "NombreArticulo": "Perlas de gel de agua (3,000)",
+   "CodigoArticulo": "HOG01",
+   "Peso": 60,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 321,
+   "NombreArticulo": "Perlas y cuentas para uñas",
+   "CodigoArticulo": "JOY21",
+   "Peso": 70,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 267,
+   "NombreArticulo": "Pestañas postizas",
+   "CodigoArticulo": "BEL29",
+   "Peso": 20,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 250,
+   "NombreArticulo": "Piercing",
+   "CodigoArticulo": "JOY16",
+   "Peso": 70,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 255,
+   "NombreArticulo": "Piercing",
+   "CodigoArticulo": "JOY18",
+   "Peso": 70,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 418,
+   "NombreArticulo": "Pieza Estante",
+   "CodigoArticulo": "COC11",
+   "Peso": 600,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 416,
+   "NombreArticulo": "Piezas Cuchillas",
+   "CodigoArticulo": "MOD77",
+   "Peso": 130,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 417,
+   "NombreArticulo": "Piezas Cuchillas",
+   "CodigoArticulo": "MOD78",
+   "Peso": 130,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 249,
+   "NombreArticulo": "Piezas de bingo",
+   "CodigoArticulo": "JUE04",
+   "Peso": 90,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 398,
+   "NombreArticulo": "Pildoras Organicas",
+   "CodigoArticulo": "SAL15",
+   "Peso": 250,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 303,
+   "NombreArticulo": "Pines",
+   "CodigoArticulo": "ANI05",
+   "Peso": 20,
+   "IdCategoria": 31
+  },
+  {
+   "IdArticulo": 83,
+   "NombreArticulo": "Pintura De Diamante",
+   "CodigoArticulo": "HOG12",
+   "Peso": 300,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 30,
+   "NombreArticulo": "Pinza antirronquidos",
+   "CodigoArticulo": "BEL02",
+   "Peso": 30,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 23,
+   "NombreArticulo": "Pinzas extrafinas",
+   "CodigoArticulo": "BEL01",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 171,
+   "NombreArticulo": "Pinzas para el pelo",
+   "CodigoArticulo": "PAP07",
+   "Peso": 35,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 344,
+   "NombreArticulo": "Piscina inflable",
+   "CodigoArticulo": "JUE06",
+   "Peso": 150,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 87,
+   "NombreArticulo": "Pistola perforadora para orejas",
+   "CodigoArticulo": "BEL06",
+   "Peso": 100,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 261,
+   "NombreArticulo": "Plancha a vapor",
+   "CodigoArticulo": "HOG26",
+   "Peso": 200,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 121,
+   "NombreArticulo": "Plantillas de zapatos",
+   "CodigoArticulo": "ZAP07",
+   "Peso": 200,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 163,
+   "NombreArticulo": "Pluma para ceja",
+   "CodigoArticulo": "MAQ10",
+   "Peso": 95,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 156,
+   "NombreArticulo": "Polvo",
+   "CodigoArticulo": "MAQ05",
+   "Peso": 70,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 367,
+   "NombreArticulo": "Polvo Limpiador de Dientes",
+   "CodigoArticulo": "BEL40",
+   "Peso": 60,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 217,
+   "NombreArticulo": "POP UP",
+   "CodigoArticulo": "HOG24",
+   "Peso": 300,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 312,
+   "NombreArticulo": "Porta lapices",
+   "CodigoArticulo": "PAP08",
+   "Peso": 50,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 355,
+   "NombreArticulo": "Portapasaporte",
+   "CodigoArticulo": "BOL19",
+   "Peso": 120,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 37,
+   "NombreArticulo": "Portatarjetas Con Clip",
+   "CodigoArticulo": "PAP03",
+   "Peso": 60,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 302,
+   "NombreArticulo": "Probióticos para Mujeres",
+   "CodigoArticulo": "SAL06",
+   "Peso": 50,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 254,
+   "NombreArticulo": "Protector comodo de saxofon",
+   "CodigoArticulo": "DEP08",
+   "Peso": 150,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 67,
+   "NombreArticulo": "Protector de botón de controlador Gamepad",
+   "CodigoArticulo": "VID02",
+   "Peso": 10,
+   "IdCategoria": 24
+  },
+  {
+   "IdArticulo": 224,
+   "NombreArticulo": "Protector de cable",
+   "CodigoArticulo": "TEC14",
+   "Peso": 25,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 368,
+   "NombreArticulo": "Protector de colchón impermeable",
+   "CodigoArticulo": "HOG35",
+   "Peso": 60,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 88,
+   "NombreArticulo": "Protector de pantalla ",
+   "CodigoArticulo": "TEC09",
+   "Peso": 40,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 411,
+   "NombreArticulo": "Protector de pantalla",
+   "CodigoArticulo": "TEC28",
+   "Peso": 80,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 253,
+   "NombreArticulo": "Protector para cinturon",
+   "CodigoArticulo": "AUT11",
+   "Peso": 80,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 182,
+   "NombreArticulo": "Protectores de palanca de freno",
+   "CodigoArticulo": "AUT04",
+   "Peso": 110,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 24,
+   "NombreArticulo": "Pulsera Magnetica",
+   "CodigoArticulo": "JOY02",
+   "Peso": 50,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 84,
+   "NombreArticulo": "Pulseras",
+   "CodigoArticulo": "JOY05",
+   "Peso": 80,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 144,
+   "NombreArticulo": "Raqueta de tennis",
+   "CodigoArticulo": "DEP03",
+   "Peso": 280,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 421,
+   "NombreArticulo": "Raspador de uñas",
+   "CodigoArticulo": "MAQ21",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 60,
+   "NombreArticulo": "Raspador lingual",
+   "CodigoArticulo": "SAL01",
+   "Peso": 50,
+   "IdCategoria": 10
+  },
+  {
+   "IdArticulo": 229,
+   "NombreArticulo": "Rasqueta",
+   "CodigoArticulo": "COC03",
+   "Peso": 60,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 154,
+   "NombreArticulo": "Recortador de vellos",
+   "CodigoArticulo": "BEL13",
+   "Peso": 100,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 106,
+   "NombreArticulo": "Reloj",
+   "CodigoArticulo": "MOD31",
+   "Peso": 70,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 120,
+   "NombreArticulo": "Reloj de cuarzo",
+   "CodigoArticulo": "MOD34",
+   "Peso": 90,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 36,
+   "NombreArticulo": "Reloj de silicona",
+   "CodigoArticulo": "MOD15",
+   "Peso": 70,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 357,
+   "NombreArticulo": "Removedor de bellos",
+   "CodigoArticulo": "SAL10",
+   "Peso": 80,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 96,
+   "NombreArticulo": "Removedor De Enlaces De La Correa De Reloj",
+   "CodigoArticulo": "HER04",
+   "Peso": 100,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 159,
+   "NombreArticulo": "Rimel",
+   "CodigoArticulo": "MAQ08",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 54,
+   "NombreArticulo": "Rizador de pestañas",
+   "CodigoArticulo": "BEL03",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 307,
+   "NombreArticulo": "Rodillera",
+   "CodigoArticulo": "BEL36",
+   "Peso": 100,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 345,
+   "NombreArticulo": "Rodilleras para bebe",
+   "CodigoArticulo": "INF21",
+   "Peso": 40,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 166,
+   "NombreArticulo": "Rollo de Puntos Adhesivos",
+   "CodigoArticulo": "HOG20",
+   "Peso": 40,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 239,
+   "NombreArticulo": "Rompecabezas de goma",
+   "CodigoArticulo": "JUE02",
+   "Peso": 250,
+   "IdCategoria": 33
+  },
+  {
+   "IdArticulo": 160,
+   "NombreArticulo": "Rubor",
+   "CodigoArticulo": "MAQ09",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 115,
+   "NombreArticulo": "Sandalias",
+   "CodigoArticulo": "ZAP06",
+   "Peso": 250,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 75,
+   "NombreArticulo": "Sandalias Antideslizantes",
+   "CodigoArticulo": "ZAP05",
+   "Peso": 200,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 109,
+   "NombreArticulo": "Sandinos",
+   "CodigoArticulo": "BEL09",
+   "Peso": 1,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 404,
+   "NombreArticulo": "Sellador de bolsa",
+   "CodigoArticulo": "BOL26",
+   "Peso": 130,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 238,
+   "NombreArticulo": "Sensor",
+   "CodigoArticulo": "AUT10",
+   "Peso": 200,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 245,
+   "NombreArticulo": "Separador Bucal",
+   "CodigoArticulo": "BEL27",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 301,
+   "NombreArticulo": "Set camisa y short",
+   "CodigoArticulo": "MOD66",
+   "Peso": 300,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 275,
+   "NombreArticulo": "Set de 2 piezas de gorro y calcetines",
+   "CodigoArticulo": "INF18",
+   "Peso": 70,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 332,
+   "NombreArticulo": "Set de 2 piezas de top",
+   "CodigoArticulo": "MOD68",
+   "Peso": 250,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 333,
+   "NombreArticulo": "Set de 3 blusas casuales",
+   "CodigoArticulo": "MOD69",
+   "Peso": 280,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 272,
+   "NombreArticulo": "Set de accesorios para Bebé",
+   "CodigoArticulo": "INF17",
+   "Peso": 60,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 295,
+   "NombreArticulo": "Set de anillos ",
+   "CodigoArticulo": "JOY20",
+   "Peso": 30,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 296,
+   "NombreArticulo": "Set de bolso con accesorios",
+   "CodigoArticulo": "BOL15",
+   "Peso": 300,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 161,
+   "NombreArticulo": "Set de Brazalete, Reloj, Aretes, Collar",
+   "CodigoArticulo": "JOY11",
+   "Peso": 180,
+   "IdCategoria": 22
+  },
+  {
+   "IdArticulo": 38,
+   "NombreArticulo": "Set De Carpeta De Hojas - Tamaño Bolsillo",
+   "CodigoArticulo": "PAP04",
+   "Peso": 250,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 107,
+   "NombreArticulo": "Set de extensiones de pestañas",
+   "CodigoArticulo": "BEL08",
+   "Peso": 50,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 215,
+   "NombreArticulo": "Set de ganchos",
+   "CodigoArticulo": "BEL23",
+   "Peso": 120,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 271,
+   "NombreArticulo": "Set de niña",
+   "CodigoArticulo": "INF16",
+   "Peso": 50,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 76,
+   "NombreArticulo": "Set de peines",
+   "CodigoArticulo": "BEL05",
+   "Peso": 200,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 364,
+   "NombreArticulo": "Set de Stickers de Resina ",
+   "CodigoArticulo": "PAP11",
+   "Peso": 80,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 31,
+   "NombreArticulo": "SHEIN CLUB",
+   "CodigoArticulo": "SUS01",
+   "Peso": 0,
+   "IdCategoria": 26
+  },
+  {
+   "IdArticulo": 126,
+   "NombreArticulo": "SHEIN Saver",
+   "CodigoArticulo": "SUS02",
+   "Peso": 0,
+   "IdCategoria": 26
+  },
+  {
+   "IdArticulo": 225,
+   "NombreArticulo": "Short",
+   "CodigoArticulo": "INF15",
+   "Peso": 85,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 147,
+   "NombreArticulo": "Shorts cover",
+   "CodigoArticulo": "MOD40",
+   "Peso": 150,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 146,
+   "NombreArticulo": "Sombra",
+   "CodigoArticulo": "MAQ04",
+   "Peso": 60,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 188,
+   "NombreArticulo": "Sombrero De Protección Solar",
+   "CodigoArticulo": "DEP04",
+   "Peso": 200,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 282,
+   "NombreArticulo": "Soporte adhesivo de pared para carga de teléfono",
+   "CodigoArticulo": "TEC16",
+   "Peso": 120,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 35,
+   "NombreArticulo": "Soporte con anillo de luz led",
+   "CodigoArticulo": "TEC06",
+   "Peso": 454,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 353,
+   "NombreArticulo": "Soporte en controlador",
+   "CodigoArticulo": "TEC23",
+   "Peso": 40,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 95,
+   "NombreArticulo": "Soporte en L de servicio pesado",
+   "CodigoArticulo": "HER03",
+   "Peso": 60,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 212,
+   "NombreArticulo": "Soporte para caset ",
+   "CodigoArticulo": "VID04",
+   "Peso": 100,
+   "IdCategoria": 24
+  },
+  {
+   "IdArticulo": 175,
+   "NombreArticulo": "Soporte para globos",
+   "CodigoArticulo": "HOG22",
+   "Peso": 200,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 66,
+   "NombreArticulo": "Soporte Para Teléfono",
+   "CodigoArticulo": "TEC07",
+   "Peso": 250,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 340,
+   "NombreArticulo": "Spray fijador",
+   "CodigoArticulo": "MAQ16",
+   "Peso": 100,
+   "IdCategoria": 29
+  },
+  {
+   "IdArticulo": 361,
+   "NombreArticulo": "Stickers de Lenguaje Floral",
+   "CodigoArticulo": "PAP10",
+   "Peso": 60,
+   "IdCategoria": 12
+  },
+  {
+   "IdArticulo": 150,
+   "NombreArticulo": "Sudadera ",
+   "CodigoArticulo": "MOD42",
+   "Peso": 170,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 354,
+   "NombreArticulo": "Sudadera",
+   "CodigoArticulo": "MOD70",
+   "Peso": 150,
+   "IdCategoria": 5
+  },
+  {
+   "IdArticulo": 11,
+   "NombreArticulo": "Sueter Lana",
+   "CodigoArticulo": "MOD07",
+   "Peso": 465,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 46,
+   "NombreArticulo": "Tacón alto",
+   "CodigoArticulo": "ZAP03",
+   "Peso": 500,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 269,
+   "NombreArticulo": "Tangas",
+   "CodigoArticulo": "MOD57",
+   "Peso": 120,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 432,
+   "NombreArticulo": "Tapacubos",
+   "CodigoArticulo": "AUT21",
+   "Peso": 180,
+   "IdCategoria": 13
+  },
+  {
+   "IdArticulo": 230,
+   "NombreArticulo": "Tapete de silicon",
+   "CodigoArticulo": "COC04",
+   "Peso": 120,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 363,
+   "NombreArticulo": "Tapete para Secar Platos",
+   "CodigoArticulo": "HOG34",
+   "Peso": 70,
+   "IdCategoria": 1
+  },
+  {
+   "IdArticulo": 256,
+   "NombreArticulo": "Tapon anal",
+   "CodigoArticulo": "JUG02",
+   "Peso": 140,
+   "IdCategoria": 14
+  },
+  {
+   "IdArticulo": 396,
+   "NombreArticulo": "Tapon para botella",
+   "CodigoArticulo": "BOL25",
+   "Peso": 150,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 410,
+   "NombreArticulo": "Tarjetero",
+   "CodigoArticulo": "BOL28",
+   "Peso": 130,
+   "IdCategoria": 25
+  },
+  {
+   "IdArticulo": 260,
+   "NombreArticulo": "Taza para cafe",
+   "CodigoArticulo": "COC05",
+   "Peso": 200,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 19,
+   "NombreArticulo": "Tennis",
+   "CodigoArticulo": "ZAP02",
+   "Peso": 650,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 391,
+   "NombreArticulo": "Tijera para corte de cabello",
+   "CodigoArticulo": "SAL14",
+   "Peso": 100,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 358,
+   "NombreArticulo": "Tinte para cabello",
+   "CodigoArticulo": "SAL11",
+   "Peso": 100,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 164,
+   "NombreArticulo": "Tiras Blanqueadoras para dientes",
+   "CodigoArticulo": "BEL15",
+   "Peso": 80,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 387,
+   "NombreArticulo": "Tiras Nasales",
+   "CodigoArticulo": "SAL13",
+   "Peso": 150,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 199,
+   "NombreArticulo": "Tiras reactivas de glucosa",
+   "CodigoArticulo": "SAL02",
+   "Peso": 80,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 293,
+   "NombreArticulo": "Tizas para satreria",
+   "CodigoArticulo": "BEL33",
+   "Peso": 20,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 197,
+   "NombreArticulo": "Toalla de Gimnasio",
+   "CodigoArticulo": "DEP07",
+   "Peso": 180,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 179,
+   "NombreArticulo": "Toallas humedas",
+   "CodigoArticulo": "BEL18",
+   "Peso": 15,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 185,
+   "NombreArticulo": "Toallas para bebe",
+   "CodigoArticulo": "INF12",
+   "Peso": 95,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 195,
+   "NombreArticulo": "Top con tirantes",
+   "CodigoArticulo": "INF14",
+   "Peso": 100,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 169,
+   "NombreArticulo": "Top con tirantes",
+   "CodigoArticulo": "MOD43",
+   "Peso": 145,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 17,
+   "NombreArticulo": "Top Sin Tirantes",
+   "CodigoArticulo": "MOD11",
+   "Peso": 140,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 413,
+   "NombreArticulo": "Tornillos",
+   "CodigoArticulo": "HER11",
+   "Peso": 120,
+   "IdCategoria": 30
+  },
+  {
+   "IdArticulo": 12,
+   "NombreArticulo": "Traje (Chaleco y Pantalon)",
+   "CodigoArticulo": "MOD08",
+   "Peso": 335,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 191,
+   "NombreArticulo": "Traje de baño",
+   "CodigoArticulo": "INF13",
+   "Peso": 190,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 114,
+   "NombreArticulo": "Traje Sexy",
+   "CodigoArticulo": "MOD33",
+   "Peso": 250,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 393,
+   "NombreArticulo": "Tripode facial",
+   "CodigoArticulo": "TEC25",
+   "Peso": 900,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 155,
+   "NombreArticulo": "Uñas Acrilicas",
+   "CodigoArticulo": "BEL14",
+   "Peso": 40,
+   "IdCategoria": 9
+  },
+  {
+   "IdArticulo": 331,
+   "NombreArticulo": "Valentino Uomo ",
+   "CodigoArticulo": "PER04",
+   "Peso": 250,
+   "IdCategoria": 28
+  },
+  {
+   "IdArticulo": 402,
+   "NombreArticulo": "Varita de tarjeta de crédito impresa",
+   "CodigoArticulo": "TEC27",
+   "Peso": 150,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 325,
+   "NombreArticulo": "Vaso termico",
+   "CodigoArticulo": "COC08",
+   "Peso": 200,
+   "IdCategoria": 2
+  },
+  {
+   "IdArticulo": 405,
+   "NombreArticulo": "Velo de novia",
+   "CodigoArticulo": "FIE01",
+   "Peso": 150,
+   "IdCategoria": 35
+  },
+  {
+   "IdArticulo": 132,
+   "NombreArticulo": "Vendaje eslastico",
+   "CodigoArticulo": "DEP01",
+   "Peso": 180,
+   "IdCategoria": 8
+  },
+  {
+   "IdArticulo": 375,
+   "NombreArticulo": "Ventilador turbo de mano",
+   "CodigoArticulo": "TEC24",
+   "Peso": 600,
+   "IdCategoria": 7
+  },
+  {
+   "IdArticulo": 187,
+   "NombreArticulo": "Vestido",
+   "CodigoArticulo": "MOD44",
+   "Peso": 230,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 89,
+   "NombreArticulo": "Vestido",
+   "CodigoArticulo": "INF06",
+   "Peso": 200,
+   "IdCategoria": 6
+  },
+  {
+   "IdArticulo": 16,
+   "NombreArticulo": "Vestido Algodon",
+   "CodigoArticulo": "MOD10",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 33,
+   "NombreArticulo": "Vestido Largo de Seda",
+   "CodigoArticulo": "MOD13",
+   "Peso": 200,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 7,
+   "NombreArticulo": "Vestido Largo Satin",
+   "CodigoArticulo": "MOD03",
+   "Peso": 250,
+   "IdCategoria": 4
+  },
+  {
+   "IdArticulo": 168,
+   "NombreArticulo": "Vibrador Vaginal",
+   "CodigoArticulo": "JUG01",
+   "Peso": 454,
+   "IdCategoria": 14
+  },
+  {
+   "IdArticulo": 237,
+   "NombreArticulo": "Vitaminas",
+   "CodigoArticulo": "SAL03",
+   "Peso": 140,
+   "IdCategoria": 32
+  },
+  {
+   "IdArticulo": 70,
+   "NombreArticulo": "Zapatillas deportivas para niños",
+   "CodigoArticulo": "ZAP04",
+   "Peso": 250,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 165,
+   "NombreArticulo": "Zapato bajo cerrado",
+   "CodigoArticulo": "ZAP09",
+   "Peso": 350,
+   "IdCategoria": 23
+  },
+  {
+   "IdArticulo": 369,
+   "NombreArticulo": "Zapatos de hombre",
+   "CodigoArticulo": "ZAP13",
+   "Peso": 900,
+   "IdCategoria": 23
+  }
+ ]
+}

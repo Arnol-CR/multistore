@@ -161,6 +161,31 @@ const asignarPrecio = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
+// Estado de cuenta: datos del cliente + movimientos + artículos, en una sola llamada
+const getEstadoCuenta = async (req, res) => {
+  try {
+    const id = parseInt(req.query.idCliente);
+    if (!id) return res.status(400).json({ ok: false, error: 'Falta el cliente' });
+    const pool = await poolPromise;
+    const col = await colVenta(pool);
+    const [cli, mov, art] = await Promise.all([
+      pool.request().input('IdCliente', sql.Int, id).execute('Se_ClientesBuscarIdCliente'),
+      pool.request().input('IdCliente', sql.Int, id).execute('Se_HistorialCliente'),
+      pool.request().input('id', sql.Int, id).query(`
+        SELECT D.IdDetallePedido, P.NumeroPedido, P.FechaPedido, A.NombreArticulo, D.DescripcionArticulo,
+               D.CodigoArticulo, D.TallaColor, D.Fotografia, ISNULL(D.CantidadArticulos,1) AS Cantidad,
+               ${col ? `ISNULL(D.[${col}],0)` : '0'} AS Venta, ISNULL(D.EstaEntregado,0) AS Entregado
+        FROM C_DetallePedido D
+        JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
+        LEFT JOIN A_Articulos A ON A.IdArticulo = D.IdArticulo
+        WHERE D.IdCliente = @id
+        ORDER BY P.FechaPedido DESC, D.IdDetallePedido DESC`)
+    ]);
+    const cliente = (cli.recordset || []).find(x => x.IdCliente === id) || cli.recordset[0] || null;
+    res.json({ ok: true, cliente, movimientos: mov.recordset || [], articulos: art.recordset || [] });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
 // Historial de cambios de un artículo
 const getBitacora = async (req, res) => {
   try {
@@ -209,7 +234,8 @@ const getHistorialCliente = async (req, res) => {
 
 const crearCliente = async (req, res) => {
   try {
-    const { nombre, apellido, telefono, correo, direccion, idVendedor } = req.body;
+    const { nombre, apellido, telefono, correo, direccion } = req.body;
+    const idVendedor = req.usuario && !req.usuario.esAdmin ? req.usuario.id : req.body.idVendedor;
     const pool = await poolPromise;
     const result = await pool.request()
       .input('Nombre',            sql.NVarChar, nombre)
@@ -223,4 +249,4 @@ const crearCliente = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { buscarClientes, asignarCliente, asignarClienteMultiple, quitarCliente, getBitacora, asignarPrecio, desbloquearPrecio, getTodosClientes, getHistorialCliente, crearCliente };
+module.exports = { buscarClientes, asignarCliente, asignarClienteMultiple, quitarCliente, getBitacora, getEstadoCuenta, asignarPrecio, desbloquearPrecio, getTodosClientes, getHistorialCliente, crearCliente };

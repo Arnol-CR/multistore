@@ -407,7 +407,7 @@
         html += kpi('var(--verde)', 'gan', 'Ganancia estimada', sinVenta ? '—' : L(m.ganancia),
             `${margen != null ? `<span>Margen ${margen}%</span>` : '<span></span>'}<span class="mio" title="Tu ganancia este mes">${Lt(mi.mes?.ganancia)}</span>`);
         html += kpi('var(--naranja)', 'cobro', 'Cobrado', L(m.cobrado), `${delta(m.cobrado, ma.cobrado)}`);
-        if (D.porCobrar) html += kpi('var(--ambar)', 'reloj', 'Por cobrar', L(D.porCobrar.total), `<span>${entero(D.porCobrar.clientes)} clientes con saldo</span>`);
+        if (D.porCobrar) html += `<a href="/clientes.html" style="text-decoration:none;color:inherit">` + kpi('var(--ambar)', 'reloj', 'Por cobrar', L(D.porCobrar.total), `<span>${Lt(D.porCobrar.cobrableYa)} cobrable ya</span><span class="mio" title="De tus clientes">${Lt(D.porCobrar.mio)}</span>`) + '</a>';
         else html += kpi('var(--ambar)', 'reloj', 'Venta por entregar', L(a.ventaPendiente), `<span>con precio, en camino</span><span class="mio" title="Tuya">${Lt(mi.ventaPendiente)}</span>`);
         html += kpi('var(--azul)', 'transito', 'Capital en tránsito', L(a.capital), `<span>costo de lo no entregado</span>`);
         document.getElementById('kpis-dinero').innerHTML = html;
@@ -491,6 +491,7 @@
             { n:a.sinPrecio, cls:'media', ic:'etiqueta', t:'Sin precio de venta', s:'Asignalos en Precios de venta', href:'/asignar-precios.html', mio:mi.sinPrecio },
             { n:a.sinCliente, cls:'media', ic:'usuario', t:'Sin cliente asignado', s:'Asignalos en Precios de venta', href:'/asignar-precios.html', mio:mi.sinCliente },
             { n:a.sinTracking, cls:'media', ic:'ruta', t:'Sin número de tracking', s:'Registralos en Envíos y casillero', href:'/tracking.html', mio:mi.sinTracking },
+            { n:(D.porCobrar || {}).clientesCobrar, cls:'alta', ic:'cobro', t:'Clientes para cobrar ya', s:`${Lt((D.porCobrar || {}).cobrableYa)} de artículos ya entregados`, href:'/clientes.html?f=cobrable' },
             { n:c.sinRespuesta, cls:'azul', ic:'doc', t:'Cotizaciones sin respuesta', s:'Enviadas hace más de 3 días', href:'/cotizaciones.html' },
             { n:usuario.esAdmin ? a.sinVendedor : 0, cls:'azul', ic:'equipo', t:'Sin vendedor', s:'Asignalos en Asignar vendedores', href:'/asignar-vendedor.html' }
         ].filter(x => x.n > 0);

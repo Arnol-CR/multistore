@@ -12,6 +12,7 @@ const getCuentasBanco = async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().execute('Se_CuentaBanco');
+    if (!(req.usuario && req.usuario.esAdmin)) result.recordset.forEach(c => { delete c.Capital; });
     res.json({ ok: true, data: result.recordset });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
@@ -36,7 +37,7 @@ const registrarPago = async (req, res) => {
 
 const getPagosRecientes = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 15;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 15, 1), 1000);
     const pool  = await poolPromise;
     const result = await pool.request()
       .input('Limit', sql.Int, limit)

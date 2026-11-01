@@ -7,473 +7,553 @@
     <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:#e2e8f0; display:flex; height:100vh; overflow:hidden; }
-
-        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:98; }
+        :root {
+            --fondo:#070910; --panel:#0d1017; --panel2:#13181f; --borde:#1e2530; --borde2:#2a3342;
+            --texto:#e2e8f0; --suave:#9ca3af; --tenue:#6b7280; --mudo:#4b5563;
+            --rosa:#E8327A; --naranja:#EF7A30; --verde:#4ade80; --rojo:#f87171; --ambar:#fbbf24; --azul:#60a5fa; --morado:#c084fc;
+        }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:var(--texto); display:flex; height:100vh; overflow:hidden; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
         .overlay.active { display:block; }
 
-        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; transition:transform .25s ease; z-index:100; }
+        /* ── Sidebar (lo arma sidebar.js) ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; }
         .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
-        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
         .sidebar-logo-text span { color:#3b82f6; }
         .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
         .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
         .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
-        .user-info-rol { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
         .nav { flex:1; padding:12px 0; overflow-y:auto; }
         .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
-        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; transition:.15s; text-decoration:none; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; text-decoration:none; }
         .nav-item:hover { color:#e2e8f0; background:#13181f; }
         .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
         .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
-        .nav-item.active svg { opacity:1; }
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
         .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
         .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
 
+        /* ── Main ── */
         .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
-        .topbar { background:#0d1017; border-bottom:1px solid #1e2530; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
-        .btn-menu { display:none; background:none; border:none; cursor:pointer; padding:4px; flex-shrink:0; }
-        .btn-menu svg { width:22px; height:22px; stroke:#9ca3af; stroke-width:2; }
+        .topbar { background:var(--panel); border-bottom:1px solid var(--borde); padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; flex-wrap:wrap; }
+        .btn-menu { background:none; border:none; cursor:pointer; padding:4px; }
         .topbar-title { font-size:16px; font-weight:700; color:#fff; }
-        .topbar-fecha { font-size:11px; color:#4b5563; margin-top:1px; }
+        .topbar-sub { font-size:11px; color:var(--mudo); margin-top:1px; }
+        .seg { margin-left:auto; display:flex; gap:3px; background:var(--panel2); border:1px solid var(--borde); border-radius:9px; padding:3px; }
+        .seg button { background:none; border:none; color:var(--tenue); font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:7px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+        .seg button.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .seg button:hover:not(.on) { color:var(--texto); }
+        .content { flex:1; overflow-y:auto; padding:20px 22px 60px; background:var(--fondo); }
+        .vista { display:none; }
+        .vista.on { display:block; }
+        .ico { width:16px; height:16px; flex-shrink:0; }
 
-        .content { flex:1; overflow-y:auto; padding:16px; }
-        .content-inner { display:grid; grid-template-columns:minmax(0,520px) minmax(0,1fr); gap:16px; align-items:flex-start; max-width:1100px; margin:0 auto; }
+        .ico { width:16px; height:16px; flex-shrink:0; }
+        /* ── Página de cobros ── */
+        .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:16px; align-items:start; max-width:1400px; margin:0 auto; }
+        .card { background:var(--panel); border:1px solid var(--borde); border-radius:12px; min-width:0; }
+        .card-cab { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 18px; border-bottom:1px solid var(--borde); flex-wrap:wrap; }
+        .card-tit { font-size:13px; font-weight:700; color:#fff; }
+        .card-sub { font-size:11px; color:var(--mudo); margin-top:2px; }
+        .cuerpo { padding:16px 18px; }
+        .campo { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; min-width:0; }
+        .campo > span { font-size:10.5px; color:var(--tenue); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .fila2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .inp { background:var(--panel2); border:1px solid var(--borde); border-radius:8px; padding:10px 12px; color:var(--texto); font-size:13.5px; outline:none; font-family:inherit; width:100%; }
+        .inp:focus { border-color:#3b82f6; background:#0c1525; }
+        .inp::placeholder { color:#374151; }
+        select.inp { cursor:pointer; }
+        textarea.inp { resize:vertical; min-height:62px; }
+        .monto { font-size:22px !important; font-weight:800; text-align:right; padding:8px 12px !important; font-variant-numeric:tabular-nums; }
+        .btn { border:1px solid var(--borde); background:var(--panel2); color:var(--suave); border-radius:8px; padding:9px 13px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; gap:7px; white-space:nowrap; text-decoration:none; }
+        .btn:hover { color:#fff; border-color:var(--borde2); }
+        .btn.prim { background:#065f46; border-color:#047857; color:#d1fae5; font-size:14px; padding:12px; }
+        .btn.prim:hover { background:#047857; }
+        .btn.rosa { background:var(--rosa); border-color:var(--rosa); color:#fff; }
+        .btn.rosa:hover { background:#d12a6d; }
+        .btn:disabled { opacity:.55; cursor:not-allowed; }
+        .btn-sm { padding:6px 10px; font-size:12px; border-radius:7px; }
 
-        /* Panel recientes */
-        .recientes-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-        .recientes-header .card-title { margin-bottom:0; }
-        .btn-recargar { background:none; border:none; cursor:pointer; color:#4b5563; padding:4px; border-radius:6px; transition:.15s; display:flex; align-items:center; }
-        .btn-recargar:hover { color:#60a5fa; background:#13181f; }
-        .btn-recargar svg { width:15px; height:15px; }
-        .btn-recargar.spin svg { animation:giro .6s linear infinite; }
-        @keyframes giro { to { transform:rotate(360deg); } }
+        /* Cliente */
+        .dd { position:relative; }
+        .dd-lista { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--panel); border:1px solid var(--borde2); border-radius:10px; max-height:320px; overflow-y:auto; z-index:20; display:none; box-shadow:0 14px 40px rgba(0,0,0,.6); }
+        .dd-lista.on { display:block; }
+        .dd-item { display:flex; align-items:center; gap:10px; padding:9px 12px; cursor:pointer; border-bottom:1px solid #111722; }
+        .dd-item:hover, .dd-item.sel { background:#131a25; }
+        .dd-item .s { margin-left:auto; font-weight:700; font-size:12.5px; font-variant-numeric:tabular-nums; }
+        .c-av { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff; flex-shrink:0; }
+        .c-txt { min-width:0; }
+        .c-txt b { display:block; color:#f1f5f9; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; }
+        .c-txt small { font-size:11px; color:var(--tenue); }
+        .cli-card { background:var(--panel2); border:1px solid var(--borde); border-radius:10px; padding:12px 14px; margin-bottom:14px; display:none; }
+        .cli-card.on { display:block; }
+        .cli-top { display:flex; align-items:center; gap:10px; }
+        .cli-top .x { margin-left:auto; background:none; border:none; color:var(--tenue); cursor:pointer; padding:4px; border-radius:6px; display:flex; }
+        .cli-top .x:hover { color:#fff; background:#1a212c; }
+        .cli-nums { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:12px; }
+        .cli-nums div { background:#0a0d13; border:1px solid var(--borde); border-radius:8px; padding:8px 10px; min-width:0; }
+        .cli-nums b { display:block; font-size:9.5px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .cli-nums span { display:block; font-size:15px; font-weight:800; color:#fff; margin-top:3px; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .cli-pie { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; font-size:11.5px; color:var(--tenue); flex-wrap:wrap; }
+        .lnk { color:var(--suave); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+        .lnk:hover { color:#f9a8d4; }
+        .rapidos { display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; }
+        .rap { background:#0a0d13; border:1px solid var(--borde); color:var(--suave); border-radius:99px; padding:4px 10px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+        .rap:hover { color:#fff; border-color:#3b82f6; }
+        .nuevo-saldo { font-size:12px; color:var(--tenue); margin-top:6px; text-align:right; min-height:16px; }
+        .nuevo-saldo b { color:#fff; }
+        .aviso { font-size:12px; border-radius:8px; padding:8px 11px; margin-top:7px; display:none; line-height:1.4; }
+        .aviso.on { display:block; }
+        .aviso.amb { background:#1a1205; border:1px solid #3d2a0a; color:#fbbf24; }
+        .resumen { font-size:12.5px; color:var(--suave); text-align:center; margin:4px 0 10px; min-height:18px; }
+        .resumen b { color:#fff; }
+        .msg { margin-top:10px; font-size:13px; padding:10px 14px; border-radius:8px; display:none; }
+        .msg.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
 
-        .pago-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #111827; }
-        .pago-row:last-child { border-bottom:none; }
-        .pago-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0; }
-        .pago-info { flex:1; min-width:0; }
-        .pago-nombre { font-size:12.5px; font-weight:600; color:#d1d5db; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .pago-meta  { font-size:11px; color:#4b5563; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .pago-monto { text-align:right; flex-shrink:0; }
-        .pago-monto-val { font-size:13px; font-weight:700; color:#34d399; }
-        .pago-monto-fecha { font-size:10px; color:#374151; margin-top:1px; }
+        /* Comprobante */
+        .exito { display:none; border-top:1px solid var(--borde); padding:16px 18px; background:linear-gradient(180deg, rgba(5,46,22,.35), transparent); }
+        .exito.on { display:block; }
+        .exito-tit { display:flex; align-items:center; gap:8px; color:var(--verde); font-weight:700; font-size:14px; }
+        .exito-nums { display:flex; gap:18px; margin:10px 0 12px; font-size:12.5px; color:var(--tenue); flex-wrap:wrap; }
+        .exito-nums b { display:block; color:#fff; font-size:16px; font-variant-numeric:tabular-nums; }
+        .exito-acc { display:flex; gap:8px; flex-wrap:wrap; }
 
-        .recientes-empty { text-align:center; padding:32px 16px; color:#374151; font-size:13px; }
-        .recientes-empty svg { width:32px; height:32px; stroke:#1e2530; margin:0 auto 10px; display:block; }
-
-        .recientes-total { margin-top:14px; padding-top:14px; border-top:1px solid #1e2530; display:flex; justify-content:space-between; align-items:center; }
-        .recientes-total-label { font-size:11px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
-        .recientes-total-val { font-size:15px; font-weight:700; color:#34d399; }
-
-        @media (max-width:900px) {
+        /* Lista de pagos */
+        .periodos { display:flex; gap:3px; background:var(--panel2); border:1px solid var(--borde); border-radius:8px; padding:3px; }
+        .periodos button { background:none; border:none; color:var(--tenue); font-size:12px; font-weight:600; padding:5px 10px; border-radius:6px; cursor:pointer; font-family:inherit; }
+        .periodos button.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .totales { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; padding:14px 18px 0; }
+        .tot { background:var(--panel2); border:1px solid var(--borde); border-radius:10px; padding:10px 12px; min-width:0; }
+        .tot b { display:block; font-size:10px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .tot span { display:block; font-size:18px; font-weight:800; color:#fff; margin-top:4px; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .tot small { font-size:11px; color:var(--tenue); }
+        .filtros { display:flex; gap:8px; padding:12px 18px; flex-wrap:wrap; }
+        .filtros .inp { padding:8px 11px; font-size:12.5px; }
+        .lista { max-height:calc(100vh - 380px); min-height:240px; overflow-y:auto; }
+        .dia { font-size:10.5px; color:var(--mudo); text-transform:uppercase; letter-spacing:1px; font-weight:700; padding:10px 18px 6px; display:flex; justify-content:space-between; background:var(--panel); position:sticky; top:0; }
+        .pago { display:flex; align-items:center; gap:11px; padding:9px 18px; border-bottom:1px solid #111722; cursor:pointer; }
+        .pago:hover { background:#0f141c; }
+        .pago .c-txt { flex:1; }
+        .pago-m { text-align:right; }
+        .pago-m b { display:block; color:var(--verde); font-weight:800; font-size:14px; font-variant-numeric:tabular-nums; }
+        .pago-m small { font-size:11px; color:var(--mudo); }
+        .ref-dup { color:var(--ambar) !important; }
+        .vacio { text-align:center; color:var(--tenue); padding:40px 10px; font-size:13px; }
+        .toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; z-index:1300; box-shadow:0 8px 30px rgba(0,0,0,.6); display:none; }
+        .toast.ok { display:block; background:#052e16; border:1px solid #14532d; color:var(--verde); }
+        .toast.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:3px; }
+        @media (max-width:1000px) { .grid { grid-template-columns:1fr; } .lista { max-height:none; } }
+        @media (max-width:768px) {
             .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,.5); }
-            .btn-menu { display:flex; }
-            .content-inner { grid-template-columns:1fr; }
-        }
-
-        .card { background:#0d1017; border:1px solid #1e2530; border-radius:10px; padding:20px; }
-        .card-title { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-        .card-title .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-
-        /* Upload area */
-        .upload-area { border:2px dashed #1e2530; border-radius:10px; padding:32px 16px; text-align:center; cursor:pointer; transition:.2s; position:relative; }
-        .upload-area:hover, .upload-area.drag { border-color:#3b82f6; background:#0a0f18; }
-        .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
-        .upload-icon { font-size:40px; margin-bottom:10px; }
-        .upload-text { color:#6b7280; font-size:13px; }
-        .upload-text strong { color:#60a5fa; }
-        .preview-img { width:100%; max-height:280px; object-fit:contain; border-radius:8px; margin-top:12px; border:1px solid #1e2530; }
-
-        /* Textarea pegar */
-        .texto-area { width:100%; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:12px; color:#9ca3af; font-size:12px; font-family:'Segoe UI',monospace; resize:vertical; min-height:100px; outline:none; }
-        .texto-area:focus { border-color:#3b82f6; color:#e2e8f0; }
-
-        /* Botón IA */
-        .btn-ia { width:100%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); color:#fff; border:none; border-radius:8px; padding:12px; font-size:14px; font-weight:700; cursor:pointer; margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px; transition:.2s; }
-        .btn-ia:hover { opacity:.9; }
-        .btn-ia:disabled { opacity:.5; cursor:not-allowed; }
-
-        /* Separador */
-        .separador { display:flex; align-items:center; gap:10px; margin:12px 0; }
-        .separador hr { flex:1; border:none; border-top:1px solid #1e2530; }
-        .separador span { font-size:11px; color:#374151; }
-
-        /* Form */
-        .form-group { margin-bottom:14px; }
-        .form-label { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px; }
-        .form-input { width:100%; background:#13181f; border:1px solid #1e2530; border-radius:8px; padding:10px 14px; color:#fff; font-size:13px; outline:none; font-family:'Segoe UI',sans-serif; transition:.15s; }
-        .form-input:focus { border-color:#3b82f6; }
-        .form-input.ia-filled { border-color:#34d399; background:#0a1a14; }
-        select.form-input option { background:#0d1017; }
-        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
-        /* Búsqueda cliente */
-        .buscar-wrap { position:relative; }
-        .buscar-drop { position:absolute; top:100%; left:0; right:0; background:#0d1017; border:1px solid #1e2530; border-radius:8px; z-index:50; max-height:180px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.5); display:none; }
-        .buscar-drop-item { padding:10px 14px; cursor:pointer; font-size:13px; color:#d1d5db; border-bottom:1px solid #111827; }
-        .buscar-drop-item:hover { background:#13181f; }
-        .buscar-drop-item:last-child { border-bottom:none; }
-
-        /* Botones acción */
-        .btn-guardar { width:100%; background:#1d4ed8; color:#fff; border:none; border-radius:8px; padding:13px; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px; transition:.2s; }
-        .btn-guardar:hover { background:#2563eb; }
-        .btn-limpiar { width:100%; background:none; color:#6b7280; border:1px solid #1e2530; border-radius:8px; padding:10px; font-size:13px; cursor:pointer; margin-top:8px; transition:.2s; }
-        .btn-limpiar:hover { border-color:#3b82f6; color:#60a5fa; }
-
-        /* Alerta IA */
-        .ia-resultado { background:#0a1a14; border:1px solid #1a3d28; border-radius:8px; padding:12px 14px; margin-top:12px; font-size:12px; color:#34d399; display:none; }
-        .ia-resultado.error { background:#2d0a0a; border-color:#7f1d1d; color:#ef4444; }
-
-        /* Mensaje éxito */
-        .msg-box { border-radius:8px; padding:12px 14px; margin-top:12px; font-size:13px; display:none; }
-        .msg-box.ok  { background:#0f2318; border:1px solid #1a3d28; color:#34d399; }
-        .msg-box.err { background:#2d0a0a; border:1px solid #7f1d1d; color:#ef4444; }
-
-        ::-webkit-scrollbar { width:4px; height:4px; }
-        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
-
-        @media (max-width:600px) {
-            .content { padding:10px; }
-            .card { padding:14px; }
-            .form-grid { grid-template-columns:1fr; }
-            .form-input { font-size:16px; } /* evitar zoom en iOS */
+            .content { padding:14px 16px 40px; }
+            .cli-nums, .totales { grid-template-columns:1fr 1fr 1fr; gap:6px; }
+            .cli-nums span, .tot span { font-size:13.5px; }
         }
     </style>
 </head>
 <body>
 
 <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
-
 <aside class="sidebar" id="sidebar"></aside>
 
 <main class="main">
     <div class="topbar">
-        <button class="btn-menu" onclick="abrirMenu()">
-            <svg fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        <button class="btn-menu" onclick="abrirMenu()" aria-label="Menú">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
         </button>
         <div>
             <div class="topbar-title">Cobros a clientes</div>
-            <div class="topbar-fecha" id="topbar-fecha"></div>
+            <div class="topbar-sub">Registrá el pago, mandá el comprobante y revisá lo cobrado</div>
         </div>
     </div>
 
     <div class="content">
-      <div class="content-inner">
+        <div class="grid">
 
-        <!-- PANEL FORMULARIO -->
-        <div class="card" style="width:100%;">
-            <div class="card-title"><span class="dot" style="background:#34d399;"></span>Datos del pago</div>
+            <!-- ═════ REGISTRAR PAGO ═════ -->
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Registrar pago</div><div class="card-sub">Los campos marcados son obligatorios</div></div></div>
+                <div class="cuerpo">
+                    <div class="campo"><span>Cliente *</span>
+                        <div class="dd">
+                            <input class="inp" id="cli-buscar" placeholder="Buscar por nombre, código o teléfono…" autocomplete="off" oninput="ddFiltrar()" onfocus="ddFiltrar()" onkeydown="ddTecla(event)">
+                            <div class="dd-lista" id="dd-lista"></div>
+                        </div>
+                    </div>
+                    <div class="cli-card" id="cli-card"></div>
 
-            <!-- Cliente -->
-            <div class="form-group">
-                <label class="form-label">Cliente *</label>
-                <div class="buscar-wrap">
-                    <input class="form-input" id="input-cliente" type="text" placeholder="Buscar cliente por nombre..."
-                        oninput="buscarCliente(this.value)" autocomplete="off">
-                    <div class="buscar-drop" id="drop-cliente"></div>
+                    <div class="fila2">
+                        <div class="campo"><span>Monto (L) *</span>
+                            <input class="inp monto" id="f-monto" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="actualizar()">
+                            <div class="rapidos" id="rapidos"></div>
+                            <div class="nuevo-saldo" id="nuevo-saldo"></div>
+                        </div>
+                        <div class="campo"><span>Fecha del pago *</span>
+                            <input class="inp" id="f-fecha" type="date" onchange="actualizar()">
+                        </div>
+                    </div>
+                    <div class="fila2">
+                        <div class="campo"><span>Método *</span><select class="inp" id="f-metodo" onchange="actualizar()"><option value="">Elegí…</option></select></div>
+                        <div class="campo"><span>Cuenta destino *</span><select class="inp" id="f-cuenta" onchange="actualizar()"><option value="">Elegí…</option></select></div>
+                    </div>
+                    <div class="campo"><span>N° de referencia</span>
+                        <input class="inp" id="f-referencia" placeholder="Número de la transferencia o depósito" autocomplete="off" oninput="actualizar()">
+                        <div class="aviso amb" id="aviso-ref"></div>
+                    </div>
+                    <div class="campo"><span>Observaciones</span><textarea class="inp" id="f-obs" placeholder="Opcional"></textarea></div>
+
+                    <div class="resumen" id="resumen"></div>
+                    <button class="btn prim" id="btn-guardar" style="width:100%" onclick="guardar()" disabled>Registrar pago</button>
+                    <div style="display:flex;justify-content:center;margin-top:8px"><button class="btn btn-sm" style="border:none;background:none" onclick="limpiar()">Limpiar formulario</button></div>
+                    <div class="msg" id="msg"></div>
                 </div>
-                <div id="cliente-seleccionado-info" style="display:none;margin-top:6px;background:#0f2318;border:1px solid #1a3d28;border-radius:6px;padding:8px 12px;font-size:12px;">
-                    <span style="color:#34d399;font-weight:600;" id="cliente-sel-nombre"></span>
-                    <span style="color:#4b5563;margin-left:8px;" id="cliente-sel-codigo"></span>
-                    <span style="color:#f59e0b;margin-left:8px;">Saldo: </span>
-                    <span style="color:#f59e0b;font-weight:700;" id="cliente-sel-saldo"></span>
+                <div class="exito" id="exito"></div>
+            </div>
+
+            <!-- ═════ PAGOS RECIBIDOS ═════ -->
+            <div class="card">
+                <div class="card-cab">
+                    <div><div class="card-tit">Pagos recibidos</div><div class="card-sub">Tocá un pago para ver el estado de cuenta del cliente</div></div>
+                    <div class="periodos" id="periodos">
+                        <button data-p="hoy">Hoy</button><button data-p="7">7 días</button><button data-p="mes" class="on">Este mes</button><button data-p="todo">Todo</button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="form-grid">
-                <!-- Fecha -->
-                <div class="form-group">
-                    <label class="form-label">Fecha del pago *</label>
-                    <input class="form-input" id="f-fecha" type="date">
+                <div class="totales" id="totales"></div>
+                <div class="filtros">
+                    <input class="inp" id="p-buscar" style="flex:1;min-width:160px" placeholder="Buscar cliente o referencia…" oninput="pintarPagos()" autocomplete="off">
+                    <select class="inp" id="p-cuenta" style="width:auto;max-width:220px" onchange="pintarPagos()"><option value="">Todas las cuentas</option></select>
+                    <button class="btn btn-sm" onclick="exportar()" title="Descargar en Excel">Excel</button>
                 </div>
-                <!-- Monto -->
-                <div class="form-group">
-                    <label class="form-label">Monto (L) *</label>
-                    <input class="form-input" id="f-monto" type="number" step="0.01" min="0" placeholder="0.00">
-                </div>
-            </div>
-
-            <!-- Método de pago -->
-            <div class="form-group">
-                <label class="form-label">Método de pago *</label>
-                <select class="form-input" id="f-metodo">
-                    <option value="">Selecciona...</option>
-                </select>
-            </div>
-
-            <!-- Cuenta banco -->
-            <div class="form-group">
-                <label class="form-label">Cuenta destino *</label>
-                <select class="form-input" id="f-cuenta">
-                    <option value="">Selecciona...</option>
-                </select>
-            </div>
-
-            <!-- Referencia -->
-            <div class="form-group">
-                <label class="form-label">N° Referencia</label>
-                <input class="form-input" id="f-referencia" type="text" placeholder="Número de transacción...">
-            </div>
-
-            <!-- Observaciones -->
-            <div class="form-group">
-                <label class="form-label">Observaciones</label>
-                <textarea class="form-input" id="f-observaciones" rows="3" placeholder="Notas adicionales..." style="resize:vertical;"></textarea>
-            </div>
-
-            <div class="msg-box" id="msg-box"></div>
-
-            <button class="btn-guardar" onclick="guardarPago()">💾 Registrar Pago</button>
-            <button class="btn-limpiar" onclick="limpiarFormulario()">✕ Limpiar todo</button>
-        </div>
-
-        <!-- PANEL PAGOS RECIENTES -->
-        <div class="card" style="width:100%;">
-            <div class="recientes-header">
-                <div class="card-title" style="margin-bottom:0;"><span class="dot" style="background:#3b82f6;"></span>Pagos recientes</div>
-                <button class="btn-recargar" id="btn-recargar" onclick="cargarRecientes()" title="Actualizar">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                </button>
-            </div>
-            <div id="recientes-lista">
-                <div class="recientes-empty">
-                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                    Cargando pagos...
-                </div>
+                <div class="lista" id="lista"><div class="vacio">Cargando pagos…</div></div>
             </div>
         </div>
-
-      </div><!-- /content-inner -->
     </div>
 </main>
 
-<script src="/assets/sidebar.js"></script>
-    <script>
-    // ===== AUTH =====
+<div class="toast" id="toast"></div>
+
+<script>
     const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
     if (!usuario) window.location.href = '/login.html';
 
-    
-    
-    
-        // Fecha por defecto = hoy
-    document.getElementById('f-fecha').value = new Date().toISOString().substring(0,10);
+    const I = {
+        check:'<path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>',
+        x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+        doc:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+        copiar:'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+        bajar:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+        msg:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+        mas:'<path d="M5 12h14"/><path d="M12 5v14"/>'
+    };
+    const ico = (n, st = '') => `<svg class="ico" style="${st}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+    const WA = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35zM12.05 21.8h-.01a9.85 9.85 0 0 1-5.02-1.38l-.36-.21-3.73.98 1-3.64-.24-.37a9.83 9.83 0 0 1-1.51-5.26c0-5.44 4.43-9.87 9.88-9.87 2.64 0 5.12 1.03 6.98 2.9a9.8 9.8 0 0 1 2.89 6.98c0 5.45-4.43 9.87-9.88 9.87zm8.41-18.28A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.14 1.59 5.94L.06 24l6.3-1.65a11.87 11.87 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.18-1.24-6.17-3.48-8.42z"/></svg>';
 
-    
-    
-    
+    const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    const num = v => { if (typeof v === 'number') return v; const n = parseFloat(String(v ?? '').replace(/[^0-9.-]/g, '')); return isFinite(n) ? n : 0; };
+    const L = (n, d = 2) => 'L ' + Number(n || 0).toLocaleString('es-HN', { minimumFractionDigits:d, maximumFractionDigits:d });
+    const iniciales = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const COLORES = ['#7c3aed', '#E8327A', '#0891b2', '#EF7A30', '#16a34a', '#2563eb', '#db2777', '#9333ea'];
+    const colorDe = s => COLORES[[...String(s || '')].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORES.length];
+    const telWa = t => { const d = String(t || '').replace(/\D/g, ''); return d.length === 8 ? '504' + d : (d.length >= 10 ? d : ''); };
+    const hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+    const fCorta = iso => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
+    function toast(t, x) { const e = document.getElementById('toast'); e.className = 'toast ' + t; e.textContent = x; clearTimeout(e._h); e._h = setTimeout(() => e.className = 'toast', 3000); }
+    function guardarPref(k, v) { try { const p = JSON.parse(localStorage.getItem('ms_cobro') || '{}'); p[k] = v; localStorage.setItem('ms_cobro', JSON.stringify(p)); } catch (e) {} }
+    function pref(k) { try { return JSON.parse(localStorage.getItem('ms_cobro') || '{}')[k]; } catch (e) { return null; } }
 
-    // ===== CATÁLOGOS =====
-    async function cargarCatalogos() {
-        try {
-            const [metodos, cuentas] = await Promise.all([
-                fetch('/api/pagos/metodos').then(r=>r.json()),
-                fetch('/api/pagos/cuentas').then(r=>r.json())
-            ]);
-            if (metodos.ok) {
-                const sel = document.getElementById('f-metodo');
-                metodos.data.forEach(m => {
-                    const o = document.createElement('option');
-                    o.value = m.IdMetodoPago;
-                    o.textContent = m.Metodo;
-                    sel.appendChild(o);
-                });
-            }
-            if (cuentas.ok) {
-                const sel = document.getElementById('f-cuenta');
-                cuentas.data.forEach(c => {
-                    const o = document.createElement('option');
-                    o.value = c.IdCuentaBanco;
-                   o.textContent = (c.NombreCuenta || '') + ' · ' + (c.Banco || '') + ' · ' + (c.NumeroCuenta || '');
-                    sel.appendChild(o);
-                });
-            }
-        } catch(e) { console.error('Error cargando catalogos:', e); }
+    let clientes = [], cuentas = [], metodos = [], pagos = [], cli = null, periodo = 'mes', ddSel = 0, ultimo = null;
+
+    async function cargar() {
+        document.getElementById('f-fecha').value = hoyISO();
+        const [c, cu, me] = await Promise.all([
+            fetch('/api/clientes/todos').then(r => r.json()).catch(() => ({})),
+            fetch('/api/pagos/cuentas').then(r => r.json()).catch(() => ({})),
+            fetch('/api/pagos/metodos').then(r => r.json()).catch(() => ({}))
+        ]);
+        clientes = c.ok ? c.data : []; cuentas = cu.ok ? cu.data : []; metodos = me.ok ? me.data : [];
+        document.getElementById('f-metodo').innerHTML = '<option value="">Elegí…</option>' + metodos.map(m => `<option value="${m.IdMetodoPago}">${esc(m.Metodo)}</option>`).join('');
+        document.getElementById('f-cuenta').innerHTML = '<option value="">Elegí…</option>' + cuentas.map(k => `<option value="${k.IdCuentaBanco}">${esc(k.NombreCuenta || '')} · ${esc(k.Banco || '')} · ${esc(k.NumeroCuenta || '')}</option>`).join('');
+        document.getElementById('p-cuenta').innerHTML = '<option value="">Todas las cuentas</option>' + [...new Set(cuentas.map(k => k.NombreCuenta).filter(Boolean))].map(n => `<option>${esc(n)}</option>`).join('');
+        const m = pref('metodo'); if (m && metodos.some(x => String(x.IdMetodoPago) === m)) document.getElementById('f-metodo').value = m;
+        else if (metodos.length === 1) document.getElementById('f-metodo').selectedIndex = 1;
+        await cargarPagos();
+        const q = parseInt(new URLSearchParams(location.search).get('cliente'));
+        if (q) elegirCliente(q);
+        actualizar();
     }
 
-    // ===== IMAGEN =====
-    let imagenBase64 = null;
+    // ── Cliente ──
+    function ddFiltrar() {
+        const q = norm(document.getElementById('cli-buscar').value);
+        const l = clientes.filter(c => !q || [c.NombreCompleto, c.CodigoCliente, c.Telefeno].some(x => norm(x).includes(q)))
+            .sort((a, b) => num(b.SaldoCalculado) - num(a.SaldoCalculado)).slice(0, 25);
+        ddSel = 0;
+        const el = document.getElementById('dd-lista');
+        el.innerHTML = l.length ? l.map((c, i) => `<div class="dd-item ${i ? '' : 'sel'}" data-id="${c.IdCliente}" onmousedown="elegirCliente(${c.IdCliente})">
+            <div class="c-av" style="background:${colorDe(c.NombreCompleto)}">${esc(iniciales(c.NombreCompleto))}</div>
+            <div class="c-txt"><b>${esc(c.NombreCompleto)}</b><small>${esc(c.CodigoCliente || '')} · ${esc(c.NombreVendedor || '')}</small></div>
+            <span class="s" style="color:${num(c.SaldoCalculado) > 0.5 ? '#fff' : 'var(--verde)'}">${L(num(c.SaldoCalculado), 0)}</span></div>`).join('')
+            : '<div class="dd-item" style="color:var(--tenue)">Sin resultados</div>';
+        el.classList.add('on');
+    }
+    function ddTecla(e) {
+        const it = [...document.querySelectorAll('#dd-lista .dd-item[data-id]')];
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); ddSel = Math.max(0, Math.min(it.length - 1, ddSel + (e.key === 'ArrowDown' ? 1 : -1))); it.forEach((x, i) => x.classList.toggle('sel', i === ddSel)); it[ddSel]?.scrollIntoView({ block:'nearest' }); }
+        else if (e.key === 'Enter' && it[ddSel]) { e.preventDefault(); elegirCliente(parseInt(it[ddSel].dataset.id)); }
+        else if (e.key === 'Escape') document.getElementById('dd-lista').classList.remove('on');
+    }
+    document.addEventListener('click', e => { if (!e.target.closest('.dd')) document.getElementById('dd-lista').classList.remove('on'); });
 
-    function handleFile(file) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            imagenBase64 = e.target.result.split(',')[1];
-            document.getElementById('preview-img').src = e.target.result;
-            document.getElementById('preview-img').style.display = 'block';
-            document.getElementById('upload-placeholder').style.display = 'none';
+    function elegirCliente(id) {
+        cli = clientes.find(c => c.IdCliente === id) || null;
+        document.getElementById('dd-lista').classList.remove('on');
+        document.getElementById('exito').classList.remove('on');
+        if (!cli) return;
+        document.getElementById('cli-buscar').value = cli.NombreCompleto;
+        const s = num(cli.SaldoCalculado), pend = num(cli.MontoPendienteEntrega), cobrable = Math.max(0, s - pend);
+        const ult = pagos.find(p => norm(p.NombreCliente) === norm(cli.NombreCompleto));
+        document.getElementById('cli-card').innerHTML = `
+            <div class="cli-top">
+                <div class="c-av" style="background:${colorDe(cli.NombreCompleto)};width:36px;height:36px">${esc(iniciales(cli.NombreCompleto))}</div>
+                <div class="c-txt"><b>${esc(cli.NombreCompleto)}</b><small>${esc(cli.CodigoCliente || '')}${cli.Telefeno ? ' · ' + esc(cli.Telefeno) : ''} · ${esc(cli.NombreVendedor || 'Sin vendedor')}</small></div>
+                <button class="x" title="Cambiar cliente" onclick="quitarCliente()">${ico('x')}</button>
+            </div>
+            <div class="cli-nums">
+                <div><b>Saldo</b><span style="color:${s > 0.5 ? '#fff' : s < -0.5 ? 'var(--morado)' : 'var(--verde)'}">${L(s)}</span></div>
+                <div><b>Cobrable ya</b><span style="color:${cobrable > 0.5 ? 'var(--rojo)' : 'var(--tenue)'}">${L(cobrable)}</span></div>
+                <div><b>En camino</b><span style="color:var(--azul)">${L(pend)}</span></div>
+            </div>
+            <div class="cli-pie"><span>${ult ? `Último pago: ${L(num(ult.Cantidad))} el ${fCorta(ult.FechaPago)}` : 'Sin pagos recientes'}</span>
+                <a class="lnk" href="/clientes.html?cliente=${cli.IdCliente}">${ico('doc', 'width:13px;height:13px')}Estado de cuenta</a></div>`;
+        document.getElementById('cli-card').classList.add('on');
+        document.getElementById('rapidos').innerHTML = [
+            s > 0.5 ? `<button class="rap" onclick="ponerMonto(${s})">Saldo completo ${L(s, 0)}</button>` : '',
+            cobrable > 0.5 && Math.abs(cobrable - s) > 0.5 ? `<button class="rap" onclick="ponerMonto(${cobrable})">Cobrable ya ${L(cobrable, 0)}</button>` : ''
+        ].join('');
+        // cuenta del vendedor del cliente (o la última usada)
+        const propias = cuentas.filter(k => k.IdVendedor === cli.IdVendedor);
+        const selC = document.getElementById('f-cuenta');
+        if (propias.length === 1) selC.value = propias[0].IdCuentaBanco;
+        else if (!selC.value && pref('cuenta') && cuentas.some(k => String(k.IdCuentaBanco) === pref('cuenta'))) selC.value = pref('cuenta');
+        actualizar();
+        document.getElementById('f-monto').focus();
+    }
+    function quitarCliente() {
+        cli = null; document.getElementById('cli-buscar').value = ''; document.getElementById('cli-card').classList.remove('on');
+        document.getElementById('rapidos').innerHTML = ''; actualizar(); document.getElementById('cli-buscar').focus();
+    }
+    function ponerMonto(v) { document.getElementById('f-monto').value = Number(v).toFixed(2); actualizar(); }
+
+    // ── Validación en vivo ──
+    function actualizar() {
+        const monto = num(document.getElementById('f-monto').value);
+        const ref = document.getElementById('f-referencia').value.trim();
+        const met = document.getElementById('f-metodo'), cue = document.getElementById('f-cuenta');
+        const ns = document.getElementById('nuevo-saldo');
+        if (cli && monto > 0) {
+            const nuevo = num(cli.SaldoCalculado) - monto;
+            ns.innerHTML = nuevo < -0.5 ? `Queda <b style="color:var(--morado)">${L(-nuevo)}</b> a favor` : `Nuevo saldo: <b>${L(nuevo)}</b>`;
+        } else ns.innerHTML = '';
+        // referencia repetida
+        const av = document.getElementById('aviso-ref');
+        const dup = ref.length >= 3 ? pagos.filter(p => norm(p.Referencia) === norm(ref)) : [];
+        if (dup.length) {
+            av.innerHTML = `Esta referencia ya se usó en ${dup.length} pago${dup.length === 1 ? '' : 's'}: ` + dup.slice(0, 3).map(p => `${esc(p.NombreCliente)} (${L(num(p.Cantidad), 0)}, ${fCorta(p.FechaPago)})`).join(', ') + '. Si es la misma transferencia repartida entre clientes, está bien.';
+            av.classList.add('on');
+        } else av.classList.remove('on');
+        const listo = cli && monto > 0 && met.value && cue.value && document.getElementById('f-fecha').value;
+        const b = document.getElementById('btn-guardar');
+        b.disabled = !listo;
+        b.textContent = listo ? `Registrar pago de ${L(monto)}` : 'Registrar pago';
+        document.getElementById('resumen').innerHTML = listo
+            ? `${esc(cli.NombreCompleto)} · ${esc(met.options[met.selectedIndex].text)} · ${esc(cue.options[cue.selectedIndex].text.split(' · ').slice(0, 2).join(' · '))}` : '';
+    }
+
+    // ── Guardar ──
+    async function guardar() {
+        const monto = num(document.getElementById('f-monto').value);
+        const fecha = document.getElementById('f-fecha').value;
+        const met = document.getElementById('f-metodo'), cue = document.getElementById('f-cuenta');
+        const ref = document.getElementById('f-referencia').value.trim(), obs = document.getElementById('f-obs').value.trim();
+        const msg = document.getElementById('msg'); msg.className = 'msg';
+        if (!cli || !(monto > 0) || !met.value || !cue.value || !fecha) return;
+        if (fecha > hoyISO()) { msg.className = 'msg err'; msg.textContent = 'La fecha del pago no puede ser futura.'; return; }
+        const s = num(cli.SaldoCalculado);
+        if (s > 0.5 && monto > s + 0.5 && !confirm(`El pago (${L(monto)}) es mayor que el saldo (${L(s)}). Le quedarán ${L(monto - s)} a favor. ¿Registrar de todos modos?`)) return;
+        const mismo = pagos.find(p => norm(p.NombreCliente) === norm(cli.NombreCompleto) && Math.abs(num(p.Cantidad) - monto) < 0.01 && String(p.FechaPago).slice(0, 10) === fecha);
+        if (mismo && !confirm(`Ya hay un pago de ${L(monto)} de ${cli.NombreCompleto} con fecha ${fCorta(fecha)}. ¿Es otro pago distinto?`)) return;
+        const b = document.getElementById('btn-guardar'); b.disabled = true; b.textContent = 'Registrando…';
+        try {
+            const d = await fetch('/api/pagos/registrar', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ fechaPago:fecha, idCliente:cli.IdCliente, cantidad:monto, idMetodoPago:parseInt(met.value), observaciones:obs, referencia:ref, idCuenta:parseInt(cue.value), idMovimiento:3 }) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error || 'Error');
+            guardarPref('metodo', met.value); guardarPref('cuenta', cue.value);
+            const cuenta = cuentas.find(k => String(k.IdCuentaBanco) === cue.value) || {};
+            ultimo = { cliente:{ ...cli }, monto, fecha, ref, metodo:met.options[met.selectedIndex].text, cuenta, anterior:s, nuevo:s - monto };
+            mostrarExito();
+            limpiar(true);
+            cargarPagos();
+            fetch('/api/clientes/todos').then(r => r.json()).then(x => { if (x.ok) { clientes = x.data; const c = clientes.find(z => z.IdCliente === ultimo.cliente.IdCliente); if (c) { ultimo.nuevo = num(c.SaldoCalculado); ultimo.cliente = c; mostrarExito(); } } }).catch(() => {});
+        } catch (e) { msg.className = 'msg err'; msg.textContent = 'No se pudo registrar: ' + e.message; actualizar(); }
+    }
+
+    function mostrarExito() {
+        const u = ultimo, wa = telWa(u.cliente.Telefeno);
+        const el = document.getElementById('exito');
+        el.innerHTML = `<div class="exito-tit">${ico('check')}Pago registrado: ${L(u.monto)} de ${esc(u.cliente.NombreCompleto)}</div>
+            <div class="exito-nums"><div>Saldo anterior<b>${L(u.anterior)}</b></div><div>Pago<b style="color:var(--verde)">− ${L(u.monto)}</b></div>
+                <div>${u.nuevo < -0.5 ? 'Saldo a favor' : 'Nuevo saldo'}<b style="color:${u.nuevo > 0.5 ? '#fff' : u.nuevo < -0.5 ? 'var(--morado)' : 'var(--verde)'}">${L(Math.abs(u.nuevo))}</b></div></div>
+            <div class="exito-acc">
+                <button class="btn rosa" onclick="copiarRecibo(this)">${ico('copiar')}Copiar comprobante</button>
+                <button class="btn" onclick="descargarRecibo(this)">${ico('bajar')}Descargar</button>
+                <button class="btn" onclick="copiarTexto()">${ico('msg')}Copiar mensaje</button>
+                ${wa ? `<a class="btn" style="color:#25d366" target="_blank" rel="noopener" href="https://wa.me/${wa}?text=${encodeURIComponent(textoRecibo())}">${WA}WhatsApp</a>` : ''}
+                <button class="btn" onclick="otroPagoMismo()">${ico('mas')}Otro pago de este cliente</button>
+            </div>`;
+        el.classList.add('on');
+    }
+    function otroPagoMismo() { const id = ultimo.cliente.IdCliente; elegirCliente(id); }
+
+    function limpiar(tras) {
+        if (!tras) document.getElementById('exito').classList.remove('on');
+        cli = null;
+        document.getElementById('cli-buscar').value = '';
+        document.getElementById('cli-card').classList.remove('on');
+        document.getElementById('rapidos').innerHTML = '';
+        ['f-monto', 'f-referencia', 'f-obs'].forEach(i => document.getElementById(i).value = '');
+        document.getElementById('f-fecha').value = hoyISO();
+        document.getElementById('msg').className = 'msg';
+        actualizar();
+    }
+
+    // ── Comprobante ──
+    function textoRecibo() {
+        const u = ultimo, n = String(u.cliente.NombreCompleto || '').split(/\s+/)[0];
+        let t = `Hola ${n}, te saluda ShopAholic.\n\nRecibimos tu pago de *${L(u.monto)}* el ${fCorta(u.fecha)}`;
+        t += u.ref ? ` (referencia ${u.ref}).\n` : '.\n';
+        t += u.nuevo > 0.5 ? `Tu saldo pendiente queda en *${L(u.nuevo)}*.\n` : u.nuevo < -0.5 ? `Te queda un saldo a favor de *${L(-u.nuevo)}*.\n` : `Tu cuenta queda al día.\n`;
+        return t + `\n¡Gracias por tu pago!`;
+    }
+    async function copiarTexto() { try { await navigator.clipboard.writeText(textoRecibo()); toast('ok', 'Mensaje copiado'); } catch (e) { toast('err', 'No se pudo copiar'); } }
+    function cargarImg(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; }); }
+    function rr(x, X, Y, W, H, R) { x.beginPath(); x.moveTo(X + R, Y); x.arcTo(X + W, Y, X + W, Y + H, R); x.arcTo(X + W, Y + H, X, Y + H, R); x.arcTo(X, Y + H, X, Y, R); x.arcTo(X, Y, X + W, Y, R); x.closePath(); }
+    async function recibo() {
+        const u = ultimo, W = 1080, H = 1280, M = 70, F = "'Segoe UI', Arial, sans-serif";
+        const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+        x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+        const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#E8327A'); g.addColorStop(1, '#EF7A30');
+        x.fillStyle = g; x.fillRect(0, 0, W, 12);
+        const logo = await cargarImg('/assets/shopaholic-logo.png');
+        if (logo) { const lh = 84; x.drawImage(logo, M, 52, logo.width * lh / logo.height, lh); }
+        x.textBaseline = 'top'; x.textAlign = 'right';
+        x.fillStyle = '#111827'; x.font = `800 40px ${F}`; x.fillText('COMPROBANTE DE PAGO', W - M, 58);
+        x.fillStyle = '#6b7280'; x.font = `500 24px ${F}`; x.fillText(fCorta(u.fecha), W - M, 108);
+        x.textAlign = 'center';
+        // check
+        x.fillStyle = '#dcfce7'; x.beginPath(); x.arc(W / 2, 260, 56, 0, 7); x.fill();
+        x.strokeStyle = '#16a34a'; x.lineWidth = 9; x.lineCap = 'round'; x.lineJoin = 'round';
+        x.beginPath(); x.moveTo(W / 2 - 24, 262); x.lineTo(W / 2 - 6, 280); x.lineTo(W / 2 + 26, 244); x.stroke();
+        x.fillStyle = '#6b7280'; x.font = `600 26px ${F}`; x.fillText('Pago recibido', W / 2, 340);
+        x.fillStyle = '#111827'; x.font = `800 92px ${F}`; x.fillText(L(u.monto), W / 2, 380);
+        x.fillStyle = '#111827'; x.font = `700 32px ${F}`; x.fillText(u.cliente.NombreCompleto || '', W / 2, 500);
+        x.fillStyle = '#9ca3af'; x.font = `500 24px ${F}`; x.fillText(u.cliente.CodigoCliente || '', W / 2, 545);
+        x.textAlign = 'left';
+        let y = 620;
+        const linea = (k, v, color, peso = 600) => {
+            x.fillStyle = '#6b7280'; x.font = `500 27px ${F}`; x.fillText(k, M + 30, y);
+            x.textAlign = 'right'; x.fillStyle = color || '#111827'; x.font = `${peso} 28px ${F}`; x.fillText(v, W - M - 30, y); x.textAlign = 'left';
+            y += 62;
         };
-        reader.readAsDataURL(file);
+        rr(x, M, y - 30, W - 2 * M, 300, 22); x.fillStyle = '#f8fafc'; x.fill(); x.strokeStyle = '#eef0f3'; x.lineWidth = 2; x.stroke();
+        linea('Método', u.metodo);
+        if (u.cuenta.Banco) linea('Depositado en', `${u.cuenta.Banco}${u.cuenta.NombreCuenta ? ' · ' + u.cuenta.NombreCuenta : ''}`);
+        linea('Referencia', u.ref || '—');
+        linea('Fecha', fCorta(u.fecha));
+        y += 40;
+        rr(x, M, y, W - 2 * M, 222, 22); x.fillStyle = '#fdf2f8'; x.fill();
+        y += 34;
+        linea('Saldo anterior', L(u.anterior));
+        linea('Este pago', '− ' + L(u.monto), '#15803d');
+        x.strokeStyle = '#fbcfe8'; x.lineWidth = 2; x.beginPath(); x.moveTo(M + 30, y - 18); x.lineTo(W - M - 30, y - 18); x.stroke();
+        linea(u.nuevo < -0.5 ? 'Saldo a favor' : 'Saldo pendiente', L(Math.abs(u.nuevo)), u.nuevo > 0.5 ? '#E8327A' : '#15803d', 800);
+        x.fillStyle = g; x.fillRect(0, H - 96, W, 96);
+        x.fillStyle = '#fff'; x.font = `700 28px ${F}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText('¡Gracias por tu pago!', W / 2, H - 48);
+        return cv;
+    }
+    const aBlob = cv => new Promise(r => cv.toBlob(r, 'image/png'));
+    const nombreRecibo = () => ('comprobante-' + (ultimo.cliente.NombreCompleto || '') + '-' + ultimo.fecha).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '.png';
+    async function descargarRecibo(btn) { btn.disabled = true; try { const b = await aBlob(await recibo()); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nombreRecibo(); a.click(); } catch (e) { toast('err', 'No se pudo generar'); } btn.disabled = false; }
+    async function copiarRecibo(btn) {
+        const t = btn.innerHTML; btn.disabled = true; btn.textContent = 'Generando…';
+        try { const cv = await recibo(); if (!window.ClipboardItem) throw 0; await navigator.clipboard.write([new ClipboardItem({ 'image/png': aBlob(cv) })]); toast('ok', 'Comprobante copiado. Pegalo en WhatsApp con Ctrl+V'); }
+        catch (e) { await descargarRecibo(btn); toast('err', 'El navegador no dejó copiar; se descargó la imagen.'); }
+        btn.disabled = false; btn.innerHTML = t;
     }
 
-    function handleDrop(e) {
-        e.preventDefault();
-        document.getElementById('upload-area').classList.remove('drag');
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) handleFile(file);
+    // ── Pagos recibidos ──
+    async function cargarPagos() {
+        try { const d = await fetch('/api/pagos/recientes?limit=500').then(r => r.json()); pagos = d.ok ? d.data : []; }
+        catch (e) { pagos = []; }
+        pintarPagos();
     }
+    document.querySelectorAll('#periodos button').forEach(b => b.onclick = () => { periodo = b.dataset.p; document.querySelectorAll('#periodos button').forEach(x => x.classList.toggle('on', x === b)); pintarPagos(); });
 
-    // ===== BÚSQUEDA CLIENTE =====
-    let clienteIdSeleccionado = null;
-    let todosClientesPagos = [];
-
-    // Cargar todos los clientes al inicio para tener SaldoCalculado
-    async function cargarClientesPagos() {
-        try {
-            const res  = await fetch('/api/clientes/todos');
-            const json = await res.json();
-            if (json.ok) todosClientesPagos = json.data;
-        } catch(e) {}
-    }
-
-    function buscarCliente(texto) {
-        const drop = document.getElementById('drop-cliente');
-        if (texto.length < 2) { drop.style.display = 'none'; return; }
-        const q = texto.trim().toLowerCase();
-        const resultados = todosClientesPagos.filter(c =>
-            (c.NombreCompleto || '').toLowerCase().includes(q) ||
-            (c.CodigoCliente  || '').toLowerCase().includes(q)
-        ).slice(0, 10);
-
-        if (resultados.length > 0) {
-            drop.innerHTML = resultados.map(c => `
-                <div class="buscar-drop-item" onclick="seleccionarCliente(${c.IdCliente},'${(c.NombreCompleto||'').split("'").join(" ")}','${c.CodigoCliente||''}',${c.SaldoCalculado||0})">
-                    <strong>${c.NombreCompleto}</strong>
-                    <span style="color:#4b5563;font-size:11px;margin-left:8px;">${c.CodigoCliente}</span>
-                    <span style="color:#f59e0b;font-size:11px;margin-left:8px;">L ${parseFloat(c.SaldoCalculado||0).toLocaleString('es-HN',{minimumFractionDigits:2})}</span>
-                </div>`).join('');
-            drop.style.display = 'block';
-        } else {
-            drop.innerHTML = '<div class="buscar-drop-item" style="color:#4b5563;">Sin resultados</div>';
-            drop.style.display = 'block';
-        }
-    }
-
-    function seleccionarCliente(id, nombre, codigo, saldo) {
-        clienteIdSeleccionado = id;
-        document.getElementById('input-cliente').value = nombre;
-        document.getElementById('drop-cliente').style.display = 'none';
-        document.getElementById('cliente-sel-nombre').textContent = nombre;
-        document.getElementById('cliente-sel-codigo').textContent = codigo;
-        document.getElementById('cliente-sel-saldo').textContent = 'L ' + parseFloat(saldo||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
-        document.getElementById('cliente-seleccionado-info').style.display = 'block';
-    }
-
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.buscar-wrap')) document.getElementById('drop-cliente').style.display = 'none';
-    });
-
-    // ===== GUARDAR PAGO =====
-    async function guardarPago() {
-        const msg    = document.getElementById('msg-box');
-        const fecha  = document.getElementById('f-fecha').value;
-        const monto  = document.getElementById('f-monto').value;
-        const metodo = document.getElementById('f-metodo').value;
-        const cuenta = document.getElementById('f-cuenta').value;
-        const ref    = document.getElementById('f-referencia').value.trim();
-        const obs    = document.getElementById('f-observaciones').value.trim();
-
-        if (!clienteIdSeleccionado || !fecha || !monto || !metodo || !cuenta) {
-            msg.className = 'msg-box err';
-            msg.style.display = 'block';
-            msg.textContent = '⚠️ Cliente, fecha, monto, método y cuenta son obligatorios';
-            return;
-        }
-
-        try {
-            const res  = await fetch('/api/pagos/registrar', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({
-                    fechaPago:     fecha,
-                    idCliente:     clienteIdSeleccionado,
-                    cantidad:      parseFloat(monto),
-                    idMetodoPago:  parseInt(metodo),
-                    observaciones: obs,
-                    referencia:    ref,
-                    idCuenta:      parseInt(cuenta),
-                    idMovimiento:  3
-                })
-            });
-            const json = await res.json();
-            if (json.ok) {
-                msg.className = 'msg-box ok';
-                msg.style.display = 'block';
-                msg.textContent = `✅ Pago de L ${parseFloat(monto).toLocaleString('es-HN',{minimumFractionDigits:2})} registrado correctamente`;
-                limpiarFormulario();
-                cargarRecientes();
-            } else {
-                msg.className = 'msg-box err';
-                msg.style.display = 'block';
-                msg.textContent = '❌ Error: ' + json.error;
-            }
-        } catch(e) {
-            msg.className = 'msg-box err';
-            msg.style.display = 'block';
-            msg.textContent = '❌ Error de conexión';
-        }
-    }
-
-    // ===== LIMPIAR =====
-    function limpiarFormulario() {
-        clienteIdSeleccionado = null;
-        imagenBase64 = null;
-        document.getElementById('input-cliente').value = '';
-        document.getElementById('cliente-seleccionado-info').style.display = 'none';
-        document.getElementById('f-fecha').value = new Date().toISOString().substring(0,10);
-        document.getElementById('f-monto').value = '';
-        document.getElementById('f-metodo').value = '';
-        document.getElementById('f-cuenta').value = '';
-        document.getElementById('f-referencia').value = '';
-        document.getElementById('f-observaciones').value = '';
-        ['f-fecha','f-monto','f-referencia','f-metodo'].forEach(id => {
-            document.getElementById(id).classList.remove('ia-filled');
+    function pagosFiltrados() {
+        const hoy = hoyISO(), q = norm(document.getElementById('p-buscar').value), cu = document.getElementById('p-cuenta').value;
+        const d7 = new Date(Date.now() - 6 * 86400000); const desde7 = new Date(d7 - d7.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        return pagos.filter(p => {
+            const f = String(p.FechaPago || '').slice(0, 10);
+            if (periodo === 'hoy' && f !== hoy) return false;
+            if (periodo === '7' && f < desde7) return false;
+            if (periodo === 'mes' && f.slice(0, 7) !== hoy.slice(0, 7)) return false;
+            if (cu && p.NombreCuenta !== cu) return false;
+            if (q && ![p.NombreCliente, p.Referencia].some(x => norm(x).includes(q))) return false;
+            return true;
         });
     }
-
-    // ===== PAGOS RECIENTES =====
-    async function cargarRecientes() {
-        const btn  = document.getElementById('btn-recargar');
-        const lista = document.getElementById('recientes-lista');
-        btn.classList.add('spin');
-        try {
-            const res  = await fetch('/api/pagos/recientes?limit=10');
-            const json = await res.json();
-            btn.classList.remove('spin');
-            if (!json.ok || !json.data || json.data.length === 0) {
-                lista.innerHTML = '<div class="recientes-empty"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Sin pagos registrados aún</div>';
-                document.getElementById('recientes-total').style.display = 'none';
-                return;
-            }
-            // Calcular total del día
-            const hoy = new Date().toISOString().substring(0,10);
-            lista.innerHTML = json.data.map(p => {
-                const iniciales = ((p.NombreCliente||'?')[0] + ((p.NombreCliente||'?').split(' ')[1]?.[0]||'')).toUpperCase();
-                const fechaStr  = p.FechaPago ? new Date(p.FechaPago).toLocaleDateString('es-HN',{day:'2-digit',month:'short'}) : '—';
-                return `<div class="pago-row">
-                    <div class="pago-avatar">${iniciales}</div>
-                    <div class="pago-info">
-                        <div class="pago-nombre">${p.NombreCliente||'—'}</div>
-                        <div class="pago-meta">${p.Metodo||''} · ${p.NombreCuenta||''} ${p.Referencia ? '· #'+p.Referencia : ''}</div>
-                    </div>
-                    <div class="pago-monto">
-                        <div class="pago-monto-val">L ${parseFloat(p.Cantidad||0).toLocaleString('es-HN',{minimumFractionDigits:2})}</div>
-                        <div class="pago-monto-fecha">${fechaStr}</div>
-                    </div>
-                </div>`;
+    function pintarPagos() {
+        const l = pagosFiltrados();
+        const tot = l.reduce((a, p) => a + num(p.Cantidad), 0);
+        const porCuenta = {}; l.forEach(p => porCuenta[p.NombreCuenta || 'Sin cuenta'] = (porCuenta[p.NombreCuenta || 'Sin cuenta'] || 0) + num(p.Cantidad));
+        const top = Object.entries(porCuenta).sort((a, b) => b[1] - a[1])[0];
+        const etiqueta = { hoy:'hoy', '7':'en 7 días', mes:'este mes', todo:'en total' }[periodo];
+        document.getElementById('totales').innerHTML = `
+            <div class="tot"><b>Cobrado ${etiqueta}</b><span style="color:var(--verde)">${L(tot, 0)}</span></div>
+            <div class="tot"><b>Pagos</b><span>${l.length}</span><small>${new Set(l.map(p => p.NombreCliente)).size} clientes</small></div>
+            <div class="tot"><b>Más recibido en</b><span style="font-size:14px">${top ? esc(top[0]) : '—'}</span><small>${top ? L(top[1], 0) : ''}</small></div>`;
+        const el = document.getElementById('lista');
+        if (!l.length) { el.innerHTML = `<div class="vacio">${pagos.length ? 'No hay pagos en este período.' : 'Todavía no hay pagos registrados.'}</div>`; return; }
+        const refs = {}; pagos.forEach(p => { const r = norm(p.Referencia); if (r) refs[r] = (refs[r] || 0) + 1; });
+        const grupos = new Map(); l.forEach(p => { const f = String(p.FechaPago || '').slice(0, 10); if (!grupos.has(f)) grupos.set(f, []); grupos.get(f).push(p); });
+        const hoy = hoyISO();
+        el.innerHTML = [...grupos.entries()].map(([f, ps]) => {
+            const d = new Date(f + 'T12:00:00');
+            const nom = f === hoy ? 'Hoy' : d.toLocaleDateString('es-HN', { weekday:'long', day:'numeric', month:'long' });
+            return `<div class="dia"><span>${esc(nom)}</span><span>${L(ps.reduce((a, p) => a + num(p.Cantidad), 0), 0)}</span></div>` + ps.map(p => {
+                const c = clientes.find(z => norm(z.NombreCompleto) === norm(p.NombreCliente));
+                const dup = refs[norm(p.Referencia)] > 1;
+                return `<div class="pago" ${c ? `onclick="location.href='/clientes.html?cliente=${c.IdCliente}'"` : ''} title="${c ? 'Ver estado de cuenta' : ''}">
+                    <div class="c-av" style="background:${colorDe(p.NombreCliente)}">${esc(iniciales(p.NombreCliente))}</div>
+                    <div class="c-txt"><b>${esc(p.NombreCliente || '—')}</b><small>${esc(p.Metodo || '')} · ${esc(p.NombreCuenta || '')}${p.Referencia ? ` · <span class="${dup ? 'ref-dup' : ''}" title="${dup ? 'Referencia usada en varios pagos' : ''}">#${esc(p.Referencia)}</span>` : ''}</small></div>
+                    <div class="pago-m"><b>${L(num(p.Cantidad))}</b></div></div>`;
             }).join('');
-        } catch(e) {
-            btn.classList.remove('spin');
-            lista.innerHTML = '<div class="recientes-empty" style="color:#ef4444;">Error al cargar pagos</div>';
-        }
+        }).join('');
+    }
+    function exportar() {
+        const l = pagosFiltrados(); if (!l.length) { toast('err', 'No hay pagos para exportar'); return; }
+        let h = '<html><head><meta charset="UTF-8"></head><body><table><tr><th>Fecha</th><th>Cliente</th><th>Monto (L)</th><th>Método</th><th>Cuenta</th><th>Referencia</th></tr>';
+        l.forEach(p => h += `<tr><td>${fCorta(p.FechaPago)}</td><td>${esc(p.NombreCliente)}</td><td>${num(p.Cantidad).toFixed(2)}</td><td>${esc(p.Metodo)}</td><td>${esc(p.NombreCuenta)}</td><td>${esc(p.Referencia)}</td></tr>`);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([h + '</table></body></html>'], { type:'application/vnd.ms-excel;charset=utf-8' })); a.download = `cobros_${periodo}_${hoyISO()}.xls`; a.click();
     }
 
-    cargarCatalogos();
-    cargarClientesPagos();
-    cargarRecientes();
+    if (usuario) cargar();
 </script>
 <script src="/assets/sidebar.js"></script>
 </body>

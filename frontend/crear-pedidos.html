@@ -86,6 +86,49 @@
 
         /* ── Tabla ── */
         .tbl-wrap { overflow-x:auto; border-radius:8px; border:1px solid #111827; }
+        /* Nuevo pedido compacto */
+        .np-card { padding:14px 16px; }
+        .np-tit { font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:1.4px; margin-bottom:10px; }
+        .np-grid { display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(150px,1.3fr) minmax(90px,.7fr) minmax(140px,1fr) minmax(150px,1fr) auto; gap:10px; align-items:end; }
+        .np-campo { display:flex; flex-direction:column; gap:5px; min-width:0; }
+        .np-campo > span { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+        .np-campo .form-input { padding:8px 11px; height:38px; width:100%; }
+        .np-campo .num-pedido { height:38px; padding:0 12px; display:flex; align-items:center; font-size:14px; }
+        .np-crear { height:38px; padding:0 18px; justify-content:center; white-space:nowrap; }
+        /* Pedidos abiertos compacto */
+        .pa-card { padding:0; overflow:hidden; }
+        .pa-cab { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #1e2530; flex-wrap:wrap; }
+        .pa-cab .card-title { margin-right:auto; }
+        .pa-buscar { padding:7px 11px !important; font-size:12.5px !important; width:220px; }
+        .pa-chk { display:flex; align-items:center; gap:6px; font-size:12px; color:#9ca3af; cursor:pointer; white-space:nowrap; }
+        .pa-chk input { accent-color:#3b82f6; }
+        .pa-tbl th { padding:9px 14px; }
+        .pa-tbl td { padding:8px 14px; }
+        .pa-tbl tbody tr { cursor:pointer; }
+        .pa-tbl .r { text-align:right; }
+        .pa-num { font-family:monospace; font-weight:700; color:#60a5fa; font-size:12.5px; }
+        .pa-sub { font-size:11px; color:#4b5563; margin-top:2px; }
+        .pa-tienda { color:#e2e8f0; font-weight:600; }
+        .pa-cant { color:#e2e8f0; font-weight:700; font-size:13px; }
+        .pa-prog { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; }
+        .pa-barra { width:64px; height:5px; background:#1e2530; border-radius:99px; overflow:hidden; }
+        .pa-barra div { height:100%; border-radius:99px; }
+        .pa-total { color:#4ade80; font-weight:700; font-size:13px; }
+        .pa-tasa { color:#c4b5fd; font-weight:700; font-family:monospace; }
+        .pa-falta { background:#1a1205; border:1px dashed #854d0e; color:#fbbf24; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .pa-falta:hover { background:#2d1f0a; }
+        .pa-acc { display:inline-flex; gap:5px; }
+        .pa-ib { width:30px; height:30px; border-radius:7px; border:1px solid #1e2530; background:#13181f; color:#9ca3af; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+        .pa-ib:hover { color:#fff; border-color:#2a3342; }
+        .pa-ib.azul:hover { color:#60a5fa; border-color:#1e3a5f; background:#0c1525; }
+        .pa-ib.morado:hover { color:#c4b5fd; border-color:#4c1d95; background:#140d24; }
+        .pa-ib.rojo:hover { color:#f87171; border-color:#7f1d1d; background:#1f0707; }
+        @media (max-width:1100px) { .np-grid { grid-template-columns:1fr 1fr 1fr; } .np-crear { grid-column:span 1; } }
+        @media (max-width:700px) { .np-grid { grid-template-columns:1fr 1fr; } .np-crear { grid-column:1 / -1; } .pa-m { display:none; } .pa-buscar { width:100%; order:3; } }
+        .pr-rapido { display:inline-flex; align-items:center; gap:3px; color:#9ca3af; }
+        .pr-rapido input { width:72px; background:#0c1525; border:1px dashed #1e3a5f; border-radius:6px; color:#e2e8f0; font-size:12.5px; font-weight:600; text-align:right; padding:4px 6px; outline:none; font-family:inherit; }
+        .pr-rapido input:focus { border-style:solid; border-color:#3b82f6; }
+        .pr-rapido input.ok { border-color:#16a34a; color:#4ade80; }
         .tbl { width:100%; border-collapse:collapse; font-size:12px; }
         .tbl thead tr { background:#0a0e18; }
         .tbl th { color:#374151; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:10px 12px; text-align:left; white-space:nowrap; border-bottom:1px solid #111827; font-weight:700; }
@@ -238,84 +281,51 @@
         <!-- ══════ TAB: NUEVO PEDIDO ══════ -->
         <div class="tab-pane active" id="tab-crear">
 
-            <div class="card">
-                <div class="card-head">
-                    <div class="card-title">
-                        <span class="card-dot" style="background:#3b82f6"></span>
-                        Datos del pedido
-                    </div>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Tienda *</label>
-                        <select class="form-input" id="c-tienda" onchange="generarNumeroPedido()">
-                            <option value="">— Selecciona —</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Casillero *</label>
-                        <select class="form-input" id="c-casillero">
-                            <option value="">— Selecciona —</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Moneda *</label>
-                        <select class="form-input" id="c-moneda">
-                            <option value="">— Selecciona —</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Fecha *</label>
-                        <input class="form-input" id="c-fecha" type="date" onchange="generarNumeroPedido()">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">N° Pedido generado</label>
-                        <div class="num-pedido" id="c-numero">—</div>
-                    </div>
-                    <div class="form-group" style="align-self:end">
-                        <button class="btn btn-green" onclick="crearPedido()" style="width:100%;justify-content:center;padding:11px;">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                            Crear Pedido
-                        </button>
-                    </div>
+            <div class="card np-card">
+                <div class="np-tit">Nuevo pedido</div>
+                <div class="np-grid">
+                    <label class="np-campo"><span>Tienda</span>
+                        <select class="form-input" id="c-tienda" onchange="generarNumeroPedido();recordarNP()"><option value="">Elegí…</option></select></label>
+                    <label class="np-campo"><span>Casillero</span>
+                        <select class="form-input" id="c-casillero" onchange="recordarNP()"><option value="">Elegí…</option></select></label>
+                    <label class="np-campo np-corto"><span>Moneda</span>
+                        <select class="form-input" id="c-moneda" onchange="recordarNP()"><option value="">Elegí…</option></select></label>
+                    <label class="np-campo np-fecha"><span>Fecha</span>
+                        <input class="form-input" id="c-fecha" type="date" onchange="generarNumeroPedido()"></label>
+                    <div class="np-campo"><span>N° de pedido</span><div class="num-pedido" id="c-numero">—</div></div>
+                    <button class="btn btn-green np-crear" onclick="crearPedido()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        Crear pedido
+                    </button>
                 </div>
                 <div class="msg" id="msg-crear"></div>
             </div>
 
             <!-- Pedidos abiertos -->
-            <div class="card">
-                <div class="card-head">
-                    <div class="card-title">
-                        <span class="card-dot" style="background:#f59e0b"></span>
-                        Pedidos abiertos
-                        <span class="badge badge-amber" id="cnt-abiertos">0</span>
-                    </div>
-                    <button class="btn btn-ghost btn-sm" onclick="cargarPedidosAbiertos()">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                        Actualizar
+            <div class="card pa-card">
+                <div class="pa-cab">
+                    <div class="card-title">Pedidos abiertos <span class="badge badge-amber" id="cnt-abiertos">0</span></div>
+                    <input class="form-input pa-buscar" id="pa-buscar" placeholder="Buscar pedido o tienda…" oninput="renderTablaPedidos(todosPedidosAbiertos)" autocomplete="off">
+                    <label class="pa-chk"><input type="checkbox" id="pa-sintasa" onchange="renderTablaPedidos(todosPedidosAbiertos)"> Solo sin tasa</label>
+                    <button class="btn btn-ghost btn-sm" onclick="cargarPedidosAbiertos()" title="Actualizar">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
                     </button>
                 </div>
                 <div class="tbl-wrap">
-                    <table class="tbl">
+                    <table class="tbl pa-tbl">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>N° Pedido</th>
-                                <th>Fecha</th>
+                                <th>Pedido</th>
                                 <th>Tienda</th>
-                                <th>Casillero</th>
-                                <th>Moneda</th>
-                                <th style="text-align:right">Artículos</th>
-                                <th style="text-align:right">Entregado</th>
-                                <th style="text-align:right">Total $</th>
-                                <th style="text-align:right">Tasa L/$</th>
-                                <th style="text-align:right">Total L</th>
-                                <th>Banco / Cuenta</th>
-                                <th>Acciones</th>
+                                <th class="r">Artículos</th>
+                                <th class="pa-m">Entregado</th>
+                                <th class="r">Total</th>
+                                <th class="pa-m">Tasa y cuenta</th>
+                                <th class="r"></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-pedidos">
-                            <tr><td colspan="9" class="tbl-empty">Cargando...</td></tr>
+                            <tr><td colspan="7" class="tbl-empty">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -507,6 +517,7 @@
             if (t.ok) t.data.forEach(x => addOpt('c-tienda',   x.IdEmpresa, x.NombreEmpresa));
             if (c.ok) c.data.forEach(x => addOpt('c-casillero', x.IdEmpresa, x.NombreEmpresa));
             if (m.ok) m.data.forEach(x => addOpt('c-moneda',   x.IdMoneda,  x.MonedaSim || x.Simbolo || x.NombreMoneda));
+            aplicarNP();
             if (a.ok) todosArticulos = a.data;
         } catch(e) { console.error(e); }
     }
@@ -545,6 +556,7 @@
                 body: JSON.stringify({ fechaPedido:fecha, numeroPedido:numero, idEmpresa:+tienda, idMoneda:+mon, idCasillero:+cas })
             }).then(r => r.json());
             if (d.ok) {
+                recordarNP();
                 mostrarMsg(msg, 'ok', 'Pedido ' + d.numeroPedido + ' creado correctamente');
                 await cargarPedidosAbiertos();
                 generarNumeroPedido();
@@ -578,48 +590,59 @@
         } catch(e) {}
     }
 
+    const PA_ICO = {
+        mas:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+        lista:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/>',
+        tasa:'<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+        candado:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+    };
+    const paIco = n => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PA_ICO[n]}</svg>`;
+    const paEsc = t => String(t ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
     function renderTablaPedidos(data) {
         const tbody = document.getElementById('tbody-pedidos');
-        if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" class="tbl-empty">Sin pedidos abiertos</td></tr>'; return; }
-        tbody.innerHTML = data.map(p => {
+        const q = (document.getElementById('pa-buscar')?.value || '').trim().toLowerCase();
+        const sinTasa = document.getElementById('pa-sintasa')?.checked;
+        const lista = (data || []).filter(p => (!q || [p.NumeroPedido, p.Tienda, p.Casillero].some(x => String(x || '').toLowerCase().includes(q))) && (!sinTasa || !p.TasaCambio));
+        if (!lista.length) { tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">${(data || []).length ? 'Ningún pedido con ese filtro' : 'Sin pedidos abiertos'}</td></tr>`; return; }
+        const n2 = v => Number(v || 0).toLocaleString('es-HN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+        tbody.innerHTML = lista.map(p => {
             const f = p.FechaPedido ? p.FechaPedido.substring(0,10).split('-').reverse().join('/') : '—';
-            const tot = parseFloat(p.TotalCompra || 0).toFixed(2);
-            const tasa = p.TasaCambio ? `<span style="color:#4ade80;font-family:monospace;font-size:11px">L ${parseFloat(p.TasaCambio).toFixed(2)}</span>` : '<span style="color:#374151;font-size:11px">—</span>';
-            const cuenta = p.Banco ? `<span style="font-size:11px;color:#9ca3af">${p.Banco}<br><span style="color:#6b7280">${p.NombreCuenta || ''}</span></span>` : '<span style="color:#374151;font-size:11px">—</span>';
-            return `<tr onclick="irAgregar(${p.IdPedido})">
-                <td style="color:#374151;font-size:11px">${p.IdPedido}</td>
-                <td style="font-family:monospace;font-weight:700;color:#60a5fa">${p.NumeroPedido || '—'}</td>
-                <td style="color:#6b7280">${f}</td>
-                <td style="color:#d1d5db">${p.Tienda || '—'}</td>
-                <td style="color:#4b5563">${p.Casillero || '—'}</td>
-                <td><span class="badge badge-blue">${p.Simbolo || '$'}</span></td>
-                <td style="text-align:right;color:#9ca3af">${p.CantArticulos || 0}</td>
-                <td style="text-align:center; min-width:80px;">
-    ${p.CantArticulos > 0
-        ? (() => {
-            const pct = Math.round((p.CantEntregados / p.CantArticulos) * 100);
-            const color = pct === 100 ? '#4ade80' : pct >= 50 ? '#facc15' : '#f87171';
-            return `
-                <div style="font-size:11px;font-weight:700;color:${color};margin-bottom:3px">${pct}%</div>
-                <div style="background:#1e2530;border-radius:99px;height:4px;width:60px;margin:0 auto;">
-                    <div style="background:${color};height:4px;border-radius:99px;width:${pct}%"></div>
-                </div>`;
-          })()
-        : '<span style="color:#374151">—</span>'}
-</td>
-                <td style="text-align:right;color:#4ade80;font-weight:700">${p.Simbolo || '$'} ${tot}</td>
-                <td style="text-align:right">${tasa}</td>
-                <td style="text-align:right;color:#a78bfa;font-weight:700;">
-    ${p.TasaCambio ? 'L ' + Number((p.TotalCompra || 0) * p.TasaCambio).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'}
-</td>
-                <td>${cuenta}</td>
-                <td onclick="event.stopPropagation()" style="display:flex;gap:5px;padding:7px 12px;white-space:nowrap">
-                    <button onclick="verFaltantes('${p.NumeroPedido}')" class="btn btn-blue btn-sm"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Ver faltantes</button>
-                    <button onclick="abrirModalTasa(${p.IdPedido},'${p.NumeroPedido}',${p.TasaCambio||0},${p.IdCuenta||0})" class="btn btn-purple btn-sm"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Tasa</button>
-                    <button onclick="confirmarCerrarPedido(${p.IdPedido},'${p.NumeroPedido}')" class="btn btn-red btn-sm"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Cerrar</button>
-                </td>
+            const sim = p.Simbolo || '$';
+            const cant = p.CantArticulos || 0;
+            const pct = cant > 0 ? Math.round(((p.CantEntregados || 0) / cant) * 100) : null;
+            const col = pct === 100 ? '#4ade80' : pct >= 50 ? '#facc15' : '#f87171';
+            const num = paEsc(p.NumeroPedido);
+            return `<tr onclick="irAgregar(${p.IdPedido})" title="ID ${p.IdPedido} · clic para agregar artículos">
+                <td><div class="pa-num">${num || '—'}</div><div class="pa-sub">${f}</div></td>
+                <td><div class="pa-tienda">${paEsc(p.Tienda || '—')}</div><div class="pa-sub">${paEsc(p.Casillero || '')}</div></td>
+                <td class="r"><span class="pa-cant">${cant}</span></td>
+                <td class="pa-m">${pct === null ? '<span class="pa-sub">—</span>' : `<div class="pa-prog"><div class="pa-barra"><div style="width:${pct}%;background:${col}"></div></div><span style="color:${col}">${pct}%</span></div>`}</td>
+                <td class="r"><div class="pa-total">${sim} ${n2(p.TotalCompra)}</div><div class="pa-sub">${p.TasaCambio ? 'L ' + n2((p.TotalCompra || 0) * p.TasaCambio) : '&nbsp;'}</div></td>
+                <td class="pa-m">${p.TasaCambio
+                    ? `<div class="pa-tasa">L ${Number(p.TasaCambio).toFixed(2)}</div><div class="pa-sub">${paEsc(p.Banco || 'Sin cuenta')}${p.NombreCuenta ? ' · ' + paEsc(p.NombreCuenta) : ''}</div>`
+                    : `<button class="pa-falta" onclick="event.stopPropagation();abrirModalTasa(${p.IdPedido},'${num}',0,${p.IdCuenta || 0})">Poner tasa</button>`}</td>
+                <td class="r" onclick="event.stopPropagation()"><div class="pa-acc">
+                    <button class="pa-ib azul" onclick="irAgregar(${p.IdPedido})" title="Agregar artículos">${paIco('mas')}</button>
+                    <button class="pa-ib" onclick="verFaltantes('${num}')" title="Ver artículos pendientes de este pedido">${paIco('lista')}</button>
+                    <button class="pa-ib morado" onclick="abrirModalTasa(${p.IdPedido},'${num}',${p.TasaCambio || 0},${p.IdCuenta || 0})" title="Tasa de cambio y cuenta">${paIco('tasa')}</button>
+                    <button class="pa-ib rojo" onclick="confirmarCerrarPedido(${p.IdPedido},'${num}')" title="Cerrar pedido">${paIco('candado')}</button>
+                </div></td>
             </tr>`;
         }).join('');
+    }
+
+    // Recordar tienda, casillero y moneda del último pedido
+    function recordarNP() {
+        try { localStorage.setItem('ms_np', JSON.stringify({ t: document.getElementById('c-tienda').value, c: document.getElementById('c-casillero').value, m: document.getElementById('c-moneda').value })); } catch (e) {}
+    }
+    function aplicarNP() {
+        try {
+            const v = JSON.parse(localStorage.getItem('ms_np') || '{}');
+            const poner = (id, val) => { const el = document.getElementById(id); if (val && !el.value && [...el.options].some(o => o.value === val)) el.value = val; };
+            poner('c-casillero', v.c); poner('c-moneda', v.m);
+            ['c-casillero', 'c-moneda'].forEach(id => { const el = document.getElementById(id); if (!el.value && el.options.length === 2) el.selectedIndex = 1; });
+        } catch (e) {}
     }
 
     function irAgregar(idPedido) {
@@ -629,7 +652,7 @@
     }
 
     function verFaltantes(numeroPedido) {
-        window.location.href = `/dashboard.html?pedido=${encodeURIComponent(numeroPedido)}`;
+        window.location.href = `/asignar-precios.html?pedido=${encodeURIComponent(numeroPedido)}`;
     }
 
     // ── SELECTOR PEDIDO ──
@@ -655,7 +678,40 @@
         } catch(e) {}
     }
 
+    // ── Precio editable en la tabla ──
+    var detallesCache = [];
+    function ingresos() { try { return JSON.parse(localStorage.getItem('ms_ingresos') || '{}'); } catch (e) { return {}; } }
+    function registrarIngreso(id) {
+        try { const m = ingresos(), lim = Date.now() - 86400000; Object.keys(m).forEach(k => { if (m[k] < lim) delete m[k]; }); m[id] = Date.now(); localStorage.setItem('ms_ingresos', JSON.stringify(m)); } catch (e) {}
+    }
+    // Editable mientras el pedido esté abierto (esta pestaña solo muestra pedidos abiertos) y el artículo no se haya entregado
+    function editableEnTabla(a) {
+        const sel = document.getElementById('a-pedido'), opt = sel && sel.options[sel.selectedIndex];
+        return !!(opt && opt.value) && !a.EstaEntregado;
+    }
+    async function guardarPrecioRapido(inp) {
+        const id = +inp.dataset.id, a = detallesCache.find(x => x.IdDetallePedido === id); if (!a) return;
+        const nuevo = parseFloat(inp.value);
+        if (!(nuevo >= 0)) { inp.value = parseFloat(a.ValorCompra || 0).toFixed(2); return; }
+        if (Math.abs(nuevo - parseFloat(a.ValorCompra || 0)) < 0.005) return;
+        if (!editableEnTabla(a)) { inp.value = parseFloat(a.ValorCompra || 0).toFixed(2); return; }
+        inp.disabled = true;
+        try {
+            const d = await fetch('/api/crear-pedidos/editar-articulo', { method:'PUT', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ idDetallePedido:id, codigoArticulo:a.CodigoArticulo, descripcionArticulo:a.DescripcionArticulo, peso:a.Peso,
+                    idArticulo:a.IdArticulo, tallaColor:a.TallaColor, valorCompra:nuevo, cantidadArticulos:a.CantidadArticulos, link:a.Link, noPedidoAplicacion:a.NoPedidoAplicacion }) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error);
+            a.ValorCompra = nuevo;
+            inp.value = nuevo.toFixed(2);
+            const tot = document.querySelector('.tot-fila-' + id); if (tot) tot.textContent = '$' + (nuevo * parseInt(a.CantidadArticulos || 1)).toFixed(2);
+            actualizarTotales(detallesCache);
+            inp.classList.add('ok'); setTimeout(() => inp.classList.remove('ok'), 1200);
+        } catch (e) { inp.value = parseFloat(a.ValorCompra || 0).toFixed(2); alert('No se pudo guardar el precio: ' + e.message); }
+        inp.disabled = false;
+    }
+
     function renderTablaArticulos(data) {
+        detallesCache = data;
         const tbody = document.getElementById('tbody-articulos');
         document.getElementById('art-count').textContent = data.length;
         if (!data.length) { tbody.innerHTML = '<tr><td colspan="11" class="tbl-empty">Sin artículos en este pedido</td></tr>'; actualizarTotales([]); return; }
@@ -676,8 +732,10 @@
                 <td style="color:#6b7280">${a.TallaColor||'—'}</td>
                 <td style="text-align:right;color:#6b7280">${a.Peso||0}g</td>
                 <td style="text-align:right">${cant}</td>
-                <td style="text-align:right;color:#9ca3af">$${precio.toFixed(2)}</td>
-                <td style="text-align:right;color:#4ade80;font-weight:700">$${(precio*cant).toFixed(2)}</td>
+                <td style="text-align:right;color:#9ca3af">${editableEnTabla(a)
+                    ? `<span class="pr-rapido" title="Escribí el precio y Enter para guardarlo. Al cerrar el pedido ya no se puede cambiar"><span>$</span><input type="number" min="0" step="0.01" value="${precio.toFixed(2)}" data-id="${a.IdDetallePedido}" onchange="guardarPrecioRapido(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onfocus="this.select()"></span>`
+                    : '$' + precio.toFixed(2)}</td>
+                <td style="text-align:right;color:#4ade80;font-weight:700" class="tot-fila-${a.IdDetallePedido}">$${(precio*cant).toFixed(2)}</td>
                 <td>${foto}</td>
                 <td style="display:flex;gap:4px"><button onclick="editarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Editar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg></button><button onclick="duplicarEnForm(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm" title="Duplicar (mismo artículo, otra talla/color)"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>${a.EstaEntregado ? '' : `<button onclick="pedirEliminarArt(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="btn btn-ghost btn-sm imp-del-btn" title="Eliminar artículo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`}</td>
             </tr>`;
@@ -818,6 +876,7 @@
                 }).then(r => r.json());
             }
             if (d.ok) {
+                if (!detalleId && d.idDetallePedido) registrarIngreso(d.idDetallePedido);
                 mostrarMsg(msg,'ok', detalleId ? 'Artículo actualizado' : 'Artículo agregado');
                 limpiarArticulo(!detalleId);
                 document.getElementById(document.getElementById('a-articulo-id').value ? 'a-sku' : 'a-articulo-txt').focus();
@@ -1166,16 +1225,66 @@
         }
         document.getElementById('dl-clientes').innerHTML = todosClientes.map(c => `<option value="${esc(etiquetaCli(c))}">`).join('');
     }
+    // ── Crear cliente sin salir de la ventana ──
+    var ncFila = -1, vendedoresCache = null;
+    async function abrirNuevoCli(texto, fila) {
+        ncFila = fila;
+        const partes = String(texto || '').replace(/\s*\([^)]*\)$/, '').trim().split(/\s+/).filter(Boolean);
+        const mitad = partes.length > 1 ? Math.ceil(partes.length / 2) : partes.length;
+        document.getElementById('nc-nombre').value = partes.slice(0, mitad).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+        document.getElementById('nc-apellido').value = partes.slice(mitad).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+        document.getElementById('nc-tel').value = '';
+        document.getElementById('nc-para').textContent = fila >= 0 ? '· para ' + (filasPegadas[fila].desc || filasPegadas[fila].sku || '').substring(0, 50) : '· para las filas sin cliente';
+        document.getElementById('msg-nc').style.display = 'none';
+        document.getElementById('nc-panel').style.display = 'block';
+        const sel = document.getElementById('nc-vend');
+        if (!vendedoresCache) {
+            try { const d = await fetch('/api/vendedores').then(r => r.json()); vendedoresCache = d.ok ? d.data : []; } catch(e) { vendedoresCache = []; }
+            sel.innerHTML = '<option value="">— Elegir —</option>' + vendedoresCache.map(v => `<option value="${v.IdVendedor}">${esc(((v.Nombres || '') + ' ' + (v.Apellidos || '')).trim())}${v.CodigoVendedor ? ' (' + esc(v.CodigoVendedor) + ')' : ''}</option>`).join('');
+        }
+        // por defecto: el vendedor de la fila, o el usuario actual
+        const fv = fila >= 0 ? filasPegadas[fila].idVen || filasPegadas[fila].idVendedor : null;
+        sel.value = fv || usuario.id || '';
+        if (!usuario.esAdmin) { sel.value = usuario.id; sel.disabled = true; }
+        document.getElementById(partes.length ? (partes.length > 1 ? 'nc-tel' : 'nc-apellido') : 'nc-nombre').focus();
+    }
+    async function crearCliRapido() {
+        const msg = document.getElementById('msg-nc');
+        const nombre = document.getElementById('nc-nombre').value.trim(), apellido = document.getElementById('nc-apellido').value.trim();
+        const tel = document.getElementById('nc-tel').value.replace(/\D/g, ''), idVen = document.getElementById('nc-vend').value;
+        if (!nombre || !apellido || !idVen) { mostrarMsg(msg, 'err', 'Nombre, apellido y vendedor son obligatorios'); return; }
+        if (tel && tel.length !== 8) { mostrarMsg(msg, 'err', 'El teléfono debe tener 8 dígitos'); return; }
+        const completo = normaliza(nombre + ' ' + apellido).trim();
+        if (todosClientes.some(c => normaliza(c.NombreCompleto).trim() === completo)) { mostrarMsg(msg, 'err', 'Ya existe un cliente con ese nombre. Búscalo en la lista.'); return; }
+        const btn = document.getElementById('nc-btn'); btn.disabled = true;
+        try {
+            const d = await fetch('/api/clientes/nuevo', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ nombre, apellido, telefono: tel, correo: '', direccion: '', idVendedor: +idVen }) }).then(r => r.json());
+            if (!d.ok) { mostrarMsg(msg, 'err', 'Error: ' + d.error); return; }
+            todosClientes = [];
+            await cargarClientesPV();
+            const nuevo = todosClientes.filter(c => normaliza(c.NombreCompleto).trim() === completo).sort((a, b) => b.IdCliente - a.IdCliente)[0];
+            document.getElementById('nc-panel').style.display = 'none';
+            if (nuevo) {
+                if (ncFila >= 0) filasPegadas[ncFila].idCli = String(nuevo.IdCliente);
+                else { filasPegadas.forEach(f => { if (!f.guardado && !f.idCli) f.idCli = String(nuevo.IdCliente); }); document.getElementById('pv-cli-todos').value = etiquetaCli(nuevo); }
+            }
+            renderPegados();
+            mostrarMsg(document.getElementById('msg-pegar'), 'ok', 'Cliente ' + nombre + ' ' + apellido + ' creado' + (nuevo ? ' y asignado' : ''));
+        } catch(e) { mostrarMsg(msg, 'err', 'Error de conexión'); }
+        finally { btn.disabled = false; }
+    }
+
     function cambiarCliFila(i, txt) {
         const id = idCliPorTexto(txt);
-        if (id === null) { mostrarMsg(document.getElementById('msg-pegar'), 'err', 'No encontré el cliente "' + txt + '". Elígelo de la lista.'); filasPegadas[i].idCli = ''; renderPegados(); return; }
+        if (id === null) { filasPegadas[i].idCli = ''; renderPegados(); abrirNuevoCli(txt, i); return; }
         filasPegadas[i].idCli = id;
         renderPegados();
         const sig = document.querySelector(`.pv-cli[data-i="${i + 1}"]`); if (sig && !sig.disabled) sig.focus();
     }
     function aplicarCliTodos(txt) {
         const id = idCliPorTexto(txt);
-        if (!id) { if (txt.trim()) mostrarMsg(document.getElementById('msg-pegar'), 'err', 'Elige el cliente de la lista'); return; }
+        if (!id) { if (txt.trim()) abrirNuevoCli(txt, -1); return; }
         filasPegadas.forEach(f => { if (!f.guardado && !f.idCli) f.idCli = id; });
         renderPegados();
     }
@@ -1313,6 +1422,7 @@
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDe(f.idArt), fotoUrl:f.foto||null, idArticulo: +f.idArt,
                         idPedido:+idPed, tallaColor:f.talla, valorCompra:f.precio, cantidadArticulos:f.cant, link:f.link||null, noPedidoAplicacion:noPed }) }).then(r => r.json());
+                if (d.ok && d.idDetallePedido) registrarIngreso(d.idDetallePedido);
                 if (d.ok && f.idCli && d.idDetallePedido) {
                     try {
                         const c = await fetch('/api/clientes/asignar', { method:'POST', headers:{'Content-Type':'application/json'},
@@ -1393,7 +1503,7 @@
             <div id="pv-origen">
                 <div class="imp-src">
                     <div class="imp-card">
-                        <h4><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Desde SHEIN o Amazon</h4>
+                        <h4><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Desde SHEIN, Amazon o Temu</h4>
                         Abre el detalle del pedido en la tienda, toca el marcador y vuelve aquí.<br>
                         <a id="bm-shein" class="imp-bm" href="#" title="Arrástralo a tu barra de marcadores"
                            onclick="event.preventDefault();alert('Arrástralo a la barra de marcadores. Luego úsalo en la página del pedido en SHEIN.')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Tienda → MultiStore</a>
@@ -1432,7 +1542,8 @@
                     <input class="form-input" id="pv-cli-todos" list="dl-clientes" placeholder="Buscar cliente…" autocomplete="off" onchange="aplicarCliTodos(this.value)">
                     <datalist id="dl-clientes"></datalist>
                 </div>
-                <button class="btn btn-ghost" onclick="abrirNuevoArt('', -1)" style="height:41px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo artículo</button>
+                <div style="display:flex;gap:6px;align-self:end"><button class="btn btn-ghost" onclick="abrirNuevoCli('', -1)" style="height:41px" title="Crear un cliente nuevo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Cliente</button>
+                <button class="btn btn-ghost" onclick="abrirNuevoArt('', -1)" style="height:41px" title="Crear un artículo nuevo en el catálogo"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Artículo</button></div>
             </div>
 
             <div id="na-panel" style="display:none;background:#071a11;border:1px solid #14532d;border-radius:10px;padding:14px;margin-bottom:12px">
@@ -1448,6 +1559,23 @@
                     <button class="btn btn-ghost" onclick="document.getElementById('na-panel').style.display='none'" style="height:41px">Cancelar</button>
                 </div>
                 <div class="msg" id="msg-na"></div>
+            </div>
+
+            <div id="nc-panel" style="display:none;background:#0c1525;border:1px solid #1e3a5f;border-radius:10px;padding:14px;margin-bottom:12px">
+                <div style="font-size:11px;color:#60a5fa;font-weight:700;margin-bottom:10px;letter-spacing:.5px"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> NUEVO CLIENTE <span id="nc-para" style="color:#6b7280;font-weight:400"></span></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                    <div class="form-group" style="flex:2;min-width:140px"><label class="form-label">Nombre *</label>
+                        <input class="form-input" id="nc-nombre" type="text" placeholder="Nombre" onkeydown="if(event.key==='Enter'){event.preventDefault();crearCliRapido();}"></div>
+                    <div class="form-group" style="flex:2;min-width:140px"><label class="form-label">Apellido *</label>
+                        <input class="form-input" id="nc-apellido" type="text" placeholder="Apellido" onkeydown="if(event.key==='Enter'){event.preventDefault();crearCliRapido();}"></div>
+                    <div class="form-group" style="width:130px"><label class="form-label">Teléfono</label>
+                        <input class="form-input" id="nc-tel" type="text" inputmode="numeric" maxlength="8" placeholder="8 dígitos" onkeydown="if(event.key==='Enter'){event.preventDefault();crearCliRapido();}"></div>
+                    <div class="form-group" style="flex:2;min-width:160px"><label class="form-label">Vendedor *</label>
+                        <select class="form-input" id="nc-vend"></select></div>
+                    <button class="btn btn-green" id="nc-btn" onclick="crearCliRapido()" style="height:41px">Crear</button>
+                    <button class="btn btn-ghost" onclick="document.getElementById('nc-panel').style.display='none'" style="height:41px">Cancelar</button>
+                </div>
+                <div class="msg" id="msg-nc"></div>
             </div>
 
             <div class="tbl-wrap imp-scroll">

@@ -9,7 +9,26 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Todas las páginas cargan /assets/auth.js (pone el token en las llamadas a la API)
+const fs = require('fs');
+const FRONT = path.join(__dirname, '../frontend');
+app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
+    const ruta = req.path === '/' ? '/login.html' : req.path;
+    if (!ruta.endsWith('.html')) return next();
+    const archivo = path.join(FRONT, path.normalize(ruta));
+    if (!archivo.startsWith(FRONT)) return next();
+    fs.readFile(archivo, 'utf8', (err, html) => {
+        if (err) return next();
+        res.set('Cache-Control', 'no-cache');
+        res.type('html').send(html.replace(/<head([^>]*)>/i, m => m + '\n<script src="/assets/auth.js"></script>'));
+    });
+});
+app.use(express.static(FRONT));
+
+// Toda la API (menos el login) exige sesión
+const { requiereSesion } = require('./middleware/auth.middleware');
+app.use('/api', requiereSesion);
 
 const authRoutes         = require('./routes/auth.routes');
 const pedidosRoutes      = require('./routes/pedidos.routes');

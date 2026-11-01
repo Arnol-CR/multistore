@@ -1,4 +1,5 @@
 const { sql, poolPromise } = require('../db/connection');
+const { firmar } = require('../middleware/auth.middleware');
 
 const login = async (req, res) => {
     try {
@@ -18,9 +19,11 @@ const login = async (req, res) => {
         }
 
         const vendedor = result.recordset[0];
+        const sesion = { id: vendedor.IdVendedor, esAdmin: !!vendedor.EsAdministrador };
         res.json({
             ok: true,
             usuario: {
+                token:    firmar(sesion),
                 id:       vendedor.IdVendedor,
                 nombres:  vendedor.Nombres,
                 apellidos:vendedor.Apellidos,

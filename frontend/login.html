@@ -169,7 +169,7 @@
             const password = document.getElementById('password').value;
             if (!usuario || !password) {
                 const err = document.getElementById('error');
-                err.textContent = '⚠️ Ingresa usuario y contraseña';
+                err.textContent = 'Ingresa usuario y contraseña';
                 err.style.display = 'block';
                 return;
             }
@@ -185,15 +185,21 @@
                     window.location.href = '/dashboard.html';
                 } else {
                     const err = document.getElementById('error');
-                    err.textContent = '⚠️ Usuario o contraseña incorrectos';
+                    err.textContent = 'Usuario o contraseña incorrectos';
                     err.style.display = 'block';
                 }
             } catch (e) {
                 const err = document.getElementById('error');
-                err.textContent = '⚠️ Error conectando al servidor';
+                err.textContent = 'Error conectando al servidor';
                 err.style.display = 'block';
             }
         }
+        // Aviso cuando se vuelve al login por sesión vencida o por la actualización de seguridad
+        (function () {
+            const q = new URLSearchParams(location.search), err = document.getElementById('error');
+            const txt = q.has('expirada') ? 'Tu sesión expiró. Volvé a iniciar sesión.' : q.has('actualizado') ? 'Por seguridad, volvé a iniciar sesión.' : '';
+            if (txt) { err.textContent = txt; err.style.display = 'block'; err.style.color = '#fbbf24'; }
+        })();
         document.addEventListener('keypress', e => {
             if (e.key === 'Enter') login();
         });

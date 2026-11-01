@@ -67,17 +67,11 @@ const getResumen = async (req, res) => {
   } catch (e) { out.avisos.push('Pedidos activos: ' + e.message); }
 
   // ── 3. Pagos de clientes ──
-  let pagos = [], pagosPorCliente = null;
+  let pagos = [];
   try {
-    const cv = await columnas(pool, 'dbo.vw_pagos');
-    const colCli = elegir(cv, ['IdCliente']);
     const r = await pool.request().input('desde', sql.DateTime, desde).query(`
       SELECT FechaMovimiento, ISNULL(Monto,0) AS Monto FROM vw_pagos WHERE FechaMovimiento >= @desde`);
     pagos = r.recordset;
-    if (colCli) {
-      const r2 = await pool.request().query(`SELECT [${colCli}] AS IdCliente, SUM(ISNULL(Monto,0)) AS Pagado FROM vw_pagos GROUP BY [${colCli}]`);
-      pagosPorCliente = new Map(r2.recordset.map(x => [x.IdCliente, num(x.Pagado)]));
-    }
   } catch (e) { out.avisos.push('Pagos: ' + e.message); }
 
   // ── 4. Cotizaciones ──
@@ -98,17 +92,21 @@ const getResumen = async (req, res) => {
     out.entregadosAnio = (r.recordset[0] || {}).EntregadosAnio ?? null;
   } catch (e) { out.entregadosAnio = null; }
 
-  // ── 6. Saldos de clientes (vendido − pagado), solo si la vista de pagos trae IdCliente ──
-  let saldos = null;
-  if (pagosPorCliente && colVenta) {
-    try {
-      const r = await pool.request().query(`
-        SELECT D.IdCliente, SUM(ISNULL(D.[${colVenta}],0)) AS Vendido
-        FROM C_DetallePedido D WHERE D.IdCliente IS NOT NULL GROUP BY D.IdCliente`);
-      saldos = r.recordset.map(x => ({ IdCliente: x.IdCliente, saldo: num(x.Vendido) - (pagosPorCliente.get(x.IdCliente) || 0) }))
-                          .filter(x => x.saldo > 1);
-    } catch (e) { out.avisos.push('Saldos: ' + e.message); }
-  }
+  // ── 6. Saldos de clientes (los calcula la base: Se_ClientesBuscarIdCliente) ──
+  try {
+    const r = await pool.request().input('IdCliente', sql.Int, null).execute('Se_ClientesBuscarIdCliente');
+    const cl = r.recordset || [];
+    const sal = c => num(c.SaldoCalculado), pend = c => num(c.MontoPendienteEntrega);
+    const deben = cl.filter(c => sal(c) > 0.5);
+    const cobrable = c => Math.max(0, sal(c) - pend(c));
+    out.porCobrar = {
+      total: deben.reduce((a, c) => a + sal(c), 0), clientes: deben.length,
+      cobrableYa: deben.reduce((a, c) => a + cobrable(c), 0),
+      clientesCobrar: deben.filter(c => cobrable(c) > 0.5).length,
+      mio: deben.filter(c => c.IdVendedor === idUsuario).reduce((a, c) => a + sal(c), 0),
+      mioCobrable: deben.filter(c => c.IdVendedor === idUsuario).reduce((a, c) => a + cobrable(c), 0)
+    };
+  } catch (e) { out.porCobrar = null; out.avisos.push('Saldos: ' + e.message); }
 
   // ══════════════ Cálculos ══════════════
   const costoL = d => num(d.ValorCompra) * num(d.Cantidad || 1) * num(d.TasaCambio);
@@ -209,11 +207,6 @@ const getResumen = async (req, res) => {
       mias: cot.filter(c => c.IdVendedor === idUsuario && ['Borrador', 'Enviada'].includes(c.Estado)).length
     };
   } else out.cotizaciones = null;
-
-  // Saldos
-  if (saldos) {
-    out.porCobrar = { total: saldos.reduce((a, s) => a + s.saldo, 0), clientes: saldos.length };
-  } else out.porCobrar = null;
 
   res.json(out);
 };

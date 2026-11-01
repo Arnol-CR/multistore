@@ -95,6 +95,43 @@ function sheinScraper() {
         }
     }
 
+    /* ───────── PEDIDO TEMU ───────── */
+    else if (/temu\./i.test(host) && /order/i.test(location.pathname)) {
+        tienda = 'Temu';
+        pedido = new URLSearchParams(location.search).get('parent_order_sn') || ((document.body.innerText.match(/\b(PO-\d{3}-\d{8,})\b/) || [])[1] || '');
+        // Cada artículo tiene un marcador de cantidad "×N"
+        var marcasT = [].filter.call(document.querySelectorAll('body *'), function (e) { return !e.children.length && /^[x×]\s*\d{1,3}$/i.test((e.textContent || '').trim()); });
+        var cuantasT = function (el) { var n = 0; for (var q = 0; q < marcasT.length; q++) if (el.contains(marcasT[q])) n++; return n; };
+        var fotoProd = function (im) { var src = im.currentSrc || im.src || im.getAttribute('data-src') || ''; var w = im.naturalWidth || im.width || 0; return /kwcdn|temu/i.test(src) && !/avatar|logo|icon|flag/i.test(src) && (w === 0 || w >= 50) ? src : ''; };
+        // fotos de producto en orden de aparición (por si la foto está fuera de la fila)
+        var todasFotos = [].map.call(document.querySelectorAll('img'), fotoProd).filter(Boolean);
+        marcasT.forEach(function (mk, idx) {
+            // subir mientras el contenedor siga teniendo SOLO este artículo
+            var fila = mk;
+            var completa = function (el) { return [].some.call(el.querySelectorAll('img'), function (im) { return !!fotoProd(im); }) && /\$\s*[\d,]+\.\d{2}/.test(el.innerText || ''); };
+            while (fila.parentElement && fila.parentElement !== document.body && cuantasT(fila.parentElement) === 1 && !completa(fila)) fila = fila.parentElement;
+            var lt = lineasDe(fila);
+            var precioT = ((fila.innerText || '').match(/\$\s*([\d,]+\.\d{2})/) || [])[1] || '0';
+            var tituloT = '', varianteT = '';
+            lt.forEach(function (l) {
+                if (/^\$|^[x×]\s*\d+$|Qu[eé] incluye|rese[ñn]a|Comprar de nuevo|Devoluci|Rastrear|recibo|Vendido y enviado|cr[eé]dito|Despu[eé]s de|Env[ií]o gratis|Excepto art/i.test(l)) return;
+                var limpio = l.replace(/\s*\$\s*[\d,]+\.\d{2}\s*$/, '').replace(/\s*[x×]\s*\d+$/i, '').trim();
+                if (!limpio) return;
+                if (!tituloT && limpio.length > 15) tituloT = limpio;
+                else if (tituloT && !varianteT && limpio.length < 120) varianteT = limpio;   // la línea corta después del nombre: color / talla
+            });
+            // foto: la de esta fila; si la fila no tiene, la foto N° idx de la página
+            var imsFila = [].map.call(fila.querySelectorAll('img'), fotoProd).filter(Boolean);
+            var fotoT = (imsFila[0] || (marcasT.length === todasFotos.length ? todasFotos[idx] : '') || '').split('?')[0];
+            var aT = fila.querySelector('a[href*="goods"], a[href*="-g-"]');
+            var gidT = aT ? ((aT.href.match(/goods_id=(\d+)/) || aT.href.match(/-g-(\d+)/) || [])[1] || '') : '';
+            if (!tituloT) return;
+            items.push({ sku: gidT, titulo: tituloT.replace(/\.{3}$|…$/, '').trim(), talla: varianteT.replace(/\s*[x×]\s*\d+$/i, '').replace(/\.{3}$|…$/, '').trim(),
+                precio: parseFloat(precioT.replace(/,/g, '')) || 0, cant: parseInt((mk.textContent.match(/\d+/) || ['1'])[0], 10) || 1,
+                foto: fotoT, link: gidT ? 'https://www.temu.com/goods.html?goods_id=' + gidT : location.href });
+        });
+    }
+
     /* ───────── CARRITO SHEIN ───────── */
     else if (/shein\./i.test(host) && /cart/i.test(location.pathname)) {
         tienda = 'SHEIN'; tipo = 'carrito';
@@ -152,6 +189,69 @@ function sheinScraper() {
                 foto: imgDe(fr).replace(/_thumbnail_\d+x\d*/, ''), link: gidC ? location.origin + '/p-' + gidC + '.html' : '' });
         });
     }
+    /* ───────── CARRITO TEMU ───────── */
+    else if (/temu\./i.test(host) && /cart/i.test(location.pathname)) {
+        tienda = 'Temu'; tipo = 'carrito';
+        // Cada producto del carrito tiene su selector "Cant. N" (las recomendaciones de abajo no)
+        var cantMk = [].filter.call(document.querySelectorAll('body *'), function (e) {
+            var t = (e.innerText || e.textContent || '').replace(/\s+/g, ' ').trim();
+            return t.length < 14 && /^(Cant\.?|Cantidad|Qty)\s*:?\s*\d{1,3}$/i.test(t);
+        });
+        // También selectores desplegables de cantidad
+        [].forEach.call(document.querySelectorAll('select, [role="combobox"], [aria-label*="antidad"], [aria-label*="uantity"]'), function (e) {
+            var ok = e.tagName === 'SELECT' ? (e.options.length && [].every.call(e.options, function (o) { return /^\d{1,3}$/.test(o.value || o.text); }))
+                                            : /^\D{0,12}\d{1,3}$/.test((e.innerText || e.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim());
+            if (ok && cantMk.indexOf(e) < 0) cantMk.push(e);
+        });
+        cantMk = cantMk.filter(function (e) { return !cantMk.some(function (o) { return o !== e && e.contains(o); }); });   // el más interno
+        // Si no hay "Cant." visible, cada producto se reconoce por "… después de las promociones y créditos"
+        if (!cantMk.length) {
+            cantMk = [].filter.call(document.querySelectorAll('body *'), function (e) { return /despu[eé]s de (las )?promociones/i.test(e.textContent || '') && e.textContent.length < 160; });
+            cantMk = cantMk.filter(function (e) { return !cantMk.some(function (o) { return o !== e && e.contains(o); }); });
+        }
+        var cuentaC = function (el) { var n = 0; for (var q = 0; q < cantMk.length; q++) if (el.contains(cantMk[q])) n++; return n; };
+        var esProd = function (im) { var r = im.getBoundingClientRect(); return r.width >= 70 && r.height >= 70; };
+        var tieneFoto = function (el) { return [].some.call(el.querySelectorAll('img'), esProd); };
+        var RUIDO = /^(ENV[IÍ]O GRATIS|BLACK FRIDAY|ADELANTADO|Enviado por Temu|CASI AGOTADO|[ÚU]LTIMOS?\b|GRAN VENTA|[ÚU]LTIMAS? \d|HORAS|L[ií]mite|Cant\.?|Cantidad|Almac[eé]n local|Precio m[aá]s bajo|Oferta|\d+% |-\d+%)/i;
+        var cantDe = function (fila, mk) {
+            var sel = fila.querySelector('select'); if (sel && /^\d+$/.test(sel.value)) return parseInt(sel.value, 10);
+            var m = ((mk && (mk.innerText || mk.textContent)) || '').match(/^\s*(?:Cant\.?|Cantidad|Qty)\s*:?\s*(\d{1,3})\s*$/i)
+                 || (fila.innerText || '').match(/(?:Cant\.?|Cantidad|Qty)\s*:?\s*(\d{1,3})\b/i);
+            return m ? parseInt(m[1], 10) || 1 : 1;
+        };
+        cantMk.forEach(function (mk) {
+            var f = mk;
+            while (f.parentElement && f.parentElement !== document.body && cuentaC(f.parentElement) === 1 && !tieneFoto(f)) f = f.parentElement;
+            // subir un poco más si todavía no está el precio, sin juntar dos productos
+            while (f.parentElement && f.parentElement !== document.body && cuentaC(f.parentElement) === 1 && !/\$\s*[\d,]+\.\d{2}/.test(f.innerText || '')) f = f.parentElement;
+            var texto = f.innerText || '';
+            // Precio: el que dice "ÚLTIMO DÍA $X después de…" o, si no, el menor de los dos primeros (el otro es el tachado)
+            var mp = texto.replace(/\s+/g, ' ').match(/\$\s*([\d,]+\.\d{2})\s*despu[eé]s/i);
+            var montos = (texto.match(/\$\s*[\d,]+\.\d{2}/g) || []).map(function (x) { return parseFloat(x.replace(/[^\d.]/g, '')); });
+            var precioC = mp ? parseFloat(mp[1].replace(/,/g, '')) : (montos.length > 1 ? Math.min(montos[0], montos[1]) : (montos[0] || 0));
+            var ti = '', va = '';
+            lineasDe(f).forEach(function (l) {
+                var c = l.replace(/[›>]\s*$/, '').trim();
+                if (c.indexOf('|') >= 0) c = c.split('|').pop().trim();
+                if (!c || /\$\s*\d/.test(c) || RUIDO.test(c)) return;
+                if (!ti && c.length > 15) ti = c;
+                else if (ti && !va && c.length < 90) va = c;
+            });
+            if (!ti) return;
+            // Foto: la imagen más grande de la fila (las pequeñas son etiquetas)
+            var fotoC = '', ancho = 0;
+            [].forEach.call(f.querySelectorAll('img'), function (im) { var r = im.getBoundingClientRect(), w = Math.min(r.width, r.height); var src = im.currentSrc || im.src || ''; if (w > ancho && !/^data:/.test(src)) { ancho = w; fotoC = src; } });
+            var aC = f.querySelector('a[href*="goods"], a[href*="-g-"]');
+            var gC = aC ? ((aC.href.match(/goods_id=(\d+)/) || aC.href.match(/-g-(\d+)/) || [])[1] || '') : '';
+            items.push({ sku: gC, titulo: ti.replace(/\.{3}$|…$/, '').trim(), talla: va, precio: precioC,
+                cant: cantDe(f, mk),
+                foto: fotoC.split('?')[0], link: gC ? 'https://www.temu.com/goods.html?goods_id=' + gC : '' });
+        });
+        // quitar repetidos (mismo producto detectado dos veces)
+        var vistosK = {}; items = items.filter(function (x) { var k = x.titulo + '|' + x.talla + '|' + x.precio; if (vistosK[k]) return false; vistosK[k] = 1; return true; });
+        if (!items.length) { alert('MultiStore: no encontré los productos del carrito de Temu. Esperá a que cargue todo el carrito y volvé a tocar el marcador.'); return; }
+    }
+
     /* ───────── CARRITO AMAZON ───────── */
     else if (/amazon\./i.test(host) && /cart/i.test(location.pathname)) {
         tienda = 'Amazon'; tipo = 'carrito';
@@ -196,7 +296,7 @@ function sheinScraper() {
             it.pesoLb = envio || articulo;
             if (it.sku) it.link = 'https://www.amazon.com/dp/' + it.sku;
         } else {
-            tienda = /shein\./i.test(host) ? 'SHEIN' : host.replace(/^www\./, '');
+            tienda = /shein\./i.test(host) ? 'SHEIN' : /temu\./i.test(host) ? 'Temu' : host.replace(/^www\./, '');
             if (ld) {
                 it.titulo = ld.name || '';
                 it.sku = ld.sku || ld.mpn || '';
@@ -211,7 +311,7 @@ function sheinScraper() {
                 var pe = document.querySelector('[class*="productPrice"], [class*="mainprice"], [class*="main-price"], [class*="sale-price"], [class*="price__sale"], [itemprop="price"]');
                 it.precio = num(pe ? (pe.getAttribute('content') || pe.innerText) : '') || num(meta('product:price:amount') || meta('og:price:amount'));
             }
-            if (/shein\./i.test(host)) {
+            if (/shein\.|temu\./i.test(host)) {
                 // El precio y la talla se buscan JUNTO AL TÍTULO del producto
                 // (en la página también hay precios del carrito desplegable y de recomendaciones).
                 var esTachado = function (e) {
@@ -245,15 +345,28 @@ function sheinScraper() {
                         selec.push(tx);
                     }
                     if (selec.length) it.talla = selec.join(' / ');
+                    // "Color: Leonado" / "Talla: M" escritos junto al título
+                    var etq = lineasDe(intro.parentElement || intro).map(function (l) { var m = l.match(/^(Color|Colour|Talla|Tamaño|Size|Estilo|Style|Modelo)\s*[:：]\s*(.{1,40})$/i); return m ? m[2].trim() : ''; }).filter(Boolean);
+                    if (etq.length) it.talla = etq.slice(0, 3).join(' / ');
                 } else {
                     var skuB = (document.body.innerText.match(/SKU\s*[:：]\s*([A-Za-z0-9\-_]+)/) || [])[1]; if (skuB) it.sku = skuB;
                 }
                 var gid2 = (location.pathname.match(/-p-(\d+)/) || [])[1]; if (gid2) it.link = location.origin + '/p-' + gid2 + '.html';
+                if (/temu\./i.test(host)) {
+                    var gidT2 = new URLSearchParams(location.search).get('goods_id') || (location.pathname.match(/-g-(\d+)/) || [])[1] || '';
+                    if (gidT2) { it.sku = it.sku || gidT2; it.link = 'https://www.temu.com/goods.html?goods_id=' + gidT2; }
+                    if (!it.foto || /logo/i.test(it.foto)) {
+                        var grandes = [].filter.call(document.querySelectorAll('img'), function (im) { return /kwcdn/i.test(im.currentSrc || im.src || '') && (im.naturalWidth || im.width) >= 250; });
+                        if (grandes[0]) it.foto = grandes[0].currentSrc || grandes[0].src;
+                    }
+                    it.foto = (it.foto || '').split('?')[0];
+                    it.titulo = (it.titulo || '').replace(/\s*[-|]\s*Temu.*$/i, '');
+                }
                 it.foto = it.foto.replace(/_thumbnail_\d+x\d*/, '');
             }
             if (it.foto && it.foto.indexOf('//') === 0) it.foto = 'https:' + it.foto;
         }
-        it.titulo = (it.titulo || '').replace(/\s+/g, ' ').trim();
+        it.titulo = (it.titulo || '').replace(/\s+/g, ' ').trim().replace(/^(Local|Trends)\s+/i, '').replace(/^\d+\s*(piezas?|pcs?|pc|unidades?)\s+/i, '');
         if (it.titulo) items.push(it);
     }
 

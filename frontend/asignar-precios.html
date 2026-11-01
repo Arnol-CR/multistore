@@ -180,6 +180,7 @@
             <select class="inp" id="f-pedido" onchange="render()" style="max-width:220px" title="Filtrar por pedido (opcional)"><option value="">Todos los pedidos</option></select>
             <label class="chk"><input type="checkbox" id="f-sin" checked onchange="render()"> Solo sin precio</label>
             <label class="chk"><input type="checkbox" id="f-agrupar" checked onchange="render()"> Agrupar por cliente</label>
+            <select class="inp" id="f-vend" onchange="render()" style="max-width:220px;display:none" title="Filtrar por vendedor"><option value="">Todos los vendedores</option></select>
             <label class="chk" id="wrap-mios" style="display:none"><input type="checkbox" id="f-mios" onchange="render()"> Solo mis artículos</label>
             <button class="btn btn-amber btn-sm" onclick="usarSugeridoTodos()" title="Pone el precio sugerido en todas las casillas vacías visibles"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Sugerido en vacíos</button>
             <button class="btn-nuevo" style="padding:8px 12px" onclick="abrirNuevoCliente([])"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nuevo cliente</button>
@@ -269,9 +270,23 @@
         const peds = [...new Set(datos.map(p => p.NoPedidoAplicacion || p.NumeroPedido).filter(Boolean))];
         sel.innerHTML = '<option value="">Todos los pedidos</option>' + peds.map(x => {
             const n = datos.filter(p => (p.NoPedidoAplicacion || p.NumeroPedido) === x && !p.ValorCobroCliente).length;
-            return `<option value="${esc(x)}">${esc(x)}${n ? ' · ' + n + ' sin precio' : ''}</option>`;
+            const t = (datos.find(p => (p.NoPedidoAplicacion || p.NumeroPedido) === x) || {}).NombreEmpresa;
+            return `<option value="${esc(x)}">${esc(x)}${t ? ' · ' + esc(t) : ''}${n ? ' · ' + n + ' sin precio' : ''}</option>`;
         }).join('');
         sel.value = peds.includes(actual) ? actual : '';
+        if (usuario.esAdmin) {
+            const sv = document.getElementById('f-vend'), act = sv.value;
+            const vs = [...new Map(datos.filter(p => p.IdVendedor).map(p => [p.IdVendedor, p.NombreVendedor || ('Vendedor ' + p.IdVendedor)])).entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+            const sinV = datos.filter(p => !p.IdVendedor).length;
+            sv.innerHTML = '<option value="">Todos los vendedores</option>' + vs.map(([id, n]) => {
+                const k = datos.filter(p => p.IdVendedor === id && !p.ValorCobroCliente).length;
+                return `<option value="${id}">${esc(n)}${k ? ' · ' + k + ' sin precio' : ''}</option>`;
+            }).join('') + (sinV ? `<option value="sin">Sin vendedor · ${sinV}</option>` : '');
+            sv.value = [...sv.options].some(o => o.value === act) ? act : '';
+            sv.style.display = '';
+        }
+        const qp = new URLSearchParams(location.search).get('pedido');
+        if (qp && !window._pedidoQP) { window._pedidoQP = true; if (peds.includes(qp)) { sel.value = qp; document.getElementById('f-sin').checked = false; } }
         render();
     }
 
@@ -302,12 +317,14 @@
         const q = norm(document.getElementById('buscar').value.trim());
         const sin = document.getElementById('f-sin').checked;
         const mios = document.getElementById('f-mios').checked;
+        const fVend = document.getElementById('f-vend').value;
         const ped = document.getElementById('f-pedido').value;
         return datos.filter(p => {
             if (ped && (p.NoPedidoAplicacion || p.NumeroPedido) !== ped) return false;
             // "solo sin precio": se quedan visibles los que estás editando o acabas de guardar
             if (sin && p.ValorCobroCliente && !cambios.has(p.IdDetallePedido) && !estados.has(p.IdDetallePedido)) return false;
             if (mios && p.IdVendedor !== usuario.id) return false;
+            if (fVend === 'sin' ? p.IdVendedor : (fVend && String(p.IdVendedor) !== fVend)) return false;
             if (!q) return true;
             return [p.NombreArticulo, p.DescripcionArticulo, p.NombreCliente, p.NoPedidoAplicacion, p.NumeroPedido, p.TallaColor, p.CodigoArticulo]
                 .some(x => norm(x).includes(q));
