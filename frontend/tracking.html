@@ -153,6 +153,23 @@
             .btn-ver { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-right:7px; vertical-align:middle; background:#13181f; border:1px solid #2a3342; border-radius:6px; color:#9ca3af; cursor:pointer; padding:0; flex-shrink:0; }
         .btn-ver:hover { color:#fff; border-color:#3b82f6; background:#1a2540; }
         .col-n { width:34px; text-align:right; color:#6b7280; font-size:11px; font-weight:700; }
+        .ns-sug { font-size:11.5px; color:#6b7280; margin-top:-4px; }
+        .ns-asig { display:flex; align-items:center; gap:8px; font-size:12.5px; color:#cbd5e1; margin-top:6px; cursor:pointer; }
+        .ns-asig[hidden] { display:none; }
+        .tag-sin { display:inline-block; font-size:10px; font-weight:700; padding:1px 7px; border-radius:999px; color:#fbbf24; border:1px solid rgba(251,191,36,.35); background:rgba(251,191,36,.08); margin-left:6px; }
+        .meta-trk { font-size:11px; color:#6b7280; margin-top:2px; }
+        .pt-info { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:#9ca3af; margin-bottom:10px; }
+        .pt-info b { color:#e2e8f0; }
+        .pt-paq { border:1px solid #1e2530; border-radius:9px; padding:10px 12px; margin-bottom:10px; background:#0b0f15; }
+        .pt-paq .fila { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr); gap:10px; }
+        .pt-arts { max-height:300px; overflow-y:auto; border:1px solid #1e2530; border-radius:9px; }
+        .pt-art { display:flex; align-items:center; gap:10px; padding:7px 10px; border-bottom:1px solid #111827; font-size:12.5px; cursor:pointer; }
+        .pt-art:last-child { border-bottom:none; }
+        .pt-art img { width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid #1e2530; background:#0d1117; }
+        .pt-art .meta-trk { margin:0; }
+        .pt-ok { color:#4ade80; font-size:11px; font-weight:700; }
+        #pt-cuerpo a { color:#93c5fd; text-decoration:none; } #pt-cuerpo a:hover { text-decoration:underline; }
+        .pt-aviso { font-size:12px; color:#fbbf24; margin:6px 0 10px; }
 </style>
 </head>
 
@@ -184,16 +201,16 @@
         <!-- Pestañas -->
         <div class="tabs">
             <button class="tab active" onclick="cambiarTab('sin-seguimiento')">
-                📦 Sin seguimiento <span class="tab-badge" id="count-sin-seg">0</span>
+                Sin tracking <span class="tab-badge" id="count-sin-seg">0</span>
             </button>
             <button class="tab" onclick="cambiarTab('casillero')">
-                🏠 Entrada a casillero <span class="tab-badge" id="count-seguimientos">0</span>
+                Trackings <span class="tab-badge" id="count-seguimientos">0</span>
             </button>
             <button class="tab" onclick="cambiarTab('orden')">
-                💳 Orden de pago <span class="tab-badge" id="count-orden">0</span>
+                Orden de pago <span class="tab-badge" id="count-orden">0</span>
             </button>
             <button class="tab" onclick="cambiarTab('consulta-ordenes')">
-                🔍 Consulta de órdenes
+                Consulta de órdenes
             </button>
         </div>
 
@@ -204,19 +221,23 @@
                 <div class="card-header">
                     <div class="card-title"><span class="dot"></span>Artículos sin seguimiento</div>
                     <div style="display:flex; gap:8px;">
+                        <button class="btn-ghost" onclick="pegarTrackingBoton()" title="Pegá lo que copió el marcador en la página de rastreo de SHEIN, Temu o Amazon (también con Ctrl+V)">Pegar tracking</button>
                         <button class="btn-primary" onclick="abrirModalNuevoSeguimiento()">+ Nuevo seguimiento</button>
-                        <button class="btn-ghost" onclick="cargarArticulosSinSeguimiento()">↻ Actualizar</button>
+                        <button class="btn-ghost" onclick="cargarArticulosSinSeguimiento()">Actualizar</button>
                     </div>
                 </div>
 
                 <div class="filtro-resumen">
-                    <input type="text" id="f-articulos" placeholder="🔍 Buscar artículo, pedido, cliente..." oninput="filtrarArticulosTab1()">
-                    <select id="f-tienda" onchange="filtrarArticulosTab1()">
+                    <input type="text" id="f-articulos" placeholder="Buscar artículo, pedido o descripción…" oninput="filtrarArticulosTab1()">
+                    <select id="f-tienda" onchange="llenarPedidosTab1(); filtrarArticulosTab1()">
                         <option value="">Todas las tiendas</option>
+                    </select>
+                    <select id="f-pedido" onchange="filtrarArticulosTab1()" style="min-width:300px">
+                        <option value="">Todos los pedidos</option>
                     </select>
                     <input type="date" id="f-fecha-inicio" onchange="filtrarArticulosTab1()" title="Fecha inicio">
                     <input type="date" id="f-fecha-fin" onchange="filtrarArticulosTab1()" title="Fecha fin">
-                    <button class="btn-ghost" onclick="limpiarFiltrosTab1()">✕ Limpiar</button>
+                    <button class="btn-ghost" onclick="limpiarFiltrosTab1()">Limpiar</button>
                 </div>
 
                 <div class="summary-bar" id="bar-asignacion-masiva" style="display:none;">
@@ -305,12 +326,12 @@
 
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span class="dot"></span>Entradas a casillero sin orden</div>
-                    <button class="btn-ghost" onclick="cargarEntradasCasillero()">↻ Actualizar</button>
+                    <div class="card-title"><span class="dot"></span>Trackings pendientes de orden de pago</div>
+                    <button class="btn-ghost" onclick="cargarEntradasCasillero()">Actualizar</button>
                 </div>
 
                 <div class="filtro-resumen">
-                    <input type="text" id="f-entradas" placeholder="🔍 Buscar tracking o casillero..." oninput="filtrarEntradas(this.value)">
+                    <input type="text" id="f-entradas" placeholder="Buscar tracking, pedido o tienda…" oninput="filtrarEntradas(this.value)">
                 </div>
 
                 <div class="summary-bar">
@@ -339,7 +360,7 @@
                                 <th>Entrada Miami</th>
                                 <th>Entrega est.</th>
                                 <th>Peso (lb)</th>
-                                <th>Pago</th>
+                                <th>Pago estimado</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-entradas">
@@ -509,10 +530,27 @@
                 <label>Fecha estimada de entrega</label>
                 <input type="date" id="ns-fecha-entrega">
             </div>
+            <div class="ns-sug" id="ns-sugerencia"></div>
+            <label class="ns-asig" id="ns-asignar-wrap"><input type="checkbox" id="ns-asignar" checked> <span id="ns-asignar-txt"></span></label>
         </div>
         <div class="modal-footer">
             <button class="btn-ghost" onclick="cerrarModal('modal-seguimiento')">Cancelar</button>
             <button class="btn-primary" onclick="guardarNuevoSeguimiento()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: TRACKING COPIADO CON EL MARCADOR ===== -->
+<div class="modal-overlay" id="modal-pegar-trk">
+    <div class="modal" style="max-width:760px;width:96vw">
+        <div class="modal-header">
+            <h3>Tracking desde la tienda</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-pegar-trk')">&times;</button>
+        </div>
+        <div class="modal-body" id="pt-cuerpo"></div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-pegar-trk')">Cancelar</button>
+            <button class="btn-primary" id="pt-guardar" onclick="guardarTrackingPegado()">Crear y asignar</button>
         </div>
     </div>
 </div>
@@ -545,7 +583,7 @@
 <div class="modal-overlay" id="modal-entrada">
     <div class="modal">
         <div class="modal-header">
-            <h3>Registrar entrada a casillero</h3>
+            <h3>Llegó a Miami (opcional)</h3>
             <button class="modal-close" onclick="cerrarModal('modal-entrada')">&times;</button>
         </div>
         <div class="modal-body">
@@ -678,6 +716,116 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         document.getElementById('tab-' + tab).classList.add('active');
     }
 
+    // ===== TRACKING COPIADO CON EL MARCADOR (MULTISTORE_TRACK) =====
+    const normPed = t => String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const baseFoto = u => String(u || '').split('?')[0].split('/').pop().replace(/_thumbnail_\d+x\d*/i, '').replace(/\._[^.]+_\./, '.').toLowerCase();
+    let trkPegado = null;
+    function leerTrackPegado(t){
+        t = String(t || ''); const i = t.indexOf('MULTISTORE_TRACK'); if(i < 0) return null;
+        const a = t.indexOf('{', i), b = t.lastIndexOf('}');
+        try{ return JSON.parse(t.slice(a, b + 1)); }catch(e){ return null; }
+    }
+    async function pegarTrackingBoton(){
+        try{
+            const t = await navigator.clipboard.readText();
+            const d = leerTrackPegado(t);
+            if(!d){ showToast('En el portapapeles no hay un tracking del marcador. Abrí la página de rastreo de la tienda y tocá el marcador.', true); return; }
+            abrirTrackPegado(d);
+        }catch(e){ showToast('Pegá con Ctrl+V en esta página.', true); }
+    }
+    document.addEventListener('paste', e => {
+        const t = (e.clipboardData && e.clipboardData.getData('text')) || '';
+        if(t.indexOf('MULTISTORE_TRACK') < 0) return;
+        e.preventDefault();
+        const d = leerTrackPegado(t);
+        if(!d){ showToast('No pude leer el tracking copiado.', true); return; }
+        abrirTrackPegado(d);
+    });
+    function abrirTrackPegado(d){
+        cambiarTab('sin-seguimiento');
+        const paqs = (d.paquetes || []).filter(p => p.tracking);
+        if(!paqs.length){ showToast('El texto copiado no trae número de tracking.', true); return; }
+        const np = normPed(d.pedido);
+        let arts = articulosSinSeguimiento.filter(a => np && normPed(pedidoDe(a)) === np);
+        // fecha de salida = la del pedido; entrega +7 días
+        const fechas = arts.map(a => String(a.FechaPedido || '').substring(0,10)).filter(Boolean).sort();
+        const salida = fechas[0] || new Date().toISOString().substring(0,10);
+        trkPegado = { d, paqs, arts, salida };
+        // ¿qué artículos van en cada paquete? por foto; si no coincide ninguna, todos al primero
+        const asign = {};
+        arts.forEach(a => {
+            const fa = baseFoto(a.Fotografia);
+            const k = fa ? paqs.findIndex(p => (p.fotos || []).some(f => baseFoto(f) === fa)) : -1;
+            asign[a.IdDetallePedido] = k;
+        });
+        const hayCoincidencia = Object.values(asign).some(k => k >= 0);
+        arts.forEach(a => { if(!hayCoincidencia) asign[a.IdDetallePedido] = 0; });
+        trkPegado.asign = asign;
+        // filtrar la lista al pedido para que se vea detrás
+        if(arts.length){ document.getElementById('f-tienda').value = ''; llenarPedidosTab1(); document.getElementById('f-pedido').value = pedidoDe(arts[0]); filtrarArticulosTab1(); }
+        const existe = tr => listaSeguimientos.find(s => normPed(String(s.Seguimiento).replace(/\s*\(.*\)\s*$/, '')) === normPed(tr));
+        document.getElementById('pt-cuerpo').innerHTML = `
+            <div class="pt-info"><span>Tienda <b>${d.tienda || '-'}</b></span><span>Pedido <b>${d.pedido || '(sin número)'}</b></span>${d.estado ? `<span>Estado en la tienda <b>${d.estado}</b></span>` : ''}</div>
+            ${paqs.map((p, i) => { const ex = existe(p.tracking); return `
+            <div class="pt-paq"><div class="fila">
+                <div class="field"><label>${paqs.length > 1 ? 'Paquete ' + (i + 1) + ' · ' : ''}N° de tracking${p.transportista ? ' (' + p.transportista + ')' : ''}</label><input type="text" id="pt-trk-${i}" value="${String(p.tracking).replace(/"/g,'&quot;')}"></div>
+                <div class="field"><label>Fecha de salida</label><input type="date" id="pt-sal-${i}" value="${salida}"></div>
+                <div class="field"><label>Entrega estimada</label><input type="date" id="pt-ent-${i}" value="${masDias(salida, 7)}"></div>
+            </div>${ex ? `<div class="pt-ok">Ya existe en MultiStore: se usa el mismo, no se crea otro.</div>` : ''}</div>`; }).join('')}
+            ${arts.length ? `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0">
+                    <b style="font-size:12.5px">Artículos del pedido sin tracking (${arts.length})</b>
+                    <span style="font-size:12px"><a href="#" onclick="event.preventDefault();marcarTodosPt(true)">Marcar todos</a> · <a href="#" onclick="event.preventDefault();marcarTodosPt(false)">Ninguno</a></span>
+                </div>
+                ${hayCoincidencia ? '<div class="pt-aviso">Marqué solo los artículos cuya foto aparece en el paquete. Revisá antes de guardar.</div>' : ''}
+                <div class="pt-arts">${arts.map(a => { const k = asign[a.IdDetallePedido]; return `
+                    <label class="pt-art"><input type="checkbox" class="check pt-chk" data-id="${a.IdDetallePedido}" ${k >= 0 ? 'checked' : ''}>
+                        ${a.Fotografia ? `<img src="${a.Fotografia}" onerror="this.style.visibility='hidden'">` : '<img alt="">'}
+                        <span style="flex:1;min-width:0"><b>${a.NombreArticulo ?? '-'}</b><div class="meta-trk">${[a.TallaColor, a.CantidadArticulos > 1 ? '×' + a.CantidadArticulos : ''].filter(Boolean).join(' · ')}</div></span>
+                        ${paqs.length > 1 ? `<select class="pt-paq-sel" data-id="${a.IdDetallePedido}" onclick="event.stopPropagation()">${paqs.map((p, i) => `<option value="${i}"${(k < 0 ? 0 : k) === i ? ' selected' : ''}>Paquete ${i + 1}</option>`).join('')}</select>` : ''}
+                    </label>`; }).join('')}</div>`
+            : `<div class="pt-aviso">No hay artículos sin tracking del pedido ${d.pedido || ''} en MultiStore. Revisá que el pedido esté ingresado con ese número, o asigná el tracking a mano.</div>`}`;
+        document.getElementById('pt-guardar').disabled = !arts.length;
+        abrirModal('modal-pegar-trk');
+    }
+    function marcarTodosPt(on){ document.querySelectorAll('#pt-cuerpo .pt-chk').forEach(c => c.checked = on); }
+    async function guardarTrackingPegado(){
+        if(!trkPegado) return;
+        const { paqs } = trkPegado;
+        const elegidos = [...document.querySelectorAll('#pt-cuerpo .pt-chk')].filter(c => c.checked).map(c => +c.dataset.id);
+        if(!elegidos.length){ showToast('Marcá al menos un artículo.', true); return; }
+        const porPaq = paqs.map(() => []);
+        elegidos.forEach(id => { const sel = document.querySelector(`#pt-cuerpo .pt-paq-sel[data-id="${id}"]`); porPaq[sel ? +sel.value : 0].push(id); });
+        const btn = document.getElementById('pt-guardar'); btn.disabled = true;
+        try{
+            let total = 0; const nombres = [];
+            for(let i = 0; i < paqs.length; i++){
+                if(!porPaq[i].length) continue;
+                const tr = document.getElementById('pt-trk-' + i).value.trim();
+                const sal = document.getElementById('pt-sal-' + i).value, ent = document.getElementById('pt-ent-' + i).value;
+                if(!tr || !sal || !ent) throw new Error('Completá el tracking y las fechas.');
+                let ex = listaSeguimientos.find(s => normPed(String(s.Seguimiento).replace(/\s*\(.*\)\s*$/, '')) === normPed(tr));
+                let idSeg = ex && ex.IdSeguimiento;
+                if(!idSeg){
+                    const r = await fetch(`${API}/seguimientos`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ Seguimiento: tr, FechaSalidaInicio: sal, FechaEstimadaEntrega: ent }) }).then(x => x.json());
+                    if(!r.ok) throw new Error(r.error || r.mensaje || 'No se pudo crear el tracking');
+                    idSeg = r.idSeguimiento;
+                    if(!idSeg){ await cargarSeguimientos(); const n = listaSeguimientos.find(s => normPed(String(s.Seguimiento).replace(/\s*\(.*\)\s*$/, '')) === normPed(tr)); idSeg = n && n.IdSeguimiento; }
+                    if(!idSeg) throw new Error('Se creó el tracking pero no lo encontré para asignarlo.');
+                }
+                const r2 = await fetch(`${API}/asignar-seguimiento-masivo`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ idsDetalle: porPaq[i], IdSeguimiento: idSeg }) }).then(x => x.json());
+                if(!r2.ok) throw new Error(r2.error || r2.mensaje || 'No se pudo asignar');
+                total += porPaq[i].length; nombres.push(tr);
+            }
+            cerrarModal('modal-pegar-trk');
+            showToast(`Tracking ${nombres.join(', ')} asignado a ${total} artículo${total === 1 ? '' : 's'}.`);
+            trkPegado = null;
+            await cargarSeguimientos(); await cargarArticulosSinSeguimiento();
+            if(typeof cargarEntradasCasillero === 'function') cargarEntradasCasillero();
+        }catch(err){ showToast(err.message, true); }
+        finally{ btn.disabled = false; }
+    }
+
     // ===== HELPERS =====
     function showToast(msg, isError=false){
         const t = document.getElementById('toast');
@@ -717,7 +865,8 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             selTienda.innerHTML = '<option value="">Todas las tiendas</option>' +
                 tiendas.map(t => `<option value="${t}">${t}</option>`).join('');
 
-            renderArticulosSinSeguimiento(articulosSinSeguimiento);
+            llenarPedidosTab1();
+            filtrarArticulosTab1();
         }catch(err){
             tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">Error: ${err.message}</td></tr>`;
         }
@@ -758,6 +907,22 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             lista.length > 0 && lista.every(a => seleccionArticulos.has(a.IdDetallePedido));
     }
 
+    const pedidoDe = a => String(a.NoPedidoAplicacion || a.NumeroPedido || a.IdPedido || '');
+    // Pedidos para el filtro: "N° pedido · tienda · fecha · n artículos" (respeta la tienda elegida)
+    function llenarPedidosTab1(){
+        const sel = document.getElementById('f-pedido'), actual = sel.value, tienda = document.getElementById('f-tienda').value;
+        const m = new Map();
+        articulosSinSeguimiento.filter(a => !tienda || a.NombreEmpresa === tienda).forEach(a => {
+            const k = pedidoDe(a); if(!k) return;
+            const x = m.get(k) || { k, tienda: a.NombreEmpresa || '', fecha: String(a.FechaPedido || '').substring(0,10), n: 0 };
+            x.n++; m.set(k, x);
+        });
+        const lista = [...m.values()].sort((a, b) => b.fecha.localeCompare(a.fecha) || a.k.localeCompare(b.k));
+        sel.innerHTML = '<option value="">Todos los pedidos</option>' + lista.map(x =>
+            `<option value="${x.k.replace(/"/g,'&quot;')}">${x.k} · ${x.tienda} · ${fmtFecha(x.fecha)} · ${x.n} art.</option>`).join('');
+        sel.value = lista.some(x => x.k === actual) ? actual : '';
+    }
+
     function filtrarArticulosTab1(){
         const q         = (document.getElementById('f-articulos').value || '').toLowerCase();
         const tienda    = document.getElementById('f-tienda').value;
@@ -766,6 +931,8 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
 
         const filtrados = articulosSinSeguimiento.filter(a => {
             if(tienda && a.NombreEmpresa !== tienda) return false;
+            const ped = document.getElementById('f-pedido').value;
+            if(ped && pedidoDe(a) !== ped) return false;
             if(fechaIni && a.FechaPedido && a.FechaPedido.substring(0,10) < fechaIni) return false;
             if(fechaFin && a.FechaPedido && a.FechaPedido.substring(0,10) > fechaFin) return false;
             if(!q) return true;
@@ -776,8 +943,10 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                 String(a.NoPedidoAplicacion ?? a.IdPedido ?? '').toLowerCase().includes(q)
             );
         });
+        articulosVisiblesTab1 = filtrados;
         renderArticulosSinSeguimiento(filtrados);
     }
+    let articulosVisiblesTab1 = [];
 
     // Mantener compatibilidad con llamadas antiguas a filtrarArticulos
     function filtrarArticulos(q){ filtrarArticulosTab1(); }
@@ -785,9 +954,11 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
     function limpiarFiltrosTab1(){
         document.getElementById('f-articulos').value = '';
         document.getElementById('f-tienda').value = '';
+        llenarPedidosTab1();
+        document.getElementById('f-pedido').value = '';
         document.getElementById('f-fecha-inicio').value = '';
         document.getElementById('f-fecha-fin').value = '';
-        renderArticulosSinSeguimiento(articulosSinSeguimiento);
+        filtrarArticulosTab1();
     }
 
     /* --- Selección masiva --- */
@@ -884,11 +1055,32 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
     }
 
     /* --- Modal: nuevo seguimiento --- */
+    const masDias = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().substring(0,10); };
+    // Artículos a los que se le asignaría el tracking nuevo: los marcados, o si no, los del pedido filtrado
+    function articulosParaNuevoTracking(){
+        if(seleccionArticulos.size) return { ids: [...seleccionArticulos], origen: 'marcados' };
+        const ped = document.getElementById('f-pedido').value;
+        if(ped) return { ids: articulosVisiblesTab1.map(a => a.IdDetallePedido), origen: 'pedido ' + ped };
+        return { ids: [], origen: '' };
+    }
     function abrirModalNuevoSeguimiento(){
         document.getElementById('ns-seguimiento').value = '';
-        document.getElementById('ns-fecha-salida').value = '';
-        document.getElementById('ns-fecha-entrega').value = '';
+        // Fecha de salida sugerida: la del pedido filtrado; si no, la de los artículos marcados o visibles (la más reciente)
+        const ped = document.getElementById('f-pedido').value;
+        const base = seleccionArticulos.size ? articulosSinSeguimiento.filter(a => seleccionArticulos.has(a.IdDetallePedido)) : articulosVisiblesTab1;
+        const fechas = base.map(a => String(a.FechaPedido || '').substring(0,10)).filter(Boolean).sort();
+        const salida = fechas.length ? fechas[fechas.length - 1] : new Date().toISOString().substring(0,10);
+        document.getElementById('ns-fecha-salida').value = salida;
+        document.getElementById('ns-fecha-entrega').value = masDias(salida, 7);
+        document.getElementById('ns-sugerencia').textContent = fechas.length
+            ? `Fechas sugeridas según ${ped ? 'el pedido ' + ped : seleccionArticulos.size ? 'los artículos marcados' : 'los artículos que se ven'}: salida ${fmtFecha(salida)}, entrega +7 días. Podés cambiarlas.`
+            : 'Entrega estimada: +7 días. Podés cambiarla.';
+        const asg = articulosParaNuevoTracking();
+        document.getElementById('ns-asignar-wrap').hidden = !asg.ids.length;
+        document.getElementById('ns-asignar').checked = true;
+        document.getElementById('ns-asignar-txt').textContent = `Asignarlo a ${asg.ids.length} artículo${asg.ids.length === 1 ? '' : 's'} (${asg.origen})`;
         abrirModal('modal-seguimiento');
+        setTimeout(() => document.getElementById('ns-seguimiento').focus(), 50);
     }
 
     async function guardarNuevoSeguimiento(){
@@ -908,9 +1100,19 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                 body: JSON.stringify({Seguimiento, FechaSalidaInicio, FechaEstimadaEntrega})
             });
             const data = await res.json();
-            if(!data.ok) throw new Error(data.error || 'Error al crear seguimiento');
+            if(!data.ok) throw new Error(data.error || data.mensaje || 'Error al crear seguimiento');
 
-            showToast(data.mensaje);
+            const asg = articulosParaNuevoTracking();
+            let msg = data.mensaje;
+            if(document.getElementById('ns-asignar').checked && asg.ids.length && data.idSeguimiento){
+                const r2 = await fetch(`${API}/asignar-seguimiento-masivo`, { method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ idsDetalle: asg.ids, IdSeguimiento: data.idSeguimiento }) }).then(r => r.json());
+                if(!r2.ok) throw new Error('El tracking se creó, pero no se pudo asignar: ' + (r2.error || r2.mensaje));
+                msg = `Tracking ${Seguimiento} creado y asignado a ${asg.ids.length} artículo${asg.ids.length === 1 ? '' : 's'}.`;
+                seleccionArticulos.clear();
+                await cargarArticulosSinSeguimiento();
+            }
+            showToast(msg);
             cerrarModal('modal-seguimiento');
             await cargarSeguimientos();
         }catch(err){
@@ -1009,7 +1211,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                     <td><button class="btn-ghost btn-sm" onclick="toggleArticulosSeguimiento(${s.IdSeguimiento}, this, 'seg')">Ver artículos</button></td>
                     <td>
                         ${puedeRegistrar
-                            ? `<button class="btn-primary btn-sm" onclick="abrirModalEntrada(${s.IdSeguimiento})">Registrar entrada</button>`
+                            ? `<button class="btn-ghost btn-sm" title="Opcional: al crear la orden de pago se registra sola" onclick="abrirModalEntrada(${s.IdSeguimiento})">Llegó a Miami</button>`
                             : `<span class="badge b-gray">Ya registrado</span>`}
                     </td>
                 </tr>
@@ -1093,8 +1295,8 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             const data = await res.json();
             if(!data.ok) throw new Error(data.error || 'Error al cargar entradas');
 
-            // Solo entradas SIN orden (IdOrden null o 0)
-            entradasCasillero = (data.data || []).filter(e => !e.IdOrden || e.IdOrden === 0);
+            // Trackings sin orden de pago (con o sin entrada a casillero registrada)
+            entradasCasillero = data.data || [];
 
             document.getElementById('count-orden').textContent = entradasCasillero.length;
             renderEntradasCasillero(entradasCasillero);
@@ -1106,7 +1308,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
     function renderEntradasCasillero(lista){
         const tbody = document.getElementById('tbody-entradas');
         if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="9">No hay entradas a casillero pendientes de orden.</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="9">No hay trackings pendientes de orden de pago.</td></tr>`;
             return;
         }
 
@@ -1122,12 +1324,13 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                     <td>
                         <button class="btn-ghost btn-sm" onclick="toggleArticulosSeguimiento(${e.IdSeguimiento}, this, 'entrada')">Ver artículos</button>
                     </td>
-                    <td>${e.Seguimiento}</td>
-                    <td>${e.NombreCasillero}</td>
-                    <td>${fmtFecha(e.EntradaMiami)}</td>
-                    <td>${fmtFecha(e.EntregaEstimada)}</td>
-                    <td>${e.TotalPesoLibras}</td>
-                    <td>$${e.TotalPago}</td>
+                    <td><b>${e.Seguimiento}</b>${e.CambioSeguimiento ? ` <span style="color:#6b7280">(${e.CambioSeguimiento})</span>` : ''}
+                        <div class="meta-trk">${[e.Tiendas, e.Pedidos].filter(Boolean).join(' · ')} · ${e.Articulos} art.</div></td>
+                    <td>${e.NombreCasillero ?? '-'}</td>
+                    <td>${e.EntradaMiami ? fmtFecha(e.EntradaMiami) : `<span style="color:#6b7280">—</span><span class="tag-sin" title="Se registra sola al crear la orden">sin entrada</span>`}</td>
+                    <td>${fmtFecha(e.EntregaEstimada || e.FechaEstimadaEntrega)}</td>
+                    <td>${Number(e.TotalPesoLibras || 0).toFixed(2)}</td>
+                    <td>L ${Number(e.TotalPago || 0).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 </tr>
                 <tr class="fila-articulos fila-articulos-entrada-${e.IdSeguimiento}" style="display:none;">
                     <td colspan="9">
@@ -1143,8 +1346,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
     function filtrarEntradas(q){
         q = q.toLowerCase();
         const filtrados = entradasCasillero.filter(e =>
-            e.Seguimiento.toLowerCase().includes(q) ||
-            e.NombreCasillero.toLowerCase().includes(q)
+            [e.Seguimiento, e.CambioSeguimiento, e.NombreCasillero, e.Pedidos, e.Tiendas].some(x => String(x || '').toLowerCase().includes(q))
         );
         renderEntradasCasillero(filtrados);
     }

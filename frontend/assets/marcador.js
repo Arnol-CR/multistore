@@ -8,6 +8,8 @@
  *   - Detalle de un PEDIDO (SHEIN / Amazon)  → varios artículos
  *   - Página de un PRODUCTO (SHEIN / Amazon / otras con datos estándar) → 1 artículo
  * Copia al portapapeles: MULTISTORE_IMPORT{ tienda, pedido, tipo, items:[...] }
+ *   - Página de RASTREO (SHEIN orders/track, Temu bgst_express, Amazon progress-tracker)
+ *     → MULTISTORE_TRACK{ tienda, pedido, estado, paquetes:[{ tracking, transportista, fotos }] }
  *
  * Uso en una página:  <a id="bm-shein">…</a>  y  marcadorHref()  para obtener el href.
  */
@@ -42,6 +44,68 @@ function sheinScraper() {
             } catch (e) {}
         }
         return null;
+    }
+
+    /* ───────── PÁGINA DE RASTREO (SHEIN / Temu / Amazon) → tracking del paquete ───────── */
+    var esRastreo = (/shein\./i.test(host) && /\/orders?\/track/i.test(location.pathname))
+        || (/temu\./i.test(host) && /bgst_express|order_track|express/i.test(location.pathname))
+        || (/amazon\./i.test(host) && /progress-tracker|ship-track|track-package/i.test(location.pathname + location.search));
+    if (esRastreo) {
+        var qs = new URLSearchParams(location.search);
+        var tiendaR = /shein\./i.test(host) ? 'SHEIN' : /temu\./i.test(host) ? 'Temu' : 'Amazon';
+        var pedidoR = qs.get('billno') || qs.get('parent_order_sn') || qs.get('orderId') || qs.get('order_sn') || '';
+        var cuerpo = document.body.innerText || '';
+        if (!pedidoR) pedidoR = ((cuerpo.match(/\b(PO-\d{3}-\d{8,}|\d{3}-\d{7}-\d{7}|G[A-Z]{2}[A-Z0-9]{10,})\b/) || [])[1] || '');
+        var paquetes = [], vistosR = {};
+        var agregar = function (num, transp) {
+            num = String(num || '').replace(/[\s​]/g, '').replace(/[^A-Za-z0-9]/g, '');
+            if (num.length < 8 || vistosR[num] || num === pedidoR.replace(/[^A-Za-z0-9]/g, '')) return;
+            if (/^\d{10,11}$/.test(num)) return;   // teléfonos
+            vistosR[num] = 1; paquetes.push({ tracking: num, transportista: (transp || '').trim().substring(0, 40), fotos: [] });
+        };
+        var lineasR = cuerpo.split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+        // 1) Texto con etiqueta: "Número de seguimiento: X", "ID de rastreo: X", "Tracking number: X", "Tracking ID: X"
+        lineasR.forEach(function (l, i) {
+            var m = l.match(/(?:N[uú]mero de seguimiento|ID de rastreo|N[uú]mero de rastreo|Tracking (?:number|ID|No\.?))\s*[:：]?\s*([A-Za-z0-9\- ]{8,40})/i);
+            if (!m) return;
+            var antes = l.split(/N[uú]mero de seguimiento|ID de rastreo|N[uú]mero de rastreo|Tracking/i)[0].trim();
+            var transp = antes || ((cuerpo.match(/(?:Entrega por|Enviado (?:con|por)|Shipped with|Delivered by)\s+([A-Za-z][\w&-]{1,20})/i) || [])[1] || '');
+            if (!transp) { var lg = [].filter.call(document.querySelectorAll('img[alt]'), function (im) { return /USPS|UPS|FedEx|DHL|OnTrac|GOFO|Yun/i.test(im.alt); })[0]; if (lg) transp = lg.alt; }
+            if (!transp) { var kn = cuerpo.match(/\b(USPS|UPS|FedEx|DHL|OnTrac|LaserShip|GOFO|YunExpress|UniUni)\b/i); if (kn) transp = kn[1]; }
+            agregar(m[1].split(/\s{2,}| (?=[A-Za-z]{3,}\b)/)[0], transp);
+        });
+        // 2) SHEIN: "TRANSPORTISTA NUMERO" al lado del logo, sin etiqueta
+        if (!paquetes.length) {
+            var reNum = /^([A-Z]{2,6}\d{8,}[A-Z0-9]*|\d{12,30}|1Z[0-9A-Z]{16}|TBA\d{9,})$/;
+            lineasR.forEach(function (l, i) {
+                var m = l.match(/^([A-Za-z][A-Za-z .&-]{1,25}?)\s+([A-Z]{2,6}\d{8,}[A-Z0-9]*|\d{12,30}|1Z[0-9A-Z]{16}|TBA\d{9,})(?:\s+[A-Za-z]{2,12})?$/);
+                if (m) agregar(m[2], m[1]);
+                else if (reNum.test(l) && i > 0 && /^[A-Za-z][A-Za-z .&-]{1,25}$/.test(lineasR[i - 1])) agregar(l, lineasR[i - 1]);
+            });
+        }
+        if (!paquetes.length) {
+            var mm = cuerpo.match(/\b([A-Z]{2,6}\d{10,}[A-Z0-9]*|1Z[0-9A-Z]{16}|TBA\d{9,}|9\d{19,25})\b/);
+            if (mm) agregar(mm[1], '');
+        }
+        if (!paquetes.length) { alert('MultiStore: no encontré el número de tracking en esta página. Espera a que cargue por completo y volvé a tocar el marcador.'); return; }
+        // Fotos de los artículos del paquete (para saber qué artículos van en él)
+        var fotosR = [].map.call(document.querySelectorAll('img'), function (im) {
+            var src = im.currentSrc || im.src || im.getAttribute('data-src') || '';
+            var w = im.naturalWidth || im.width || 0, h = im.naturalHeight || im.height || 0;
+            if (!/kwcdn|ltwebstatic|media-amazon|images-amazon/i.test(src) || /logo|icon|avatar|flag|sprite|map|transparent|pixel/i.test(src)) return '';
+            if (w && w < 40) return '';
+            if (/amazon/i.test(src) && !/\/images\/I\//.test(src)) return '';
+            if (/amazon/i.test(src) && w > 300 && h > 300) return '';   // foto de la entrega en la puerta, no del producto
+            if (src.indexOf('//') === 0) src = 'https:' + src;
+            return src;
+        }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).slice(0, 30);
+        if (paquetes.length === 1) paquetes[0].fotos = fotosR;
+        var estadoR = (lineasR.filter(function (l) { return /^(Entregado|Delivered|En tr[aá]nsito|In transit|Enviado|Shipped)/i.test(l); })[0] || '').substring(0, 60);
+        var dataR = 'MULTISTORE_TRACK' + JSON.stringify({ tienda: tiendaR, pedido: pedidoR, estado: estadoR, paquetes: paquetes });
+        var okR = function () { alert('MultiStore: ' + (paquetes.length === 1 ? 'tracking ' + paquetes[0].tracking + (paquetes[0].transportista ? ' (' + paquetes[0].transportista + ')' : '') : paquetes.length + ' trackings') + ' copiado' + (paquetes.length === 1 ? '' : 's') + '\nPedido ' + tiendaR + ' ' + (pedidoR || '(sin número)') + '\nVe a MultiStore → Envíos y casillero → Sin tracking y pegá con Ctrl+V'); };
+        var viejoR = function () { var ta = document.createElement('textarea'); ta.value = dataR; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); okR(); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(dataR).then(okR, viejoR); else viejoR();
+        return;
     }
 
     /* ───────── PEDIDO SHEIN ───────── */
