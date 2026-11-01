@@ -115,6 +115,8 @@
         .cant-tag { display:inline-block; margin-left:7px; padding:1px 8px; border-radius:999px; background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#fbbf24; font-size:11px; font-weight:800; vertical-align:1px; }
         .sub-num { display:block; font-size:10.5px; color:#6b7280; font-weight:500; margin-top:3px; white-space:nowrap; }
         .cu { display:block; font-size:10.5px; color:#6b7280; margin-top:3px; text-align:right; white-space:nowrap; }
+        .vend { display:inline-block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px; background:rgba(96,165,250,.1); border:1px solid rgba(96,165,250,.3); color:#93c5fd; vertical-align:middle; }
+        .vend.sin { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.3); color:#fca5a5; }
         .antes { display:block; font-size:10px; color:#7c3aed; margin-top:3px; text-align:right; }
         .asig-todos { display:flex; align-items:center; gap:6px; }
         .asig-todos input { width:230px; padding:7px 10px !important; font-size:12px !important; }
@@ -147,7 +149,7 @@
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
         @media (max-width:900px) {
             .stats { grid-template-columns:1fr 1fr; }
-            .col-pedido, .col-costo { display:none; }
+            .col-pedido, .col-costo, .col-vend { display:none; }
             .content { padding:12px 10px 120px; }
             td, th { padding:7px 6px; }
             .precio { width:86px; }
@@ -364,6 +366,9 @@
     const Lc = v => 'L ' + (Math.abs(v - Math.round(v)) < 0.005 ? Math.round(v).toLocaleString('es-HN') : v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     function textoCU(p, v) { const c = cantDe(p), n = parseFloat(v); return c > 1 && n > 0 ? `${c} × ${Lc(n / c)} c/u` : ''; }
 
+    // "Nestor Alexander Hernandez Carranza" → "Nestor Hernandez"
+    const nomCorto = n => { const w = String(n || '').trim().split(/\s+/).filter(Boolean); return w.length >= 3 ? w[0] + ' ' + w[2] : w.join(' '); };
+
     function fila(p) {
         const id = p.IdDetallePedido;
         const cant = cantDe(p);
@@ -394,6 +399,7 @@
                 </div>`}
             </td>
             <td class="col-pedido" style="font-size:11px;white-space:nowrap">${esc(p.NoPedidoAplicacion || p.NumeroPedido || '')}<div class="meta">${fecha(p.FechaPedido)} · ${esc(p.NombreEmpresa || '')}</div></td>
+            <td class="col-vend">${p.IdVendedor ? `<span class="vend" title="${esc(p.NombreVendedor || '')}${p.CodigoVendedor ? ' · ' + esc(p.CodigoVendedor) : ''}">${esc(nomCorto(p.NombreVendedor) || p.CodigoVendedor || 'Asignado')}</span>` : '<span class="vend sin">Sin vendedor</span>'}</td>
             <td class="num col-costo">${costo}</td>
             <td class="num">${sug ? `<span class="sug" title="Usar sugerido${cant > 1 ? ' (total de la línea)' : ''}" onclick="ponerSugerido(${id}, ${sug})">L ${sug}</span>${cant > 1 ? `<span class="sub-num">${Lc(sug / cant)} c/u</span>` : ''}` : '<span style="color:#374151">—</span>'}</td>
             <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>${cant > 1 ? `<span class="cu">${textoCU(p, p.ValorCobroCliente)}</span>` : ''}`
@@ -405,7 +411,7 @@
     }
 
     function cabeceraTabla() {
-        return `<thead><tr><th></th><th>Artículo</th><th class="col-pedido">Pedido</th><th class="num col-costo">Costo</th><th class="num">Sugerido</th><th class="num">Precio (L)</th><th></th></tr></thead>`;
+        return `<thead><tr><th></th><th>Artículo</th><th class="col-pedido">Pedido</th><th class="col-vend">Vendedor</th><th class="num col-costo">Costo</th><th class="num">Sugerido</th><th class="num">Precio (L)</th><th></th></tr></thead>`;
     }
 
     function render() {
