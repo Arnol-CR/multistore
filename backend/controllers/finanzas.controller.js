@@ -41,7 +41,7 @@ const CONSULTAS = {
     LEFT JOIN A_Casilleros CA ON CA.IdCasillero = EC.IdCasillero`,
   combustible: `
     SELECT C.IdCombustible, ${F('C.Fecha')} AS Fecha, ISNULL(C.CantidadPagar, 0) AS Monto, ISNULL(C.EstaCancelado, 0) AS Cancelado,
-           C.Observaciones, CB.NombreCuenta AS Cuenta, ${nombre('V.Nombres', 'V.Apellidos')} AS Vendedor
+           C.Observaciones, CB.NombreCuenta AS Cuenta, C.IdVendedor, ${nombre('V.Nombres', 'V.Apellidos')} AS Vendedor
     FROM C_Combustible C
     LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = C.IdCuentaBancaria
     LEFT JOIN A_Vendedores V ON V.IdVendedor = C.IdVendedor`,
@@ -69,7 +69,7 @@ const CONSULTAS = {
     FROM A_MoviminentoCuenta M LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = M.IdCuenta`,
   cobros: `SELECT ${F('FechaMovimiento')} AS Fecha, Monto FROM vw_Pagos`,
   puntos: `
-    SELECT P.IdPedido, RTRIM(P.NumeroPedido) AS NumeroPedido, ${F('P.FechaPedido')} AS Fecha, E.NombreEmpresa AS Tienda,
+    SELECT P.IdPedido, P.IdEmpresa, RTRIM(P.NumeroPedido) AS NumeroPedido, ${F('P.FechaPedido')} AS Fecha, E.NombreEmpresa AS Tienda,
            ISNULL(P.PuntosUtilizados, 0) AS Puntos, ISNULL(P.ValorDolaresPuntos, 0) AS ValorPunto, P.TasaCambio
     FROM C_Pedidos P LEFT JOIN A_Empresas E ON E.IdEmpresa = P.IdEmpresa
     WHERE ISNULL(P.PuntosUtilizados, 0) <> 0 OR ISNULL(P.ValorDolaresPuntos, 0) <> 0`
