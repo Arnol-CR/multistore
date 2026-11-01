@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiStore — Finanzas</title>
+    <link rel="icon" href="/assets/Recurso-3.ico" type="image/x-icon">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --fondo:#070910; --panel:#0d1017; --panel2:#13181f; --borde:#1e2530; --borde2:#2a3342;
+            --texto:#e2e8f0; --suave:#9ca3af; --tenue:#6b7280; --mudo:#4b5563;
+            --rosa:#E8327A; --naranja:#EF7A30; --verde:#4ade80; --rojo:#f87171; --ambar:#fbbf24; --azul:#60a5fa; --morado:#c084fc;
+        }
+        body { background:#0a0c10; font-family:'Segoe UI',sans-serif; color:var(--texto); display:flex; height:100vh; overflow:hidden; }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:98; }
+        .overlay.active { display:block; }
+
+        /* ── Sidebar (lo arma sidebar.js) ── */
+        .sidebar { width:230px; min-width:230px; background:#0d1017; border-right:1px solid #1e2530; display:flex; flex-direction:column; z-index:100; }
+        .sidebar-logo { padding:20px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo img { width:38px; height:38px; object-fit:contain; }
+        .sidebar-logo-text { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.5px; }
+        .sidebar-logo-text span { color:#3b82f6; }
+        .sidebar-user { padding:14px 18px; border-bottom:1px solid #1e2530; display:flex; align-items:center; gap:10px; }
+        .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+        .user-info-name { font-size:13px; font-weight:600; color:#d1d5db; }
+        .user-info-rol  { font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:1px; }
+        .nav { flex:1; padding:12px 0; overflow-y:auto; }
+        .nav-label { font-size:10px; color:#374151; letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-left:2px solid transparent; color:#6b7280; font-size:13.5px; text-decoration:none; }
+        .nav-item:hover { color:#e2e8f0; background:#13181f; }
+        .nav-item.active { color:#fff; background:linear-gradient(90deg,#1a2540,transparent); border-left-color:#3b82f6; }
+        .nav-item svg { width:17px; height:17px; flex-shrink:0; opacity:.7; }
+        .nav-badge { margin-left:auto; background:#1e3a5f; color:#60a5fa; font-size:10px; padding:2px 7px; border-radius:99px; font-weight:700; }
+        .sidebar-bottom { padding:14px 18px; border-top:1px solid #1e2530; }
+        .btn-salir { display:flex; align-items:center; gap:8px; color:#ef4444; font-size:13px; cursor:pointer; padding:8px 0; background:none; border:none; width:100%; }
+
+        /* ── Main ── */
+        .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .topbar { background:var(--panel); border-bottom:1px solid var(--borde); padding:12px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; flex-wrap:wrap; }
+        .btn-menu { background:none; border:none; cursor:pointer; padding:4px; }
+        .topbar-title { font-size:16px; font-weight:700; color:#fff; }
+        .topbar-sub { font-size:11px; color:var(--mudo); margin-top:1px; }
+        .seg { margin-left:auto; display:flex; gap:3px; background:var(--panel2); border:1px solid var(--borde); border-radius:9px; padding:3px; }
+        .seg button { background:none; border:none; color:var(--tenue); font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:7px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+        .seg button.on { background:var(--panel); color:#fff; box-shadow:0 1px 0 var(--borde2); }
+        .seg button:hover:not(.on) { color:var(--texto); }
+        .content { flex:1; overflow-y:auto; padding:20px 22px 60px; background:var(--fondo); }
+        .vista { display:none; }
+        .vista.on { display:block; }
+        .ico { width:16px; height:16px; flex-shrink:0; }
+        /* ── Finanzas ── */
+        .seg { overflow-x:auto; max-width:100%; }
+        .periodo { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 auto 16px; max-width:1400px; }
+        .chip { background:var(--panel); border:1px solid var(--borde); color:var(--suave); font:600 12px 'Segoe UI',sans-serif; padding:7px 12px; border-radius:999px; cursor:pointer; }
+        .chip:hover { color:#fff; border-color:var(--borde2); }
+        .chip.on { background:#1a2540; border-color:#2b4a7a; color:#fff; }
+        .inp { background:var(--panel); border:1px solid var(--borde); color:var(--texto); border-radius:8px; padding:7px 10px; font:13px 'Segoe UI',sans-serif; outline:none; }
+        .inp:focus { border-color:#3b82f6; }
+        .periodo .sep { color:var(--mudo); font-size:12px; }
+        .periodo .info { margin-left:auto; font-size:11.5px; color:var(--mudo); }
+        .wrap { max-width:1400px; margin:0 auto; }
+        .kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+        .kpi { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:14px 16px; min-width:0; }
+        .kpi-tit { font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase; color:var(--tenue); font-weight:700; }
+        .kpi-val { font-size:22px; font-weight:800; color:#fff; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .kpi-pie { font-size:11.5px; color:var(--tenue); margin-top:4px; }
+        .kpi.destacado { border-color:#14532d; background:linear-gradient(180deg,#0b1a12,var(--panel)); }
+        .pos { color:var(--verde); } .neg { color:var(--rojo); } .amb { color:var(--ambar); }
+        .grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:16px; align-items:start; margin-bottom:16px; }
+        .card { background:var(--panel); border:1px solid var(--borde); border-radius:12px; min-width:0; margin-bottom:16px; }
+        .grid2 .card { margin-bottom:0; }
+        .card-cab { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 16px; border-bottom:1px solid var(--borde); flex-wrap:wrap; }
+        .card-tit { font-size:13px; font-weight:700; color:#fff; }
+        .card-sub { font-size:11px; color:var(--mudo); margin-top:2px; }
+        .card-cuerpo { padding:14px 16px; }
+        .tabla-wrap { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:12.5px; }
+        th { text-align:left; font-size:10.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--tenue); font-weight:700; padding:9px 12px; border-bottom:1px solid var(--borde); white-space:nowrap; background:var(--panel); position:sticky; top:0; }
+        th.ord { cursor:pointer; user-select:none; }
+        th.ord:hover { color:#fff; }
+        td { padding:9px 12px; border-bottom:1px solid #141a22; color:#cbd5e1; vertical-align:top; }
+        tr:hover td { background:#0f141c; }
+        .num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+        tfoot td { font-weight:800; color:#fff; border-top:1px solid var(--borde2); border-bottom:none; background:var(--panel2); }
+        .er td { padding:8px 14px; }
+        .er .tot td { font-weight:800; color:#fff; border-top:1px solid var(--borde2); }
+        .er .menos td:first-child { padding-left:26px; color:var(--suave); }
+        .er .sub td { font-size:11px; color:var(--mudo); padding-top:0; }
+        .tag { display:inline-block; font-size:10px; font-weight:700; padding:1px 7px; border-radius:999px; border:1px solid; vertical-align:1px; margin-left:6px; white-space:nowrap; }
+        .tag.est { color:#fbbf24; border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.08); }
+        .tag.real { color:#4ade80; border-color:rgba(74,222,128,.35); background:rgba(74,222,128,.08); }
+        .tag.gris { color:var(--suave); border-color:var(--borde2); }
+        .meta { font-size:11px; color:var(--mudo); margin-top:2px; }
+        .barra-ctl { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .btn { background:var(--panel2); border:1px solid var(--borde2); color:var(--texto); font:600 12px 'Segoe UI',sans-serif; padding:7px 12px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+        .btn:hover { border-color:#3b82f6; }
+        label.chk { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--suave); cursor:pointer; }
+        .nota { font-size:12px; color:var(--suave); background:var(--panel2); border:1px solid var(--borde); border-left:3px solid var(--ambar); border-radius:8px; padding:10px 12px; margin-bottom:12px; line-height:1.5; }
+        .nota b { color:#fff; }
+        .vacio { padding:28px; text-align:center; color:var(--mudo); font-size:13px; }
+        .exp { cursor:pointer; }
+        .exp td:first-child::before { content:''; display:inline-block; width:0; height:0; border-left:5px solid var(--tenue); border-top:4px solid transparent; border-bottom:4px solid transparent; margin-right:8px; transition:transform .15s; }
+        .exp.abierto td:first-child::before { transform:rotate(90deg); }
+        .detalle td { background:#0a0e14; padding:0; }
+        .detalle table { font-size:12px; }
+        .detalle th { background:#0a0e14; position:static; }
+        /* Gráfico */
+        .graf { position:relative; }
+        .graf svg { display:block; width:100%; height:260px; }
+        .leyenda { display:flex; gap:16px; font-size:12px; color:var(--suave); margin-bottom:8px; }
+        .leyenda span { display:inline-flex; align-items:center; gap:6px; }
+        .leyenda i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+        .tip { position:absolute; pointer-events:none; background:#0b0f16; border:1px solid var(--borde2); border-radius:8px; padding:8px 10px; font-size:12px; color:var(--texto); box-shadow:0 8px 24px rgba(0,0,0,.5); display:none; white-space:nowrap; z-index:5; }
+        .tip b { color:#fff; }
+        .cargando { padding:60px; text-align:center; color:var(--tenue); }
+        .avisos { font-size:12px; color:#fca5a5; background:#1f0707; border:1px solid #7f1d1d; border-radius:8px; padding:10px 12px; margin:0 auto 14px; max-width:1400px; display:none; }
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:3px; }
+        @media (max-width:1100px) { .kpis { grid-template-columns:repeat(2, minmax(0,1fr)); } .grid2 { grid-template-columns:1fr; } }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); }
+            .content { padding:14px 16px 40px; }
+            .seg { margin-left:0; width:100%; }
+            .kpi-val { font-size:18px; }
+            .periodo .info { margin-left:0; width:100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+    <div class="topbar">
+        <button class="btn-menu" onclick="abrirMenu()" aria-label="Menú">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke="#9ca3af" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke="#9ca3af" stroke-width="2"/></svg>
+        </button>
+        <div>
+            <div class="topbar-title">Finanzas</div>
+            <div class="topbar-sub">Costo, envío, utilidad, gastos y capital</div>
+        </div>
+        <div class="seg" id="tabs">
+            <button class="on" data-v="resumen">Resumen</button>
+            <button data-v="utilidad">Utilidad</button>
+            <button data-v="envios">Envíos</button>
+            <button data-v="gastos">Gastos</button>
+            <button data-v="capital">Capital y bancos</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="periodo" id="periodo">
+            <button class="chip" data-p="mes">Este mes</button>
+            <button class="chip" data-p="mesant">Mes pasado</button>
+            <button class="chip" data-p="3m">Últimos 3 meses</button>
+            <button class="chip on" data-p="anio">Este año</button>
+            <button class="chip" data-p="anioant">Año pasado</button>
+            <button class="chip" data-p="todo">Todo</button>
+            <input class="inp" type="date" id="desde"> <span class="sep">a</span> <input class="inp" type="date" id="hasta">
+            <span class="info" id="info-periodo"></span>
+        </div>
+        <div class="avisos" id="avisos"></div>
+
+        <div id="cargando" class="cargando">Cargando información financiera…</div>
+
+        <!-- ═════ RESUMEN ═════ -->
+        <section class="vista on wrap" id="v-resumen"></section>
+        <!-- ═════ UTILIDAD ═════ -->
+        <section class="vista wrap" id="v-utilidad">
+            <div class="card">
+                <div class="card-cab">
+                    <div><div class="card-tit">Utilidad por artículo y agrupada</div><div class="card-sub">Venta − (costo del artículo + envío + combustible). Envío real cuando ya hay orden de entrega; si no, estimado por peso.</div></div>
+                    <div class="barra-ctl">
+                        <select class="inp" id="u-grupo">
+                            <option value="art">Por artículo</option><option value="pedido">Por pedido</option><option value="vendedor">Por vendedor</option>
+                            <option value="cliente">Por cliente</option><option value="tienda">Por tienda</option><option value="mes">Por mes</option>
+                        </select>
+                        <input class="inp" id="u-buscar" placeholder="Buscar…" style="width:180px">
+                        <label class="chk"><input type="checkbox" id="u-conprecio" checked> Solo con precio de venta</label>
+                        <button class="btn" onclick="exportarUtilidad()">Exportar CSV</button>
+                    </div>
+                </div>
+                <div class="tabla-wrap" id="u-tabla"></div>
+            </div>
+        </section>
+        <!-- ═════ ENVÍOS ═════ -->
+        <section class="vista wrap" id="v-envios"></section>
+        <!-- ═════ GASTOS ═════ -->
+        <section class="vista wrap" id="v-gastos"></section>
+        <!-- ═════ CAPITAL ═════ -->
+        <section class="vista wrap" id="v-capital"></section>
+    </div>
+</main>
+
+<script>
+    const usuario = JSON.parse(localStorage.getItem('ms_usuario') || 'null');
+    if (!usuario) window.location.href = '/login.html';
+    else if (!usuario.esAdmin) window.location.href = '/dashboard.html';
+
+    // ══════════ Utilidades ══════════
+    const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+    const L = (v, d = 2) => (v < 0 ? '-' : '') + 'L ' + Math.abs(v).toLocaleString('es-HN', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const L0 = v => L(v, 0);
+    const pct = (a, b) => b ? (a / b * 100).toFixed(1) + '%' : '—';
+    const clsU = v => v > 0.004 ? 'pos' : v < -0.004 ? 'neg' : '';
+    const hoy = () => new Date().toISOString().slice(0, 10);
+    const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const nomMes = k => { const [a, m] = k.split('-'); return MESES[+m - 1] + ' ' + a; };
+    const pl = (n, s, p) => `${n} ${n === 1 ? s : p}`;
+    const fFecha = f => f ? f.split('-').reverse().join('/') : '—';
+
+    let D = null;         // datos crudos
+    let LIN = [];         // líneas con costos calculados
+    let ORD = [];         // órdenes con reparto
+    let vista = 'resumen';
+
+    // ══════════ Periodo ══════════
+    function ponerPeriodo(p) {
+        const h = new Date(), y = h.getFullYear(), m = h.getMonth();
+        const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        let a, b = hoy();
+        if (p === 'mes') a = iso(new Date(y, m, 1));
+        else if (p === 'mesant') { a = iso(new Date(y, m - 1, 1)); b = iso(new Date(y, m, 0)); }
+        else if (p === '3m') a = iso(new Date(y, m - 2, 1));
+        else if (p === 'anio') a = `${y}-01-01`;
+        else if (p === 'anioant') { a = `${y - 1}-01-01`; b = `${y - 1}-12-31`; }
+        else { a = '2000-01-01'; }
+        document.getElementById('desde').value = a; document.getElementById('hasta').value = b;
+        document.querySelectorAll('#periodo .chip').forEach(c => c.classList.toggle('on', c.dataset.p === p));
+        pintar();
+    }
+    const enPeriodo = f => { if (!f) return false; const a = document.getElementById('desde').value, b = document.getElementById('hasta').value; return (!a || f >= a) && (!b || f <= b); };
+
+    // ══════════ Carga y repartos ══════════
+    async function cargar() {
+        try {
+            const r = await fetch('/api/finanzas/datos').then(x => x.json());
+            if (!r.ok) throw new Error(r.error || 'Error');
+            D = r;
+            if (r.avisos && r.avisos.length) { const a = document.getElementById('avisos'); a.style.display = 'block'; a.innerHTML = '<b>Algunas consultas fallaron:</b><br>' + r.avisos.map(esc).join('<br>'); }
+            repartir();
+            document.getElementById('cargando').style.display = 'none';
+            ponerPeriodo('anio');
+        } catch (e) { document.getElementById('cargando').textContent = 'No se pudo cargar: ' + e.message; }
+    }
+
+    // Reparto: Orden de entrega → trackings (por peso real) → artículos (por peso)
+    function repartir() {
+        const comb = new Map(D.combustible.map(c => [c.IdCombustible, num(c.Monto)]));
+        // combustible de cada orden: según su peso dentro de las órdenes del mismo registro de combustible
+        const pesoComb = new Map();
+        D.ordenes.forEach(o => { if (o.IdCombustible) pesoComb.set(o.IdCombustible, (pesoComb.get(o.IdCombustible) || 0) + num(o.PesoLb)); });
+        ORD = D.ordenes.map(o => {
+            const tot = pesoComb.get(o.IdCombustible) || 0;
+            const n = D.ordenes.filter(x => x.IdCombustible === o.IdCombustible).length || 1;
+            const c = o.IdCombustible ? (comb.get(o.IdCombustible) || 0) * (tot ? num(o.PesoLb) / tot : 1 / n) : 0;
+            return { ...o, Pagado: num(o.Pagado), PesoLb: num(o.PesoLb), comb: c, entradas: [] };
+        });
+        const ordM = new Map(ORD.map(o => [o.IdOrden, o]));
+        // entradas por orden y por tracking
+        const entSeg = new Map();
+        D.entradas.forEach(e => {
+            const o = e.IdOrden ? ordM.get(e.IdOrden) : null;
+            const x = { ...e, PesoCobrado: num(e.PesoCobrado), PesoReal: num(e.PesoReal), ValorReal: num(e.ValorReal), ValorCobrado: num(e.ValorCobrado), orden: o, comb: 0, lineas: [] };
+            if (o) o.entradas.push(x);
+            const prev = entSeg.get(e.IdSeguimiento);
+            if (!prev || (!prev.orden && o)) entSeg.set(e.IdSeguimiento, x);
+        });
+        ORD.forEach(o => {
+            const base = o.entradas.reduce((a, e) => a + (e.PesoReal || e.PesoCobrado), 0);
+            o.entradas.forEach(e => { e.comb = base ? o.comb * (e.PesoReal || e.PesoCobrado) / base : o.comb / o.entradas.length; });
+        });
+        // artículos por tracking
+        const porSeg = new Map();
+        D.lineas.forEach(l => { if (l.IdSeguimiento) { if (!porSeg.has(l.IdSeguimiento)) porSeg.set(l.IdSeguimiento, []); porSeg.get(l.IdSeguimiento).push(l); } });
+        LIN = D.lineas.map(l => {
+            const r = { ...l, Venta: num(l.Venta), CostoCompra: num(l.CostoCompra), PesoTotal: num(l.PesoTotal), EnvioEstimado: num(l.EnvioEstimado), Cant: num(l.Cant) || 1 };
+            const e = l.IdSeguimiento ? entSeg.get(l.IdSeguimiento) : null;
+            const hermanos = l.IdSeguimiento ? porSeg.get(l.IdSeguimiento) : [];
+            const pesoSeg = hermanos.reduce((a, h) => a + num(h.PesoTotal), 0);
+            const parte = pesoSeg ? r.PesoTotal / pesoSeg : 1 / (hermanos.length || 1);
+            if (e && e.orden && e.ValorReal > 0) { r.envio = e.ValorReal * parte; r.envioReal = true; r.comb = e.comb * parte; r.orden = e.orden; }
+            else { r.envio = r.EnvioEstimado; r.envioReal = false; r.comb = 0; r.orden = null; }
+            r.costo = r.CostoCompra + r.envio + r.comb;
+            r.util = r.Venta - r.costo;
+            if (e) e.lineas.push(r);
+            return r;
+        });
+    }
+
+    // ══════════ Pintar ══════════
+    function pintar() {
+        if (!D) return;
+        const a = document.getElementById('desde').value, b = document.getElementById('hasta').value;
+        document.getElementById('info-periodo').textContent = a === '2000-01-01' ? 'Todo el historial' : `Del ${fFecha(a)} al ${fFecha(b)} · ventas por fecha del pedido`;
+        ({ resumen: pResumen, utilidad: pUtilidad, envios: pEnvios, gastos: pGastos, capital: pCapital })[vista]();
+    }
+
+    function totales(lins) {
+        const t = { venta: 0, compra: 0, envio: 0, envioReal: 0, envioEst: 0, comb: 0, util: 0, n: 0, nEst: 0 };
+        lins.forEach(l => { t.venta += l.Venta; t.compra += l.CostoCompra; t.envio += l.envio; t.comb += l.comb; t.util += l.util; t.n++;
+            if (l.envioReal) t.envioReal += l.envio; else { t.envioEst += l.envio; t.nEst++; } });
+        t.costo = t.compra + t.envio + t.comb;
+        return t;
+    }
+
+    // ── RESUMEN ──
+    function pResumen() {
+        const per = LIN.filter(l => enPeriodo(l.Fecha));
+        const con = per.filter(l => l.Venta > 0), sin = per.filter(l => !(l.Venta > 0));
+        const t = totales(con);
+        const otros = D.otros.filter(g => enPeriodo(g.Fecha)).reduce((s, g) => s + num(g.Monto), 0);
+        const cobrado = D.cobros.filter(c => enPeriodo(c.Fecha)).reduce((s, c) => s + num(c.Monto), 0);
+        const neta = t.util - otros;
+        const costoSin = sin.reduce((s, l) => s + l.CostoCompra + l.envio + l.comb, 0);
+        const v = document.getElementById('v-resumen');
+        v.innerHTML = `
+        <div class="kpis">
+            <div class="kpi"><div class="kpi-tit">Ventas</div><div class="kpi-val">${L0(t.venta)}</div><div class="kpi-pie">${pl(t.n, 'artículo', 'artículos')} con precio</div></div>
+            <div class="kpi"><div class="kpi-tit">Costo total</div><div class="kpi-val">${L0(t.costo)}</div><div class="kpi-pie">Artículos ${L0(t.compra)} · envío ${L0(t.envio)}</div></div>
+            <div class="kpi"><div class="kpi-tit">Utilidad bruta</div><div class="kpi-val ${clsU(t.util)}">${L0(t.util)}</div><div class="kpi-pie">Margen ${pct(t.util, t.venta)}</div></div>
+            <div class="kpi destacado"><div class="kpi-tit">Utilidad neta</div><div class="kpi-val ${clsU(neta)}">${L0(neta)}</div><div class="kpi-pie">Después de otros gastos · margen ${pct(neta, t.venta)}</div></div>
+        </div>
+        <div class="grid2">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Estado de resultados</div><div class="card-sub">Artículos con precio de venta en el período</div></div></div>
+                <table class="er">
+                    <tr><td>Ventas</td><td class="num">${L(t.venta)}</td></tr>
+                    <tr class="menos"><td>Costo de los artículos</td><td class="num">-${L(t.compra)}</td></tr>
+                    <tr class="menos"><td>Envío del casillero</td><td class="num">-${L(t.envio)}</td></tr>
+                    <tr class="sub"><td style="padding-left:26px">Real ${L(t.envioReal)} · estimado ${L(t.envioEst)}${t.nEst ? ` (${pl(t.nEst, 'artículo', 'artículos')} sin orden de entrega)` : ''}</td><td></td></tr>
+                    <tr class="menos"><td>Combustible asignado</td><td class="num">-${L(t.comb)}</td></tr>
+                    <tr class="tot"><td>Utilidad bruta</td><td class="num ${clsU(t.util)}">${L(t.util)}</td></tr>
+                    <tr class="menos"><td>Otros gastos del período</td><td class="num">-${L(otros)}</td></tr>
+                    <tr class="tot"><td>Utilidad neta</td><td class="num ${clsU(neta)}">${L(neta)}</td></tr>
+                    <tr><td style="color:var(--tenue)">Cobrado a clientes en el período</td><td class="num" style="color:var(--tenue)">${L(cobrado)}</td></tr>
+                </table>
+                <div class="card-cuerpo" style="padding-top:4px">
+                    ${sin.length ? `<div class="nota"><b>${pl(sin.length, 'artículo del período todavía sin precio de venta.', 'artículos del período todavía sin precio de venta.')}</b> Su costo (${L(costoSin)}) no entra en este cálculo hasta que tengan precio.</div>` : ''}
+                    <div class="nota">Los pagos a cuentas por pagar y los puntos todavía <b>no se restan</b>. Están en la pestaña Gastos para que definamos cómo tratarlos.</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Ventas y utilidad por mes</div><div class="card-sub">Por fecha del pedido · pasá el cursor sobre las barras</div></div></div>
+                <div class="card-cuerpo">
+                    <div class="leyenda"><span><i style="background:#3987e5"></i>Ventas</span><span><i style="background:#199e70"></i>Utilidad bruta</span></div>
+                    <div class="graf" id="graf"><svg id="graf-svg" role="img" aria-label="Ventas y utilidad bruta por mes"></svg><div class="tip" id="graf-tip"></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Detalle mensual</div><div class="card-sub">Los mismos datos del gráfico</div></div></div>
+            <div class="tabla-wrap" id="tabla-mes"></div>
+        </div>`;
+        // meses
+        const mm = new Map();
+        con.forEach(l => { const k = l.Fecha.slice(0, 7); if (!mm.has(k)) mm.set(k, []); mm.get(k).push(l); });
+        const meses = [...mm.keys()].sort().map(k => ({ k, ...totales(mm.get(k)) }));
+        grafico(meses);
+        document.getElementById('tabla-mes').innerHTML = meses.length ? `<table><thead><tr><th>Mes</th><th class="num">Artículos</th><th class="num">Ventas</th><th class="num">Costo artículos</th><th class="num">Envío</th><th class="num">Combustible</th><th class="num">Utilidad</th><th class="num">Margen</th></tr></thead><tbody>
+            ${meses.slice().reverse().map(m => `<tr><td>${nomMes(m.k)}</td><td class="num">${m.n}</td><td class="num">${L(m.venta)}</td><td class="num">${L(m.compra)}</td><td class="num">${L(m.envio)}${m.nEst ? '<span class="tag est">est.</span>' : ''}</td><td class="num">${L(m.comb)}</td><td class="num ${clsU(m.util)}">${L(m.util)}</td><td class="num">${pct(m.util, m.venta)}</td></tr>`).join('')}
+            </tbody></table>` : '<div class="vacio">Sin ventas en el período</div>';
+    }
+
+    function grafico(meses) {
+        const svg = document.getElementById('graf-svg'), tip = document.getElementById('graf-tip');
+        if (!meses.length) { svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6b7280" font-size="13">Sin ventas en el período</text>'; return; }
+        meses = meses.slice(-12);
+        const W = svg.clientWidth || 600, H = 260, ml = 58, mr = 8, mt = 10, mb = 26;
+        const max = Math.max(...meses.map(m => Math.max(m.venta, m.util)), 1), min = Math.min(0, ...meses.map(m => m.util));
+        const paso = (() => { const r = (max - min) / 4, p = Math.pow(10, Math.floor(Math.log10(r))); return [1, 2, 2.5, 5, 10].map(x => x * p).find(x => x >= r); })();
+        const top = Math.ceil(max / paso) * paso, bot = Math.floor(min / paso) * paso;
+        const y = v => mt + (top - v) / (top - bot) * (H - mt - mb);
+        const gw = (W - ml - mr) / meses.length, bw = Math.max(4, Math.min(22, gw * 0.3));
+        let s = '';
+        for (let v = bot; v <= top + 0.001; v += paso) s += `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 0 ? '#2a3342' : '#161c25'}"/><text x="${ml - 8}" y="${y(v) + 4}" text-anchor="end" fill="#6b7280" font-size="11">${v >= 1000 || v <= -1000 ? (v / 1000).toLocaleString('es-HN') + 'k' : v}</text>`;
+        const barra = (x, v, c) => { const y0 = y(0), y1 = y(v), h = Math.abs(y1 - y0); if (h < 0.5) return ''; const r = Math.min(4, h, bw / 2);
+            return v >= 0 ? `<path d="M${x},${y0} V${y1 + r} Q${x},${y1} ${x + r},${y1} H${x + bw - r} Q${x + bw},${y1} ${x + bw},${y1 + r} V${y0} Z" fill="${c}"/>`
+                          : `<path d="M${x},${y0} V${y1 - r} Q${x},${y1} ${x + r},${y1} H${x + bw - r} Q${x + bw},${y1} ${x + bw},${y1 - r} V${y0} Z" fill="${c}"/>`; };
+        meses.forEach((m, i) => {
+            const cx = ml + gw * i + gw / 2;
+            s += barra(cx - bw - 1, m.venta, '#3987e5') + barra(cx + 1, m.util, '#199e70');
+            s += `<text x="${cx}" y="${H - 8}" text-anchor="middle" fill="#6b7280" font-size="11">${nomMes(m.k).split(' ')[0]}</text>`;
+            s += `<rect x="${ml + gw * i}" y="${mt}" width="${gw}" height="${H - mt - mb}" fill="transparent" data-i="${i}" class="hit"/>`;
+        });
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = s;
+        svg.querySelectorAll('.hit').forEach(r => {
+            r.addEventListener('mousemove', ev => { const m = meses[+r.dataset.i]; const g = document.getElementById('graf').getBoundingClientRect();
+                tip.innerHTML = `<b>${nomMes(m.k)}</b><br>Ventas ${L0(m.venta)}<br>Utilidad ${L0(m.util)} · ${pct(m.util, m.venta)}<br><span style="color:#6b7280">${m.n} artículos</span>`;
+                tip.style.display = 'block'; let x = ev.clientX - g.left + 12; if (x + 170 > g.width) x -= 190; tip.style.left = x + 'px'; tip.style.top = (ev.clientY - g.top - 10) + 'px';
+                r.setAttribute('fill', 'rgba(255,255,255,.03)'); });
+            r.addEventListener('mouseleave', () => { tip.style.display = 'none'; r.setAttribute('fill', 'transparent'); });
+        });
+    }
+
+    // ── UTILIDAD ──
+    let uOrden = { k: 'util', dir: -1 }, uFilas = [];
+    function pUtilidad() {
+        const g = document.getElementById('u-grupo').value, q = document.getElementById('u-buscar').value.trim().toLowerCase();
+        const soloCon = document.getElementById('u-conprecio').checked;
+        let lins = LIN.filter(l => enPeriodo(l.Fecha) && (!soloCon || l.Venta > 0));
+        const clave = { pedido: l => l.NumeroPedido || '—', vendedor: l => l.Vendedor || 'Sin vendedor', cliente: l => l.Cliente || 'Sin cliente', tienda: l => l.Tienda || '—', mes: l => l.Fecha.slice(0, 7) }[g];
+        if (g === 'art') {
+            uFilas = lins.map(l => ({ nombre: l.NombreArticulo || '—', sub: [l.TallaColor, l.NumeroPedido, l.Cliente].filter(Boolean).join(' · '), n: l.Cant, venta: l.Venta, compra: l.CostoCompra, envio: l.envio, comb: l.comb, util: l.util, est: !l.envioReal, fecha: l.Fecha }));
+        } else {
+            const m = new Map();
+            lins.forEach(l => { const k = clave(l); if (!m.has(k)) m.set(k, []); m.get(k).push(l); });
+            uFilas = [...m.entries()].map(([k, ls]) => { const t = totales(ls); return { nombre: g === 'mes' ? nomMes(k) : k, orden: k, sub: g === 'pedido' ? [ls[0].Tienda, fFecha(ls[0].Fecha)].join(' · ') : '', n: ls.reduce((a, l) => a + l.Cant, 0), venta: t.venta, compra: t.compra, envio: t.envio, comb: t.comb, util: t.util, est: t.nEst > 0, fecha: ls[0].Fecha }; });
+        }
+        if (q) uFilas = uFilas.filter(f => (f.nombre + ' ' + f.sub).toLowerCase().includes(q));
+        const k = uOrden.k;
+        uFilas.sort((a, b) => { const x = k === 'nombre' ? (g === 'mes' ? a.orden : a.nombre) : a[k], y = k === 'nombre' ? (g === 'mes' ? b.orden : b.nombre) : b[k]; return (typeof x === 'string' ? x.localeCompare(y) : x - y) * uOrden.dir; });
+        const t = uFilas.reduce((s, f) => { ['n', 'venta', 'compra', 'envio', 'comb', 'util'].forEach(c => s[c] += f[c]); return s; }, { n: 0, venta: 0, compra: 0, envio: 0, comb: 0, util: 0 });
+        const th = (c, txt, cls = 'num') => `<th class="ord ${cls}" onclick="ordenarU('${c}')">${txt}${uOrden.k === c ? (uOrden.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+        const MAX = 500;
+        document.getElementById('u-tabla').innerHTML = uFilas.length ? `<table><thead><tr>${th('nombre', { art: 'Artículo', pedido: 'Pedido', vendedor: 'Vendedor', cliente: 'Cliente', tienda: 'Tienda', mes: 'Mes' }[g], '')}${th('n', 'Unid.')}${th('venta', 'Venta')}${th('compra', 'Costo artículo')}${th('envio', 'Envío')}${th('comb', 'Combustible')}${th('util', 'Utilidad')}<th class="num">Margen</th></tr></thead><tbody>
+            ${uFilas.slice(0, MAX).map(f => `<tr><td>${esc(f.nombre)}${f.sub ? `<div class="meta">${esc(f.sub)}</div>` : ''}</td><td class="num">${f.n}</td><td class="num">${L(f.venta)}</td><td class="num">${L(f.compra)}</td><td class="num">${L(f.envio)}${f.est ? '<span class="tag est" title="Envío estimado por peso: todavía no hay orden de entrega">est.</span>' : ''}</td><td class="num">${L(f.comb)}</td><td class="num ${clsU(f.util)}">${L(f.util)}</td><td class="num">${f.venta ? pct(f.util, f.venta) : '—'}</td></tr>`).join('')}
+            </tbody><tfoot><tr><td>Total · ${uFilas.length} ${g === 'art' ? 'artículos' : 'grupos'}${uFilas.length > MAX ? ` (se muestran ${MAX})` : ''}</td><td class="num">${t.n}</td><td class="num">${L(t.venta)}</td><td class="num">${L(t.compra)}</td><td class="num">${L(t.envio)}</td><td class="num">${L(t.comb)}</td><td class="num ${clsU(t.util)}">${L(t.util)}</td><td class="num">${pct(t.util, t.venta)}</td></tr></tfoot></table>`
+            : '<div class="vacio">No hay datos con estos filtros</div>';
+    }
+    function ordenarU(k) { uOrden = { k, dir: uOrden.k === k ? -uOrden.dir : (k === 'nombre' ? 1 : -1) }; pUtilidad(); }
+    function exportarUtilidad() {
+        const filas = [['Nombre', 'Detalle', 'Unidades', 'Venta', 'Costo articulo', 'Envio', 'Envio estimado', 'Combustible', 'Utilidad']]
+            .concat(uFilas.map(f => [f.nombre, f.sub, f.n, f.venta.toFixed(2), f.compra.toFixed(2), f.envio.toFixed(2), f.est ? 'Si' : 'No', f.comb.toFixed(2), f.util.toFixed(2)]));
+        const csv = '﻿' + filas.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = `utilidad_${document.getElementById('u-grupo').value}_${hoy()}.csv`; a.click();
+    }
+
+    // ── ENVÍOS ──
+    const abiertos = new Set();
+    function pEnvios() {
+        const ords = ORD.filter(o => enPeriodo(o.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const sinOrden = LIN.filter(l => enPeriodo(l.Fecha) && l.IdSeguimiento && !l.envioReal);
+        const sinTrack = LIN.filter(l => enPeriodo(l.Fecha) && !l.IdSeguimiento);
+        const t = ords.reduce((s, o) => { s.pag += o.Pagado; s.lb += o.PesoLb; s.comb += o.comb; s.cob += o.entradas.reduce((a, e) => a + e.PesoCobrado, 0) / 454; return s; }, { pag: 0, lb: 0, comb: 0, cob: 0 });
+        document.getElementById('v-envios').innerHTML = `
+        <div class="kpis">
+            <div class="kpi"><div class="kpi-tit">Pagado al casillero</div><div class="kpi-val">${L0(t.pag)}</div><div class="kpi-pie">${pl(ords.length, 'orden de entrega', 'órdenes de entrega')}</div></div>
+            <div class="kpi"><div class="kpi-tit">Peso real</div><div class="kpi-val">${t.lb.toLocaleString('es-HN', { maximumFractionDigits: 1 })} lb</div><div class="kpi-pie">${t.lb ? L(t.pag / t.lb) + ' por libra' : '—'}</div></div>
+            <div class="kpi"><div class="kpi-tit">Combustible asignado</div><div class="kpi-val">${L0(t.comb)}</div><div class="kpi-pie">Repartido por peso de cada orden</div></div>
+            <div class="kpi"><div class="kpi-tit">Pendiente de orden</div><div class="kpi-val amb">${L0(sinOrden.reduce((a, l) => a + l.envio, 0))}</div><div class="kpi-pie">${pl(sinOrden.length, 'artículo', 'artículos')} con envío estimado${sinTrack.length ? ` · ${sinTrack.length} sin tracking` : ''}</div></div>
+        </div>
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Órdenes de entrega</div><div class="card-sub">El pago de cada orden se reparte entre sus trackings según el peso real, y dentro de cada tracking entre sus artículos según su peso. Clic en una orden para ver el reparto.</div></div></div>
+            <div class="tabla-wrap">${ords.length ? `<table><thead><tr><th>Orden</th><th>Fecha</th><th class="num">Trackings</th><th class="num">Peso real</th><th class="num">Peso cobrado</th><th class="num">Pagado</th><th class="num">L por lb</th><th class="num">Combustible</th><th class="num">Artículos</th></tr></thead><tbody>
+            ${ords.map(o => { const arts = o.entradas.reduce((a, e) => a + e.lineas.length, 0), cob = o.entradas.reduce((a, e) => a + e.PesoCobrado, 0) / 454; const ab = abiertos.has(o.IdOrden);
+                return `<tr class="exp${ab ? ' abierto' : ''}" onclick="abrirOrden(${o.IdOrden})"><td><b style="color:#fff">${esc(o.NumeroOrden || o.IdOrden)}</b>${o.Cuenta ? `<div class="meta">${esc(o.Cuenta)}</div>` : ''}</td><td>${fFecha(o.Fecha)}</td><td class="num">${o.entradas.length}</td><td class="num">${o.PesoLb.toFixed(2)} lb</td><td class="num">${cob.toFixed(2)} lb</td><td class="num">${L(o.Pagado)}</td><td class="num">${o.PesoLb ? L(o.Pagado / o.PesoLb) : '—'}</td><td class="num">${L(o.comb)}</td><td class="num">${arts}</td></tr>
+                ${ab ? `<tr class="detalle"><td colspan="9">${detalleOrden(o)}</td></tr>` : ''}`; }).join('')}
+            </tbody></table>` : '<div class="vacio">No hay órdenes de entrega en el período</div>'}</div>
+        </div>`;
+    }
+    function abrirOrden(id) { abiertos.has(id) ? abiertos.delete(id) : abiertos.add(id); pEnvios(); }
+    function detalleOrden(o) {
+        return `<table><thead><tr><th style="padding-left:30px">Tracking / artículo</th><th class="num">Peso cobrado</th><th class="num">Peso real</th><th class="num">Envío real</th><th class="num">Combustible</th><th class="num">Venta</th><th class="num">Utilidad</th></tr></thead><tbody>
+        ${o.entradas.map(e => `<tr><td style="padding-left:30px;color:#fff;font-weight:700">${esc(e.Seguimiento || 'Tracking ' + e.IdSeguimiento)}${e.Casillero ? `<span class="tag gris">${esc(e.Casillero)}</span>` : ''}</td><td class="num">${(e.PesoCobrado / 454).toFixed(2)} lb</td><td class="num">${(e.PesoReal / 454).toFixed(2)} lb</td><td class="num">${L(e.ValorReal)}</td><td class="num">${L(e.comb)}</td><td></td><td></td></tr>
+            ${e.lineas.map(l => `<tr><td style="padding-left:46px">${esc(l.NombreArticulo || '—')}${l.Cant > 1 ? ` <span class="tag gris">×${l.Cant}</span>` : ''}<div class="meta">${esc([l.NumeroPedido, l.Cliente].filter(Boolean).join(' · '))}</div></td><td class="num">${l.PesoTotal} g</td><td></td><td class="num">${L(l.envio)}</td><td class="num">${L(l.comb)}</td><td class="num">${l.Venta ? L(l.Venta) : '<span style="color:var(--mudo)">sin precio</span>'}</td><td class="num ${l.Venta ? clsU(l.util) : ''}">${l.Venta ? L(l.util) : '—'}</td></tr>`).join('')}`).join('') || '<tr><td colspan="7" class="vacio">Esta orden no tiene trackings asociados</td></tr>'}
+        </tbody></table>`;
+    }
+
+    // ── GASTOS ──
+    function pGastos() {
+        const comb = D.combustible.filter(c => enPeriodo(c.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const otros = D.otros.filter(g => enPeriodo(g.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const trans = D.transacciones.filter(g => enPeriodo(g.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const ptos = D.puntos.filter(p => enPeriodo(p.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const sum = (a, k) => a.reduce((s, x) => s + num(x[k]), 0);
+        const ordenesDe = id => ORD.filter(o => o.IdCombustible === id).length;
+        const grupo = (arr, k, v) => { const m = new Map(); arr.forEach(x => { const n = x[k] || 'Sin nombre'; m.set(n, (m.get(n) || 0) + num(x[v])); }); return [...m.entries()].sort((a, b) => b[1] - a[1]); };
+        const gOtros = grupo(otros, 'NombreGasto', 'Monto'), gTrans = grupo(trans, 'CuentaPorPagar', 'Valor');
+        document.getElementById('v-gastos').innerHTML = `
+        <div class="kpis">
+            <div class="kpi"><div class="kpi-tit">Combustible</div><div class="kpi-val">${L0(sum(comb, 'Monto'))}</div><div class="kpi-pie">${comb.length} registros · ${comb.filter(c => !c.Cancelado).length} sin cancelar</div></div>
+            <div class="kpi"><div class="kpi-tit">Otros gastos</div><div class="kpi-val">${L0(sum(otros, 'Monto'))}</div><div class="kpi-pie">${otros.length} registros · se restan de la utilidad</div></div>
+            <div class="kpi"><div class="kpi-tit">Cuentas por pagar</div><div class="kpi-val">${L0(sum(trans, 'Valor'))}</div><div class="kpi-pie">${trans.length} pagos · no se restan todavía</div></div>
+            <div class="kpi"><div class="kpi-tit">Puntos</div><div class="kpi-val">${ptos.length}</div><div class="kpi-pie">pedidos con puntos registrados</div></div>
+        </div>
+        <div class="grid2">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Otros gastos por concepto</div><div class="card-sub">Período seleccionado</div></div></div>
+                ${gOtros.length ? `<table><tbody>${gOtros.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(otros, 'Monto'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin gastos en el período</div>'}
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Combustible</div><div class="card-sub">Se reparte entre las órdenes de entrega de la misma fecha, según su peso</div></div></div>
+                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${comb.length ? `<table><thead><tr><th>Fecha</th><th>Detalle</th><th class="num">Órdenes</th><th class="num">Monto</th><th>Estado</th></tr></thead><tbody>
+                ${comb.map(c => `<tr><td>${fFecha(c.Fecha)}</td><td>${esc(c.Observaciones || '—')}<div class="meta">${esc([c.Vendedor, c.Cuenta].filter(Boolean).join(' · '))}</div></td><td class="num">${ordenesDe(c.IdCombustible)}</td><td class="num">${num(c.Monto) ? L(c.Monto) : '<span class="amb">sin monto</span>'}</td><td>${c.Cancelado ? '<span class="tag real">Pagado</span>' : '<span class="tag est">Pendiente</span>'}</td></tr>`).join('')}
+                </tbody></table>` : '<div class="vacio">Sin combustible en el período</div>'}</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-cab"><div><div class="card-tit">Detalle de otros gastos</div></div></div>
+            <div class="tabla-wrap">${otros.length ? `<table><thead><tr><th>Fecha</th><th>Gasto</th><th>Detalle</th><th>Cuenta</th><th class="num">Monto</th></tr></thead><tbody>
+            ${otros.map(g => `<tr><td>${fFecha(g.Fecha)}</td><td>${esc(g.NombreGasto || '—')}</td><td>${esc([g.Empresa, g.Observaciones, g.Referencia].filter(Boolean).join(' · ') || '—')}</td><td>${esc(g.Cuenta || '—')}</td><td class="num">${L(num(g.Monto))}</td></tr>`).join('')}
+            </tbody></table>` : '<div class="vacio">Sin gastos en el período</div>'}</div>
+        </div>
+        <div class="grid2">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Pagos a cuentas por pagar</div><div class="card-sub">Decidí si son gasto del negocio, retiro de socio o pago de deuda</div></div></div>
+                ${gTrans.length ? `<table><tbody>${gTrans.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="num">${L(v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${L(sum(trans, 'Valor'))}</td></tr></tfoot></table>` : '<div class="vacio">Sin pagos en el período</div>'}
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Puntos usados en pedidos</div><div class="card-sub">Falta confirmar si el valor es por punto o total</div></div></div>
+                <div class="tabla-wrap" style="max-height:300px;overflow-y:auto">${ptos.length ? `<table><thead><tr><th>Fecha</th><th>Pedido</th><th class="num">Puntos</th><th class="num">Valor ($)</th></tr></thead><tbody>
+                ${ptos.map(p => `<tr><td>${fFecha(p.Fecha)}</td><td>${esc(p.NumeroPedido)}<div class="meta">${esc(p.Tienda || '')}</div></td><td class="num">${num(p.Puntos).toLocaleString('es-HN')}</td><td class="num">$${num(p.ValorPunto).toFixed(2)}</td></tr>`).join('')}
+                </tbody></table>` : '<div class="vacio">Sin puntos en el período</div>'}</div>
+            </div>
+        </div>`;
+    }
+
+    // ── CAPITAL Y BANCOS ──
+    let bancosCache = {};
+    async function pCapital() {
+        const cap = D.capital.filter(c => enPeriodo(c.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const socios = new Map();
+        D.capital.forEach(c => { const k = c.Socio || 'Sin socio'; if (!socios.has(k)) socios.set(k, { total: 0, per: 0, n: 0, ult: '' }); const s = socios.get(k); s.total += num(c.Valor); s.n++; if (enPeriodo(c.Fecha)) s.per += num(c.Valor); if (c.Fecha > s.ult) s.ult = c.Fecha; });
+        const totCap = [...socios.values()].reduce((a, s) => a + s.total, 0);
+        const movs = D.movimientos.filter(m => enPeriodo(m.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const v = document.getElementById('v-capital');
+        v.innerHTML = `
+        <div class="grid2">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Aportes de capital por socio</div><div class="card-sub">Total histórico y lo aportado en el período</div></div></div>
+                ${socios.size ? `<table><thead><tr><th>Socio</th><th class="num">Aportes</th><th class="num">En el período</th><th class="num">Total</th><th class="num">Participación</th></tr></thead><tbody>
+                ${[...socios.entries()].sort((a, b) => b[1].total - a[1].total).map(([n, s]) => `<tr><td>${esc(n)}<div class="meta">Último ${fFecha(s.ult)}</div></td><td class="num">${s.n}</td><td class="num">${L(s.per)}</td><td class="num">${L(s.total)}</td><td class="num">${pct(s.total, totCap)}</td></tr>`).join('')}
+                </tbody><tfoot><tr><td>Total</td><td></td><td class="num">${L(cap.reduce((a, c) => a + num(c.Valor), 0))}</td><td class="num">${L(totCap)}</td><td></td></tr></tfoot></table>` : '<div class="vacio">Sin aportes registrados</div>'}
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Cuentas bancarias</div><div class="card-sub">Movimiento del período y saldo calculado del historial</div></div></div>
+                <div class="tabla-wrap" id="bancos"><div class="vacio">Cargando cuentas…</div></div>
+            </div>
+        </div>
+        <div class="grid2">
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Aportes del período</div></div></div>
+                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${cap.length ? `<table><thead><tr><th>Fecha</th><th>Socio</th><th>Cuenta</th><th class="num">Monto</th></tr></thead><tbody>
+                ${cap.map(c => `<tr><td>${fFecha(c.Fecha)}</td><td>${esc(c.Socio || '—')}<div class="meta">${esc([c.Metodo, c.Referencia].filter(Boolean).join(' · '))}</div></td><td>${esc(c.Cuenta || '—')}</td><td class="num">${L(num(c.Valor))}</td></tr>`).join('')}
+                </tbody></table>` : '<div class="vacio">Sin aportes en el período</div>'}</div>
+            </div>
+            <div class="card">
+                <div class="card-cab"><div><div class="card-tit">Movimientos de cuenta</div><div class="card-sub">Ajustes y transferencias registrados</div></div></div>
+                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${movs.length ? `<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Detalle</th><th class="num">Valor</th></tr></thead><tbody>
+                ${movs.map(m => `<tr><td>${fFecha(m.Fecha)}</td><td>${esc(m.Cuenta || '—')}</td><td>${esc([m.Observaciones, m.NumeroReferencia].filter(Boolean).join(' · ') || '—')}</td><td class="num ${clsU(num(m.Valor))}">${L(num(m.Valor))}</td></tr>`).join('')}
+                </tbody></table>` : '<div class="vacio">Sin movimientos en el período</div>'}</div>
+            </div>
+        </div>
+        <div class="nota">El saldo bancario lo calcula el procedimiento <b>Se_ResumenCuentaBancos</b>: suma aportes, cobros y movimientos, y resta compras, órdenes de entrega, otros gastos y pagos a cuentas por pagar. <b>El combustible no está incluido</b> en ese cálculo; avisame si debe restarse de la cuenta.</div>`;
+        const a = document.getElementById('desde').value, b = document.getElementById('hasta').value, k = a + '|' + b;
+        try {
+            const [per, hist] = await Promise.all([
+                bancosCache[k] || fetch(`/api/finanzas/bancos?desde=${a}&hasta=${b}`).then(r => r.json()),
+                bancosCache.hist || fetch(`/api/finanzas/bancos?desde=2000-01-01&hasta=${hoy()}`).then(r => r.json())
+            ]);
+            bancosCache[k] = per; bancosCache.hist = hist;
+            if (vista !== 'capital') return;
+            if (!per.ok || !hist.ok) throw new Error(per.error || hist.error);
+            const hm = new Map(hist.data.map(x => [x.IdCuentaBanco, x]));
+            const t = per.data.reduce((s, x) => { s.i += num(x.TotalIngresos); s.e += num(x.TotalEgresos); s.s += num((hm.get(x.IdCuentaBanco) || {}).Saldo); return s; }, { i: 0, e: 0, s: 0 });
+            document.getElementById('bancos').innerHTML = `<table><thead><tr><th>Cuenta</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th></tr></thead><tbody>
+            ${per.data.map(x => { const sal = num((hm.get(x.IdCuentaBanco) || {}).Saldo); return `<tr><td>${esc(x.NombreCuenta || '—')}<div class="meta">${esc([x.Banco, x.NumeroCuenta].filter(Boolean).join(' · '))}</div></td><td class="num pos">${L(num(x.TotalIngresos))}</td><td class="num neg">${L(num(x.TotalEgresos))}</td><td class="num ${clsU(sal)}">${L(sal)}</td></tr>`; }).join('')}
+            </tbody><tfoot><tr><td>Total</td><td class="num">${L(t.i)}</td><td class="num">${L(t.e)}</td><td class="num">${L(t.s)}</td></tr></tfoot></table>`;
+        } catch (e) { const el = document.getElementById('bancos'); if (el) el.innerHTML = `<div class="vacio">No se pudo cargar: ${esc(e.message)}</div>`; }
+    }
+
+    // ══════════ Eventos ══════════
+    document.getElementById('tabs').addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        vista = b.dataset.v;
+        document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+        document.querySelectorAll('.vista').forEach(x => x.classList.toggle('on', x.id === 'v-' + vista));
+        try { localStorage.setItem('ms_fin_vista', vista); } catch (_) {}
+        pintar();
+    });
+    document.getElementById('periodo').addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) ponerPeriodo(c.dataset.p); });
+    ['desde', 'hasta'].forEach(id => document.getElementById(id).addEventListener('change', () => { document.querySelectorAll('#periodo .chip').forEach(c => c.classList.remove('on')); pintar(); }));
+    ['u-grupo', 'u-conprecio'].forEach(id => document.getElementById(id).addEventListener('change', () => { uOrden = { k: 'util', dir: -1 }; pUtilidad(); }));
+    document.getElementById('u-buscar').addEventListener('input', pUtilidad);
+    window.addEventListener('resize', () => { if (vista === 'resumen') pintar(); });
+    try { const v = localStorage.getItem('ms_fin_vista'); if (v && document.querySelector(`#tabs [data-v="${v}"]`)) document.querySelector(`#tabs [data-v="${v}"]`).click(); } catch (_) {}
+    cargar();
+</script>
+<script src="/assets/sidebar.js"></script>
+</body>
+</html>

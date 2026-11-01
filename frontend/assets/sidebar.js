@@ -39,6 +39,7 @@
       items: [
         { href: '/asignar-vendedor.html', texto: 'Asignar vendedores', solo: true, badge: null, svg: '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>' },
         { href: '/catalogo.html', texto: 'Catálogo de artículos', solo: false, badge: null, svg: '<path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>' },
+        { href: '/finanzas.html', texto: 'Finanzas', solo: true, badge: null, svg: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-6"/>' },
         { href: '/cuentas.html', texto: 'Cuentas bancarias', solo: false, badge: null, svg: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="8" y1="15" x2="12" y2="15"/>' }
       ]
     }
