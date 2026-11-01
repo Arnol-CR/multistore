@@ -179,7 +179,7 @@
         </div>
 
         <div class="toolbar">
-            <input class="inp" id="buscar" style="flex:1;min-width:220px" placeholder="Buscar artículo, cliente, N° de pedido…" oninput="render()">
+            <input class="inp" id="buscar" style="flex:1;min-width:320px" placeholder="Buscar artículo, descripción, talla, cliente o pedido…" oninput="render()">
             <select class="inp" id="f-pedido" onchange="cambiarFiltro()" style="max-width:220px" title="Filtrar por pedido (opcional)"><option value="">Todos los pedidos</option></select>
             <label class="chk"><input type="checkbox" id="f-sin" checked onchange="cambiarFiltro()"> Solo sin precio</label>
             <label class="chk"><input type="checkbox" id="f-agrupar" checked onchange="cambiarFiltro()"> Agrupar por cliente</label>
@@ -340,8 +340,9 @@
             if (mios && p.IdVendedor !== usuario.id) return false;
             if (fVend === 'sin' ? p.IdVendedor : (fVend && String(p.IdVendedor) !== fVend)) return false;
             if (!q) return true;
-            return [p.NombreArticulo, p.DescripcionArticulo, p.NombreCliente, p.NoPedidoAplicacion, p.NumeroPedido, p.TallaColor, p.CodigoArticulo]
-                .some(x => norm(x).includes(q));
+            // cada palabra puede estar en cualquier campo: "vestido rojo" encuentra Vestido · Rojo / 2-3Y
+            const texto = norm([p.NombreArticulo, p.DescripcionArticulo, p.NombreCliente, p.NoPedidoAplicacion, p.NumeroPedido, p.TallaColor, p.CodigoArticulo, p.NombreEmpresa, p.NombreVendedor].join(' '));
+            return q.split(/\s+/).every(w => texto.includes(w));
         });
     }
 

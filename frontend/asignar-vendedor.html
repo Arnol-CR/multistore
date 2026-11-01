@@ -181,7 +181,7 @@
 
             <div>
                 <div class="toolbar">
-                    <input class="inp" id="buscar" style="flex:1;min-width:220px" placeholder="Buscar artículo, cliente, N° de pedido…" oninput="render()">
+                    <input class="inp" id="buscar" style="flex:1;min-width:320px" placeholder="Buscar artículo, descripción, talla, cliente o pedido…" oninput="render()">
                     <select class="inp" id="f-estado" onchange="render()">
                         <option value="sin">Sin vendedor</option>
                         <option value="todos">Todos</option>
@@ -284,7 +284,9 @@
             if (est === 'con' && !p.IdVendedor) return false;
             if (ped && (p.NoPedidoAplicacion || p.NumeroPedido) !== ped) return false;
             if (!q) return true;
-            return [p.NombreArticulo, p.DescripcionArticulo, p.NombreCliente, p.NoPedidoAplicacion, p.NumeroPedido, p.TallaColor, p.CodigoArticulo].some(x => norm(x).includes(q));
+            // cada palabra puede estar en cualquier campo: "vestido rojo" encuentra Vestido · Rojo / 2-3Y
+            const texto = norm([p.NombreArticulo, p.DescripcionArticulo, p.NombreCliente, p.NoPedidoAplicacion, p.NumeroPedido, p.TallaColor, p.CodigoArticulo, p.NombreEmpresa, p.NombreVendedor].join(' '));
+            return q.split(/\s+/).every(w => texto.includes(w));
         });
     }
 
