@@ -642,7 +642,86 @@
         const r = tot ? [...m.values()].filter(x => x.v > 0).map(x => ({ ...x, p: x.v / tot })) : [];
         partCache.set(fecha, r); return r;
     }
-    let repPersonas = [];
+    let repPersonas = [], repFilas = [];
+    const repF = { vend: '', tienda: '', q: '' };
+    const n2 = v => Math.round(v * 100) / 100;
+    function filasDetalle() {
+        const q = nT(repF.q).split(/\s+/).filter(Boolean);
+        return repFilas.filter(f => (!repF.vend || (repF.vend === 'sin' ? !f.l.IdVendedor : String(f.l.IdVendedor) === repF.vend))
+            && (!repF.tienda || f.l.Tienda === repF.tienda)
+            && (!q.length || q.every(w => nT([f.l.NombreArticulo, f.l.NumeroPedido, f.l.Cliente, f.l.TallaColor, f.l.Tienda].join(' ')).includes(w))))
+            .sort((a, b) => b.l.Fecha.localeCompare(a.l.Fecha) || b.l.IdDetallePedido - a.l.IdDetallePedido);
+    }
+    function sumaDetalle(fs) {
+        return fs.reduce((a, f) => { a.cant += f.l.Cant; a.venta += f.l.Venta; a.compra += f.l.CostoCompra; a.envio += f.l.envio; a.comb += f.l.comb; a.pts += f.pts; a.gas += f.gas; a.costo += f.costo; a.util += f.util; a.com += f.com; a.div += f.div; return a; },
+            { cant: 0, venta: 0, compra: 0, envio: 0, comb: 0, pts: 0, gas: 0, costo: 0, util: 0, com: 0, div: 0 });
+    }
+    function pintarDetalle() {
+        const box = document.getElementById('rep-detalle'); if (!box) return;
+        const vends = [...new Map(repFilas.filter(f => f.l.IdVendedor).map(f => [String(f.l.IdVendedor), f.l.Vendedor])).entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+        const tiendas = [...new Set(repFilas.map(f => f.l.Tienda).filter(Boolean))].sort();
+        const fs = filasDetalle(), T = sumaDetalle(fs);
+        const persona = repF.vend && repF.vend !== 'sin' ? repPersonas.find(x => String(x.id) === repF.vend) : null;
+        const td = v => `<td class="num ${v < -0.004 ? 'neg' : ''}">${Math.abs(v) < 0.005 ? '<span style="color:var(--mudo)">—</span>' : L(v)}</td>`;
+        const MAX = 1000;
+        box.innerHTML = `
+            <div class="card-cab"><div><div class="card-tit">Detalle de costos por artículo</div><div class="card-sub">Costo total = artículo + envío real + combustible + puntos + otros gastos</div></div>
+                <div class="barra-ctl">
+                    <select class="inp" id="rd-vend" onchange="repF.vend = this.value; pintarDetalle()"><option value="">Todos los vendedores</option>${vends.map(([id, n]) => `<option value="${id}"${repF.vend === id ? ' selected' : ''}>${esc(n)}</option>`).join('')}<option value="sin"${repF.vend === 'sin' ? ' selected' : ''}>Sin vendedor</option></select>
+                    <select class="inp" id="rd-tienda" onchange="repF.tienda = this.value; pintarDetalle()"><option value="">Todas las tiendas</option>${tiendas.map(t => `<option${repF.tienda === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
+                    <input class="inp" id="rd-q" placeholder="Artículo, pedido o cliente…" value="${esc(repF.q)}" style="width:200px">
+                    <button class="btn prim" onclick="exportarExcel()">Exportar a Excel</button>
+                </div></div>
+            ${persona ? `<div class="kpis" style="padding:14px 16px 0;margin:0">
+                <div class="kpi"><div class="kpi-tit">Comisión de ${esc(persona.nombre.split(' ')[0])}</div><div class="kpi-val">${L(persona.com)}</div><div class="kpi-pie">${pl(persona.n, 'artículo vendido', 'artículos vendidos')}</div></div>
+                <div class="kpi"><div class="kpi-tit">Dividendo como socio</div><div class="kpi-val">${L(persona.div)}</div><div class="kpi-pie">Según su aporte a cada fecha</div></div>
+                <div class="kpi"><div class="kpi-tit">Puntos y combustible</div><div class="kpi-val">${L(persona.pts + persona.comb)}</div><div class="kpi-pie">Puntos ${L(persona.pts)} · combustible ${L(persona.comb)}</div></div>
+                <div class="kpi destacado"><div class="kpi-tit">Total ganado</div><div class="kpi-val ${clsU(persona.tot)}">${L(persona.tot)}</div><div class="kpi-pie">Pagado ${L(persona.pagado)} · pendiente ${L(persona.pendiente)}</div></div>
+            </div>` : ''}
+            <div class="tabla-wrap" style="max-height:600px;overflow-y:auto">${fs.length ? `<table><thead><tr><th>Artículo</th><th>Vendedor</th><th class="num">Cant.</th><th class="num">Venta</th><th class="num">Artículo</th><th class="num">Envío</th><th class="num">Combust.</th><th class="num">Puntos</th><th class="num">Gastos</th><th class="num">Costo total</th><th class="num">Utilidad</th><th class="num">MG</th><th class="num">Comisión</th><th class="num" title="Lo que este artículo aporta a los socios">Div. socios</th></tr></thead><tbody>
+            ${fs.slice(0, MAX).map(f => `<tr><td>${esc(f.l.NombreArticulo || '—')}<div class="meta">${esc([f.l.NumeroPedido, fFecha(f.l.Fecha), f.l.Tienda, f.l.Cliente].filter(Boolean).join(' · '))}</div></td><td>${esc(nomCorto(f.l.Vendedor) || 'Sin vendedor')}</td><td class="num">${f.l.Cant}</td><td class="num">${L(f.l.Venta)}</td><td class="num">${L(f.l.CostoCompra)}</td>${td(f.l.envio)}${td(f.l.comb)}${td(f.pts)}${td(f.gas)}<td class="num" style="font-weight:700">${L(f.costo)}</td><td class="num ${clsU(f.util)}" style="font-weight:700">${L(f.util)}</td><td class="num">${pc(f.m)}<div class="meta">${pc(f.t[2])} / ${pc(f.t[3])}</div></td>${td(f.com)}${td(f.div)}</tr>`).join('')}
+            </tbody><tfoot><tr><td>Total · ${pl(fs.length, 'artículo', 'artículos')}${fs.length > MAX ? ` (se muestran ${MAX}; el Excel lleva todos)` : ''}</td><td></td><td class="num">${T.cant}</td><td class="num">${L(T.venta)}</td><td class="num">${L(T.compra)}</td><td class="num">${L(T.envio)}</td><td class="num">${L(T.comb)}</td><td class="num">${L(T.pts)}</td><td class="num">${L(T.gas)}</td><td class="num">${L(T.costo)}</td><td class="num ${clsU(T.util)}">${L(T.util)}</td><td class="num">${T.venta ? pc(T.util / T.venta) : '—'}</td><td class="num">${L(T.com)}</td><td class="num">${L(T.div)}</td></tr></tfoot></table>`
+            : '<div class="vacio">No hay artículos con estos filtros</div>'}</div>`;
+        const q = document.getElementById('rd-q');
+        q.oninput = () => { repF.q = q.value; clearTimeout(q._t); q._t = setTimeout(() => { pintarDetalle(); const n = document.getElementById('rd-q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+    }
+    const nomCorto = n => { const w = String(n || '').trim().split(/\s+/).filter(Boolean); return w.length >= 3 ? w[0] + ' ' + w[2] : w.join(' '); };
+
+    // Excel (.xlsx) con el detalle filtrado, totales y las ganancias por persona
+    let xlsxCargado = null;
+    function cargarXLSX() {
+        if (window.XLSX) return Promise.resolve();
+        if (!xlsxCargado) xlsxCargado = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = ok; sc.onerror = () => { xlsxCargado = null; no(new Error('No se pudo cargar el generador de Excel')); }; document.head.appendChild(sc); });
+        return xlsxCargado;
+    }
+    async function exportarExcel() {
+        try { await cargarXLSX(); } catch (e) { aviso(e.message, true); return; }
+        const fs = filasDetalle(), T = sumaDetalle(fs);
+        const cab = ['Id', 'Fecha', 'N° pedido', 'Tienda', 'Artículo', 'Talla / color', 'Cliente', 'Vendedor', 'Cant.', 'Venta (L)', 'Artículo (L)', 'Envío (L)', 'Combustible (L)', 'Puntos (L)', 'Otros gastos (L)', 'Costo total (L)', 'Utilidad (L)', 'MG %', 'Comisión %', 'Dividendo %', 'Comisión vendedor (L)', 'Dividendo a socios (L)', 'Puntos a Daniela (L)', 'Puntos al vendedor (L)', 'Combustible para'];
+        const filas = fs.map(f => [f.l.IdDetallePedido, f.l.Fecha, f.l.NumeroPedido, f.l.Tienda, f.l.NombreArticulo, f.l.TallaColor || '', f.l.Cliente || '', f.l.Vendedor || 'Sin vendedor', f.l.Cant,
+            n2(f.l.Venta), n2(f.l.CostoCompra), n2(f.l.envio), n2(f.l.comb), n2(f.pts), n2(f.gas), n2(f.costo), n2(f.util), f.m, f.t[2], f.t[3], n2(f.com), n2(f.div), n2(f.ptsD), n2(f.ptsV), (f.l.combDe && f.l.combDe.Vendedor) || '']);
+        const tot = ['TOTAL', '', '', '', `${fs.length} artículos`, '', '', '', T.cant, n2(T.venta), n2(T.compra), n2(T.envio), n2(T.comb), n2(T.pts), n2(T.gas), n2(T.costo), n2(T.util), T.venta ? T.util / T.venta : 0, '', '', n2(T.com), n2(T.div), n2(fs.reduce((a, f) => a + f.ptsD, 0)), n2(fs.reduce((a, f) => a + f.ptsV, 0)), ''];
+        const titulo = [`Detalle de costos por artículo · ${fFecha(document.getElementById('desde').value)} al ${fFecha(document.getElementById('hasta').value)}` + (repF.vend ? ' · ' + (repF.vend === 'sin' ? 'Sin vendedor' : (repFilas.find(f => String(f.l.IdVendedor) === repF.vend) || { l: {} }).l.Vendedor) : '') + (repF.tienda ? ' · ' + repF.tienda : '')];
+        const ws = XLSX.utils.aoa_to_sheet([titulo, [], cab, ...filas, tot]);
+        const r0 = 3, rT = r0 + filas.length;
+        for (let r = r0; r <= rT; r++) {
+            for (let c = 9; c <= 23; c++) { const a = XLSX.utils.encode_cell({ r, c }), cel = ws[a]; if (cel && typeof cel.v === 'number') cel.z = (c >= 17 && c <= 19) ? '0.0%' : '#,##0.00'; }
+        }
+        ws['!cols'] = [6, 11, 14, 11, 34, 16, 22, 26, 6, 12, 12, 11, 13, 11, 14, 14, 13, 8, 10, 11, 13, 13, 15, 16, 20].map(w => ({ wch: w }));
+        ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 2, c: 0 }, e: { r: rT - 1, c: cab.length - 1 } }) };
+        const pers = repF.vend && repF.vend !== 'sin' ? repPersonas.filter(x => String(x.id) === repF.vend) : repPersonas;
+        const ws2 = XLSX.utils.aoa_to_sheet([['Persona', 'Comisión vendedor (L)', 'Dividendo socio (L)', 'Puntos (L)', 'Combustible (L)', 'Total ganado (L)', 'Pagado en el período (L)', 'Pendiente total (L)'],
+            ...pers.map(x => [x.nombre, n2(x.com), n2(x.div), n2(x.pts), n2(x.comb), n2(x.tot), n2(x.pagado), n2(x.pendiente)]),
+            ['TOTAL', ...['com', 'div', 'pts', 'comb', 'tot', 'pagado', 'pendiente'].map(k => n2(pers.reduce((a, x) => a + x[k], 0)))]]);
+        for (let r = 1; r <= pers.length + 1; r++) for (let c = 1; c <= 7; c++) { const cel = ws2[XLSX.utils.encode_cell({ r, c })]; if (cel) cel.z = '#,##0.00'; }
+        ws2['!cols'] = [30, 18, 18, 12, 14, 16, 20, 18].map(w => ({ wch: w }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Detalle de costos');
+        XLSX.utils.book_append_sheet(wb, ws2, 'Ganancias por persona');
+        const nom = 'MultiStore_costos_' + document.getElementById('desde').value + '_' + document.getElementById('hasta').value + (repF.vend && repF.vend !== 'sin' ? '_' + nT(nomCorto((repPersonas.find(x => String(x.id) === repF.vend) || {}).nombre || '')).replace(/\s+/g, '-') : '') + '.xlsx';
+        XLSX.writeFile(wb, nom);
+        aviso('Excel descargado: ' + nom);
+    }
     function pReparto() {
         const ptsL = puntosPorLinea(), GAS = gastosPorLinea();
         const nombres = new Map();
@@ -674,11 +753,12 @@
                 } else ptsNoRep += pts;
             }
             if (l.comb) { const c = l.combDe; (c && c.IdVendedor ? per(kId(c.IdVendedor), nom(c.IdVendedor)) : per('comb', 'Combustible sin persona')).comb += l.comb; }
-            return { l, pts, gas, costo, util, m, t, com, div };
+            return { l, pts, gas, costo, util, m, t, com, div, ptsD: m > 0 ? pts * t[2] : 0, ptsV: m > 0 ? pts * t[3] : 0 };
         });
         return { P, filas, pend, ptsNoRep, divSinSocio };
         };
         const { P, filas, pend, ptsNoRep, divSinSocio } = calc(enPeriodo), H = calc(() => true).P;
+        repFilas = filas;
         // Pagos (cuentas por pagar) por persona: en el período y en todo el historial
         const pagPer = new Map(), pagHist = new Map();
         D.transacciones.forEach(t => { if (!t.IdVendedor) return; const k = kId(t.IdVendedor); pagHist.set(k, (pagHist.get(k) || 0) + num(t.Valor)); if (enPeriodo(t.Fecha)) pagPer.set(k, (pagPer.get(k) || 0) + num(t.Valor)); });
@@ -721,12 +801,9 @@
                 </tbody></table>
             </div>
         </div>
-        <div class="card">
-            <div class="card-cab"><div><div class="card-tit">Detalle por artículo</div><div class="card-sub">Costo = artículo + envío real + combustible + puntos + otros gastos</div></div></div>
-            <div class="tabla-wrap" style="max-height:520px;overflow-y:auto">${filas.length ? `<table><thead><tr><th>Artículo</th><th>Vendedor</th><th class="num">Venta</th><th class="num">Costo</th><th class="num">Puntos</th><th class="num">Gastos</th><th class="num">Utilidad</th><th class="num">Rentab.</th><th class="num">Comisión</th><th class="num">Dividendo</th></tr></thead><tbody>
-            ${filas.sort((a, b) => b.l.Fecha.localeCompare(a.l.Fecha)).slice(0, 400).map(f => `<tr><td>${esc(f.l.NombreArticulo || '—')}<div class="meta">${esc([f.l.NumeroPedido, fFecha(f.l.Fecha), f.l.Cliente].filter(Boolean).join(' · '))}</div></td><td>${esc(f.l.Vendedor || 'Sin vendedor')}</td><td class="num">${L(f.l.Venta)}</td><td class="num">${L(f.costo)}</td>${td(f.pts)}${td(f.gas)}<td class="num ${clsU(f.util)}">${L(f.util)}</td><td class="num">${pc(f.m)}<div class="meta">${pc(f.t[2])} / ${pc(f.t[3])}</div></td>${td(f.com)}${td(f.div)}</tr>`).join('')}
-            </tbody></table>` : '<div class="vacio">Sin artículos</div>'}</div>
+        <div class="card" id="rep-detalle"></div>
         </div>`;
+        pintarDetalle();
     }
     let edPago = null;
     function abrirPago(id, pendiente) { edPago = { id, monto: pendiente }; pReparto(); const el = document.getElementById('pg-monto'); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); } }
