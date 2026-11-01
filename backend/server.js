@@ -21,7 +21,7 @@ app.use((req, res, next) => {
     fs.readFile(archivo, 'utf8', (err, html) => {
         if (err) return next();
         res.set('Cache-Control', 'no-cache');
-        res.type('html').send(html.replace(/<head([^>]*)>/i, m => m + '\n<script src="/assets/auth.js"></script>'));
+        res.type('html').send(html.replace(/<head([^>]*)>/i, m => m + '\n<script src="/assets/auth.js"></script>\n<link rel="manifest" href="/manifest.webmanifest">\n<link rel="apple-touch-icon" href="/assets/icono-192.png">\n<meta name="theme-color" content="#0d1017">'));
     });
 });
 app.use(express.static(FRONT));
