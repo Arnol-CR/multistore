@@ -613,7 +613,6 @@
     </div>
 </div>
 
-<!-- ===== MODAL: ORDEN DE PAGO ===== -->
 <div class="modal-overlay" id="modal-orden">
     <div class="modal">
         <div class="modal-header">
@@ -1392,11 +1391,22 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                                         <tr>
                                             <td class="col-n">${i + 1}</td>
                                             <td>${a.NombreCliente ?? '-'}</td>
-                                            <td style="white-space:nowrap">${a.IdDetallePedido ? `<button class="btn-ver" type="button" title="Ver artículo" onclick="verArt(${a.IdDetallePedido})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg></button>` : ''}${a.NombreArticulo ?? '-'}</td>
+                                            <td>
+                                                ${a.IdDetallePedido ? `
+                                                    <button class="btn-ver" type="button" title="Ver artículo" onclick="verArt(${a.IdDetallePedido})">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/>
+                                                            <circle cx="12" cy="12" r="3"/>
+                                                        </svg>
+                                                    </button>` : ''}
+                                                ${a.NombreArticulo ?? '-'}
+                                            </td>
                                             <td>${a.TallaColor ?? '-'}</td>
-                                            <td>${a.DescripcionArticulo ?? '-'}</td>
+                                            <td title="${(a.DescripcionArticulo || '').replace(/"/g, '&quot;')}">
+                                                ${a.DescripcionArticulo ?? '-'}
+                                            </td>
                                             <td>${a.CodigoVendedor ?? '-'}</td>
-                                            <td>${a.CantidadArticulos ?? 1}</td>
+                                            <td style="text-align:center;">${a.CantidadArticulos ?? 1}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>

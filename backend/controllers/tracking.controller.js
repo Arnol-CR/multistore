@@ -33,8 +33,13 @@ const crearSeguimiento = async (req, res) => {
             .input('FechaEstimadaEntrega', sql.Date, FechaEstimadaEntrega)
             .execute('In_Seguimientos');
 
-        const mensaje = result.recordset[0]?.menjase || 'Procesado.';
-        res.json({ ok: true, mensaje });
+        // El procedimiento devuelve un texto sin nombre de columna
+        const fila = result.recordset[0] || {};
+        const mensaje = String(Object.values(fila)[0] || 'Procesado.');
+        if (/ya existe/i.test(mensaje)) return res.status(409).json({ ok: false, error: mensaje });
+        const id = (await pool.request().input('S', sql.NVarChar(sql.MAX), Seguimiento)
+            .query('SELECT TOP 1 IdSeguimiento FROM C_Seguimientos WHERE Seguimiento = @S ORDER BY IdSeguimiento DESC')).recordset[0];
+        res.json({ ok: true, mensaje, idSeguimiento: id ? id.IdSeguimiento : null });
     } catch (err) {
         res.status(500).json({ ok: false, error: err.message });
     }
@@ -130,19 +135,75 @@ const registrarEntradaCasillero = async (req, res) => {
    ========================================================= */
 
 // Listar entradas de casillero (Se_EntradaCasillero) — para elegir trackings a incluir en la orden
+// Trackings con artículos que todavía no tienen orden de pago, tengan o no la entrada a casillero.
+// Si no la tienen, se registra sola al crear la orden.
 const getEntradasCasillero = async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request()
-            .execute('Se_EntradaCasillero');
-
-        res.json({ ok: true, data: result.recordset });
+        const r = await pool.request().query(`
+            SELECT 
+                S.IdSeguimiento, 
+                RTRIM(S.Seguimiento) AS Seguimiento, 
+                S.CambioSeguimiento, 
+                S.IdEstado,
+                S.FechaSalidaInicio, 
+                S.FechaEstimadaEntrega,
+                EC.IdEntradaCasillero, 
+                EC.EntradaMiami, 
+                EC.EntregaEstimada,
+                ISNULL(CE.NombreCasillero, CP.NombreCasillero) AS NombreCasillero,
+                
+                -- Forzamos los alias explícitos
+                X.Articulos   AS Articulos,
+                X.Unidades    AS Unidades,
+                X.Pedidos     AS Pedidos,
+                X.Tiendas     AS Tiendas,
+                
+                CAST(X.Gramos / 454.0 AS decimal(10,2)) AS TotalPesoLibras,
+                CAST(
+                    CASE WHEN X.Gramos < 454 THEN 1 ELSE X.Gramos / 454.0 END 
+                    * ISNULL(ISNULL(CE.PrecioLibra, CP.PrecioLibra), 0) 
+                    AS decimal(10,2)
+                ) AS TotalPago
+            FROM C_Seguimientos S
+            CROSS APPLY (
+                SELECT 
+                    COUNT(*) AS Articulos, 
+                    SUM(D.CantidadArticulos) AS Unidades, 
+                    ISNULL(SUM(D.PesoTotal), 0) AS Gramos,
+                    MIN(D.IdPedido) AS IdPedido,
+                    STUFF((
+                        SELECT DISTINCT ', ' + RTRIM(P2.NumeroPedido) 
+                        FROM C_DetallePedido D2 
+                        JOIN C_Pedidos P2 ON P2.IdPedido = D2.IdPedido
+                        WHERE D2.IdSeguimiento = S.IdSeguimiento 
+                        FOR XML PATH('')
+                    ), 1, 2, '') AS Pedidos,
+                    STUFF((
+                        SELECT DISTINCT ', ' + E2.NombreEmpresa 
+                        FROM C_DetallePedido D2 
+                        JOIN C_Pedidos P2 ON P2.IdPedido = D2.IdPedido
+                        JOIN A_Empresas E2 ON E2.IdEmpresa = P2.IdEmpresa 
+                        WHERE D2.IdSeguimiento = S.IdSeguimiento 
+                        FOR XML PATH('')
+                    ), 1, 2, '') AS Tiendas
+                FROM C_DetallePedido D 
+                WHERE D.IdSeguimiento = S.IdSeguimiento
+            ) X
+            LEFT JOIN C_EntradasCasillero EC ON EC.IdSeguimiento = S.IdSeguimiento
+            LEFT JOIN A_Casilleros CE ON CE.IdCasillero = EC.IdCasillero
+            LEFT JOIN C_Pedidos PP ON PP.IdPedido = X.IdPedido
+            LEFT JOIN A_Casilleros CP ON CP.IdEmpresa = PP.IdCasillero
+            WHERE X.Articulos > 0 
+              AND EC.IdOrden IS NULL
+            ORDER BY ISNULL(EC.EntradaMiami, S.FechaSalidaInicio) DESC, S.IdSeguimiento DESC
+        `);
+        res.json({ ok: true, data: r.recordset });
     } catch (err) {
         res.status(500).json({ ok: false, error: err.message });
     }
 };
 
-// Obtener artículos de un seguimiento (Se_Pedidos_Seguimiento)
 const getArticulosPorSeguimiento = async (req, res) => {
     try {
         const { idSeguimiento } = req.params;
@@ -203,25 +264,44 @@ const crearOrdenEntrega = async (req, res) => {
 };
 
 // Asignar IdOrden a una o varias entradas de casillero (Up_EntradasCasilleroIdOrden)
+// Asignar la orden a los trackings elegidos. Si un tracking no tiene entrada a casillero,
+// se registra en ese momento (llegada = fecha de la orden; casillero = el del pedido).
 const asignarOrdenAEntradas = async (req, res) => {
+    const { idsSeguimiento, IdOrden } = req.body;
+    if (!Array.isArray(idsSeguimiento) || idsSeguimiento.length === 0 || !IdOrden) {
+        return res.status(400).json({ ok: false, mensaje: 'Faltan idsSeguimiento o IdOrden.' });
+    }
+    const pool = await poolPromise;
+    const tx = new sql.Transaction(pool);
     try {
-        const { idsSeguimiento, IdOrden } = req.body;
-
-        if (!Array.isArray(idsSeguimiento) || idsSeguimiento.length === 0 || !IdOrden) {
-            return res.status(400).json({ ok: false, mensaje: 'Faltan idsSeguimiento o IdOrden.' });
-        }
-
-        const pool = await poolPromise;
-
+        await tx.begin();
+        const orden = (await new sql.Request(tx).input('O', sql.Int, parseInt(IdOrden))
+            .query('SELECT Fecha FROM C_OrdenesEntrega WHERE IdOrden = @O')).recordset[0];
+        if (!orden) throw new Error('No encontré la orden');
+        let nuevas = 0;
         for (const idSeguimiento of idsSeguimiento) {
-            await pool.request()
-                .input('IdSeguimiento', sql.Int, idSeguimiento)
-                .input('IdOrden', sql.Int, IdOrden)
+            const id = parseInt(idSeguimiento);
+            const seg = (await new sql.Request(tx).input('S', sql.Int, id).query(`
+                SELECT S.FechaEstimadaEntrega, S.CambioSeguimiento,
+                       (SELECT COUNT(*) FROM C_EntradasCasillero WHERE IdSeguimiento = S.IdSeguimiento) AS Entradas
+                FROM C_Seguimientos S WHERE S.IdSeguimiento = @S`)).recordset[0];
+            if (!seg) throw new Error('No encontré el tracking ' + id);
+            if (!seg.Entradas) {
+                await new sql.Request(tx)
+                    .input('EntradaMiami', sql.Date, orden.Fecha)
+                    .input('EntregaEstimada', sql.Date, seg.FechaEstimadaEntrega || orden.Fecha)
+                    .input('IdSeguimiento', sql.Int, id)
+                    .input('CambioSeguimiento', sql.NVarChar(50), seg.CambioSeguimiento || null)
+                    .execute('In_EntradasCasillero');
+                nuevas++;
+            }
+            await new sql.Request(tx).input('IdSeguimiento', sql.Int, id).input('IdOrden', sql.Int, parseInt(IdOrden))
                 .execute('Up_EntradasCasilleroIdOrden');
         }
-
-        res.json({ ok: true, mensaje: 'Orden asignada a los seguimientos seleccionados.' });
+        await tx.commit();
+        res.json({ ok: true, mensaje: 'Orden asignada a los trackings seleccionados.' + (nuevas ? ` Se registró la entrada a casillero de ${nuevas}.` : '') });
     } catch (err) {
+        try { await tx.rollback(); } catch (_) {}
         res.status(500).json({ ok: false, error: err.message });
     }
 };
