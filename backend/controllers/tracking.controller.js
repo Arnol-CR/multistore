@@ -212,9 +212,10 @@ const getArticulosPorSeguimiento = async (req, res) => {
         const result = await pool.request()
             .input('IdSeguimiento', sql.Int, parseInt(idSeguimiento))
             .query(`SELECT CT.IdDetallePedido, CT.NombreCliente, CT.NombreArticulo, CT.TallaColor, CT.DescripcionArticulo,
-                           V.CodigoVendedor, CT.CantidadArticulos
+                           V.CodigoVendedor, CT.CantidadArticulos, DP.Fotografia
                     FROM ListadoPedidoCostoTodos CT
                     LEFT JOIN A_Vendedores V ON CT.IdVendedor = V.IdVendedor
+                    LEFT JOIN C_DetallePedido DP ON DP.IdDetallePedido = CT.IdDetallePedido
                     WHERE CT.IdSeguimiento = @IdSeguimiento
                     ORDER BY CT.NombreCliente, CT.IdDetallePedido`);
 

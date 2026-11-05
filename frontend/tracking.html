@@ -1552,7 +1552,8 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         if(dif) dif.innerHTML = pag && est ? `Pagado ${fmtL(pag)} · estimado ${fmtL(est)} · <b style="color:${pag - est > 0.5 ? '#f87171' : '#4ade80'}">${pag - est > 0 ? '+' : ''}${fmtL(pag - est).replace('L -', '-L ')}</b> de diferencia` : '';
     }
     // Imagen de lo que viene en la orden (para compartir)
-    function imgLocal(src){ return new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
+    function imgLocal(src){ return new Promise(ok => { if(!src) return ok(null); const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => ok(null);
+        let u = src; try{ const l = new URL(src, location.href); if(/^https?:$/.test(l.protocol) && l.origin !== location.origin) u = '/api/cotizaciones/img?url=' + encodeURIComponent(l.href); }catch(e){} i.src = u; }); }
     async function copiarImagenOrden(){
         const act = trkModal.filter(t => !quitarDeOrden.has(t.IdSeguimiento));
         if(!act.length){ showToast('No hay trackings en la orden.', true); return; }
@@ -1561,13 +1562,14 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             // asegurar artículos cargados
             await Promise.all(act.map(async t => { if(!t._arts){ try{ const r = await fetch(`${API}/articulos/${t.IdSeguimiento}`).then(x => x.json()); t._arts = (r.ok && r.data) || []; }catch(e){ t._arts = []; } } }));
             const F = "'Segoe UI', Arial, sans-serif", ROSA = '#E8327A', NAR = '#EF7A30', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
-            const W = 1280, M = 48, IN = W - 2 * M, FT = 58, FA = 40, CAB = 150, BLO = 104, THEAD = 40, TOT = 104, PIE = 62;
+            const W = 1280, M = 48, IN = W - 2 * M, FT = 58, FA = 76, FS = 60, CAB = 150, BLO = 104, THEAD = 40, TOT = 104, PIE = 62;
             const nArts = act.reduce((a, t) => a + t._arts.length, 0);
             const H = CAB + BLO + THEAD + act.length * (FT + 8) + nArts * FA + TOT + PIE;
             const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
             x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.textBaseline = 'top';
             const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, ROSA); g.addColorStop(1, NAR); x.fillStyle = g; x.fillRect(0, 0, W, 8);
             const [marca, logo] = await Promise.all([imgLocal('/assets/shopaholic-logo.png'), imgLocal('/assets/Recurso 3.png')]);
+            await Promise.all(act.flatMap(t => t._arts.map(async a => { a._img = await imgLocal(a.Fotografia); })));
             const v = id => document.getElementById(id).value;
             const fechaO = v('op-fecha') ? fmtFecha(v('op-fecha')) : '';
             let y = 32;
@@ -1583,7 +1585,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             const celdas = [['TRACKINGS', String(act.length)], ['ARTÍCULOS', String(nArts)], ['PESO', (pesoReal || peso).toFixed(2) + ' lb'], [pag ? 'PAGADO' : 'PAGO ESTIMADO', fmtL(pag || est)]];
             celdas.forEach((k, i) => { const cx = M + 24 + i * (IN / 4); x.fillStyle = ROSA; x.font = `700 13px ${F}`; x.fillText(k[0], cx, y + 12); x.fillStyle = TINTA; x.font = `700 24px ${F}`; x.fillText(k[1], cx, y + 32); });
             y = CAB + BLO;
-            const X = { n: M, art: M + 44, cli: M + 640, cant: M + 930, vend: W - M };
+            const X = { n: M, foto: M + 40, art: M + 40 + FS + 16, cli: M + 640, cant: M + 930, vend: W - M };
             x.font = `700 13px ${F}`; x.fillStyle = TINTA;
             x.fillText('#', X.n + 8, y + 12); x.fillText('ARTÍCULO / TALLA', X.art, y + 12); x.fillText('CLIENTE', X.cli, y + 12); x.textAlign = 'center'; x.fillText('CANT.', X.cant, y + 12); x.textAlign = 'right'; x.fillText('VENDEDOR', X.vend, y + 12); x.textAlign = 'left';
             x.fillStyle = TINTA; x.fillRect(M, y + THEAD - 3, IN, 2); y += THEAD;
@@ -1597,10 +1599,13 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                 if(t.TotalPago != null){ x.fillStyle = GRIS; x.font = `400 14px ${F}`; x.fillText('est. ' + fmtL(t.TotalPago), W - M - 12, y + 32); }
                 x.textAlign = 'left'; y += FT - 6;
                 t._arts.forEach(a => {
-                    n++; const cy = y + 11;
+                    n++; const cy = y + FA / 2 - 9;
+                    const fy = y + (FA - FS) / 2; x.fillStyle = '#f3f4f6'; x.fillRect(X.foto, fy, FS, FS);
+                    if(a._img){ const s = Math.max(FS / a._img.width, FS / a._img.height), iw = a._img.width * s, ih = a._img.height * s; x.save(); x.beginPath(); x.rect(X.foto, fy, FS, FS); x.clip(); x.drawImage(a._img, X.foto + (FS - iw) / 2, fy + (FS - ih) / 2, iw, ih); x.restore(); }
+                    x.strokeStyle = LINEA; x.lineWidth = 1; x.strokeRect(X.foto + .5, fy + .5, FS - 1, FS - 1);
                     x.fillStyle = GRIS; x.font = `700 15px ${F}`; x.fillText(String(n), X.n + 8, cy);
-                    x.fillStyle = TINTA; x.font = `600 16px ${F}`; const nom = a.NombreArticulo || '-'; x.fillText(corta(nom, 300), X.art, cy);
-                    const w1 = Math.min(300, x.measureText(nom).width); x.fillStyle = GRIS; x.font = `400 15px ${F}`; if(a.TallaColor) x.fillText(corta('· ' + a.TallaColor, X.cli - X.art - w1 - 24), X.art + w1 + 8, cy + 1);
+                    x.fillStyle = TINTA; x.font = `600 16px ${F}`; const nom = a.NombreArticulo || '-'; x.fillText(corta(nom, 260), X.art, cy);
+                    const w1 = Math.min(260, x.measureText(nom).width); x.fillStyle = GRIS; x.font = `400 15px ${F}`; if(a.TallaColor) x.fillText(corta('· ' + a.TallaColor, X.cli - X.art - w1 - 24), X.art + w1 + 8, cy + 1);
                     x.fillStyle = TINTA; x.font = `400 15px ${F}`; x.fillText(corta(a.NombreCliente || 'Sin cliente', 260), X.cli, cy + 1);
                     x.textAlign = 'center'; x.font = `700 15px ${F}`; x.fillText(String(a.CantidadArticulos || 1), X.cant, cy + 1);
                     x.textAlign = 'right'; x.fillStyle = GRIS; x.font = `600 14px ${F}`; x.fillText(a.CodigoVendedor || '', X.vend, cy + 2); x.textAlign = 'left';
