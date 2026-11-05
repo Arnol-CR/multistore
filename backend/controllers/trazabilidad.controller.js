@@ -79,4 +79,30 @@ async function historial(req, res) {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 }
 
-module.exports = { listar, historial };
+// Utilidad de un artículo con lo que se sabe: costo, envío real (o estimado) y combustible (solo administrador)
+async function costos(req, res) {
+  try {
+    if (!(req.usuario && req.usuario.esAdmin)) return res.status(403).json({ ok: false, error: 'Solo el administrador' });
+    const id = parseInt(req.params.id);
+    const pool = await poolPromise;
+    const r = await pool.request().input('Id', sql.Int, id).query(`
+      SELECT ISNULL(D.TotalCompraLempiras, 0) AS CostoL, ISNULL(D.ValorCobroCliente, 0) AS Venta,
+             EC.IdOrden, ISNULL(D.ValorCobradoReal, 0) AS EnvioReal,
+             CAST(ISNULL(D.PesoTotal, 0) / 454.0 * ISNULL(CA.PrecioLibra, 0) AS decimal(18,2)) AS EnvioEstimado,
+             CAST(ISNULL(CO.CantidadPagar, 0) * ISNULL(D.PeroCobradoReal, 0) / NULLIF((
+                 SELECT SUM(ISNULL(D2.PeroCobradoReal, 0)) FROM C_DetallePedido D2
+                 JOIN C_EntradasCasillero E2 ON E2.IdSeguimiento = D2.IdSeguimiento
+                 JOIN C_OrdenesEntrega O2 ON O2.IdOrden = E2.IdOrden
+                 WHERE O2.IdCombustible = OE.IdCombustible), 0) AS decimal(18,2)) AS Combustible
+      FROM C_DetallePedido D
+      JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
+      LEFT JOIN A_Casilleros CA ON CA.IdCasillero = P.IdCasillero
+      OUTER APPLY (SELECT TOP 1 X.IdOrden FROM C_EntradasCasillero X WHERE X.IdSeguimiento = D.IdSeguimiento AND X.IdOrden IS NOT NULL ORDER BY X.IdEntradaCasillero DESC) EC
+      LEFT JOIN C_OrdenesEntrega OE ON OE.IdOrden = EC.IdOrden
+      LEFT JOIN C_Combustible CO ON CO.IdCombustible = OE.IdCombustible
+      WHERE D.IdDetallePedido = @Id`);
+    res.json({ ok: true, data: r.recordset[0] || null });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+}
+
+module.exports = { listar, historial, costos };

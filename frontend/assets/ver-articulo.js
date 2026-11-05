@@ -37,6 +37,9 @@
   .va-pie{display:flex;gap:8px;padding:14px 18px;border-top:1px solid #1e2530;flex-shrink:0;flex-wrap:wrap}
   .va-btn{flex:1;min-width:140px;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;font-weight:600}
   .va-btn:hover{color:#e2e8f0;border-color:#374151}
+  .va-util{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#9ca3af;margin-top:-4px;padding:0 4px}
+  .va-util b{font-weight:700}.va-util i{font-style:normal;color:#fbbf24}
+  .va-util-nota{flex-basis:100%;font-size:11.5px;color:#fbbf24}
   .va-nl{margin:0 18px 12px;border:1px solid #3f1d24;background:#1a1013;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
   .va-nl[hidden]{display:none}
   .va-nl-tit{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f87171}
@@ -233,10 +236,11 @@
         <div class="va-nl-txt">${esc(est.Motivo || 'No llegó')} · desde el ${esc(fecha(est.Fecha) || est.Fecha || '')}${num(est.Reembolso) ? ` · reembolso ${fmtL(num(est.Reembolso))}` : ''}${num(est.QuitoCobro) ? ' · se le quitó el cobro al cliente' : ''}. Cuenta como pérdida en Finanzas.</div>
         <div class="va-nl-acc"><button class="va-fb va-nl-des" type="button">Deshacer</button></div>`;
       caja.querySelector('.va-nl-des').onclick = async e => {
+        const b = e.currentTarget;
         if (!confirm('¿Deshacer? Vuelve a quedar pendiente y, si se le quitó el cobro al cliente, se le vuelve a cobrar.')) return;
-        e.currentTarget.disabled = true;
+        b.disabled = true;
         try { await api('PUT', { id: a.IdDetallePedido, noLlego: false }); est.NoLlego = 0; caja.hidden = true; btn.textContent = 'No llegó'; avisoVA('Listo, ya no cuenta como pérdida'); }
-        catch (err) { avisoVA('No se pudo: ' + err.message, true); e.currentTarget.disabled = false; }
+        catch (err) { avisoVA('No se pudo: ' + err.message, true); b.disabled = false; }
       };
     };
     const formulario = () => {
@@ -252,15 +256,31 @@
         <div class="va-nl-acc"><button class="va-fb va-nl-no" type="button">Cancelar</button><button class="va-fb va-nl-ok" type="button" style="background:#b91c1c;border-color:#b91c1c">Guardar como pérdida</button></div>`;
       caja.querySelector('.va-nl-no').onclick = () => { caja.hidden = true; };
       caja.querySelector('.va-nl-ok').onclick = async e => {
-        const q = caja.querySelector('.va-nl-q');
+        const b = e.currentTarget, q = caja.querySelector('.va-nl-q');
         const cuerpo = { id: a.IdDetallePedido, noLlego: true, fecha: caja.querySelector('.va-nl-f').value, motivo: caja.querySelector('.va-nl-m').value, reembolso: caja.querySelector('.va-nl-r').value, quitarCobro: q ? q.checked : false };
-        e.currentTarget.disabled = true;
+        b.disabled = true;
         try { const d = await api('PUT', cuerpo); est = { ...est, NoLlego: 1, Fecha: cuerpo.fecha, Motivo: cuerpo.motivo, Reembolso: cuerpo.reembolso, QuitoCobro: d.quitoCobro ? 1 : 0 }; marcado(); avisoVA('Marcado como no llegó'); }
-        catch (err) { avisoVA('No se pudo: ' + err.message, true); e.currentTarget.disabled = false; }
+        catch (err) { avisoVA('No se pudo: ' + err.message, true); b.disabled = false; }
       };
     };
     api('GET').then(d => { if (actual !== a) return; est = d.data || {}; if (num(est.NoLlego)) marcado(); }).catch(() => {});
     btn.onclick = () => { if (!caja.hidden) { caja.hidden = true; return; } est && num(est.NoLlego) ? marcado() : formulario(); };
+  }
+  // Utilidad real: venta − (costo + envío + combustible). Sin orden pagada, se muestra con envío estimado.
+  function engancharUtilidad(a, d) {
+    const caja = fondo.querySelector('.va-util'); if (!caja) return;
+    fetch(`/api/trazabilidad/${a.IdDetallePedido}/costos`).then(r => r.json()).then(r => {
+      if (actual !== a || !r.ok || !r.data) return;
+      const x = r.data, venta = num(x.Venta) || d.venta, costo = num(x.CostoL) || num(d.costoL), real = !!x.IdOrden;
+      const envio = real ? num(x.EnvioReal) : num(x.EnvioEstimado), comb = real ? num(x.Combustible) : 0;
+      const util = venta - costo - envio - comb, pct = venta ? (util / venta * 100).toFixed(1) + '%' : '';
+      const gan = fondo.querySelector('.va-gan');
+      if (gan) { gan.className = 'va-gan ' + (util >= 0 ? 'va-pos' : 'va-neg'); gan.textContent = (util >= 0 ? '+' : '−') + fmtL(Math.abs(Math.round(util))) + (real ? '' : ' aprox.');
+        gan.title = real ? 'Utilidad: venta menos costo, envío real y combustible' : 'Utilidad aproximada con envío estimado por peso'; }
+      caja.hidden = false;
+      caja.innerHTML = `<span>Costo ${fmtL(Math.round(costo))}</span><span>Envío ${fmtL(Math.round(envio))}${real ? '' : ' <i>estimado</i>'}</span>${comb ? `<span>Combustible ${fmtL(Math.round(comb))}</span>` : ''}<span class="${util >= 0 ? 'va-pos' : 'va-neg'}"><b>Utilidad ${util < 0 ? '−' : ''}${fmtL(Math.abs(Math.round(util)))}</b> ${pct}</span>`
+        + (real ? '' : '<div class="va-util-nota">Todavía no tiene orden de pago: el envío es estimado por peso y no incluye combustible.</div>');
+    }).catch(() => {});
   }
   function num(v) { return Number(v) || 0; }
   function avisoVA(t, err) { if (typeof window.showToast === 'function') window.showToast(t, err); else if (typeof window.toast === 'function') window.toast(err ? 'err' : 'ok', t); else if (err) alert(t); }
@@ -457,8 +477,9 @@
             ${a.CodigoArticulo ? `<span class="va-tag mono">${esc(a.CodigoArticulo)}</span>` : ''}
           </div>
           <div class="va-precio"><b>Precio de venta</b>
-            ${d.venta ? `<span>${fmtL(d.venta)}${d.gan != null ? `<small class="${d.gan >= 0 ? 'va-pos' : 'va-neg'}">${d.gan >= 0 ? '+' : '−'}${fmtL(Math.abs(Math.round(d.gan)))}</small>` : ''}</span>` : '<span class="sin">Sin precio</span>'}
+            ${d.venta ? `<span>${fmtL(d.venta)}${d.gan != null ? `<small class="va-gan ${d.gan >= 0 ? 'va-pos' : 'va-neg'}" title="Precio de venta menos lo que costó en la app">${d.gan >= 0 ? '+' : '−'}${fmtL(Math.abs(Math.round(d.gan)))}</small>` : ''}</span>` : '<span class="sin">Sin precio</span>'}
           </div>
+          ${d.venta && esAdminVA() ? '<div class="va-util" hidden></div>' : ''}
           <div class="va-grid">
             ${dato('Precio app', d.compra != null ? `${d.cant > 1 ? `<small>${d.cant} × </small>` : ''}$${d.compra.toFixed(2)}${d.costoL ? ` <small>≈ ${fmtL(Math.round(d.costoL))}</small>` : ''}` : '—', d.compra != null ? '' : 'va-nada')}
             ${dato('Pedido', d.pedido ? `${esc(d.pedido)} <small>${esc(d.tienda)}</small>` : '—', d.pedido ? '' : 'va-nada')}
@@ -489,6 +510,7 @@
     engancharEdicion(a);
     engancharArticulo(a);
     engancharNoLlego(a);
+    engancharUtilidad(a, d);
     const img = fondo.querySelector('.va-foto img');
     if (img) img.onerror = () => { img.remove(); img.parentElement && img.parentElement.classList.add('vacia'); };
     fondo.classList.add('abierto');
