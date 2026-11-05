@@ -235,4 +235,46 @@ async function registrarPago(req, res) {
   }
 }
 
-module.exports = { registrarPago, getDatos, getBancos, crearGasto, editarGasto, editarCombustible, editarPuntos, guardarCapital };
+// Transferencia entre cuentas: dos movimientos con la misma referencia TRF-…
+// (sale de la cuenta origen y entra en la destino), así el saldo total no cambia.
+async function crearTransferencia(req, res) {
+  const pool = await poolPromise;
+  const tx = new sql.Transaction(pool);
+  try {
+    const b = req.body || {}, monto = parseFloat(b.monto), de = parseInt(b.desde), a = parseInt(b.hacia);
+    if (!fecha(b.fecha) || !(monto > 0) || !de || !a) return res.status(400).json({ ok: false, error: 'Fecha, cuentas y monto son obligatorios' });
+    if (de === a) return res.status(400).json({ ok: false, error: 'Elegí dos cuentas distintas' });
+    await tx.begin();
+    const cs = (await new sql.Request(tx).input('A', sql.Int, de).input('B', sql.Int, a)
+      .query(`SELECT IdCuentaBanco, NombreCuenta FROM A_CuentaBanco WHERE IdCuentaBanco IN (@A, @B)`)).recordset;
+    const nom = id => (cs.find(c => c.IdCuentaBanco === id) || {}).NombreCuenta;
+    if (!nom(de) || !nom(a)) throw new Error('No encontré una de las cuentas');
+    const ref = 'TRF-' + new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+    const extra = [txt(b.nota), txt(b.referencia) && 'Ref ' + txt(b.referencia)].filter(Boolean).join(' · ');
+    const filas = [[de, -monto, `Transferencia a ${nom(a)}`], [a, monto, `Transferencia de ${nom(de)}`]];
+    for (const [cta, val, obs] of filas) {
+      await new sql.Request(tx).input('Ref', sql.NVarChar(50), ref).input('Cta', sql.Int, cta).input('Val', sql.Decimal(18, 2), val)
+        .input('Obs', sql.NVarChar(sql.MAX), extra ? obs + ' · ' + extra : obs).input('Fecha', sql.Date, b.fecha).query(`
+        IF COLUMNPROPERTY(OBJECT_ID('dbo.A_MoviminentoCuenta'), 'IdMovimientoCuenta', 'IsIdentity') = 1
+          INSERT INTO A_MoviminentoCuenta (NumeroReferencia, IdCuenta, Valor, Observaciones, Fecha) VALUES (@Ref, @Cta, @Val, @Obs, @Fecha)
+        ELSE
+          INSERT INTO A_MoviminentoCuenta (IdMovimientoCuenta, NumeroReferencia, IdCuenta, Valor, Observaciones, Fecha)
+          SELECT ISNULL(MAX(IdMovimientoCuenta), 0) + 1, @Ref, @Cta, @Val, @Obs, @Fecha FROM A_MoviminentoCuenta WITH (UPDLOCK, HOLDLOCK)`);
+    }
+    await tx.commit();
+    res.json({ ok: true, referencia: ref });
+  } catch (e) { try { await tx.rollback(); } catch (_) {} res.status(500).json({ ok: false, error: e.message }); }
+}
+
+// Anular una transferencia: borra sus dos movimientos (solo referencias TRF-)
+async function anularTransferencia(req, res) {
+  try {
+    const ref = String(req.params.ref || '');
+    if (!/^TRF-\d{14}$/.test(ref)) return res.status(400).json({ ok: false, error: 'Referencia no válida' });
+    const pool = await poolPromise;
+    const r = await pool.request().input('Ref', sql.NVarChar(50), ref).query(`DELETE FROM A_MoviminentoCuenta WHERE NumeroReferencia = @Ref`);
+    res.json({ ok: true, borrados: r.rowsAffected[0] });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+}
+
+module.exports = { crearTransferencia, anularTransferencia, registrarPago, getDatos, getBancos, crearGasto, editarGasto, editarCombustible, editarPuntos, guardarCapital };

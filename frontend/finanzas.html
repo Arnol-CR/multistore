@@ -844,7 +844,7 @@
 
     // ── CAPITAL Y BANCOS ──
     let bancosCache = {};
-    let edCap = null;
+    let edCap = null, edTrf = null;
     async function pCapital() {
         const k0 = edCap || {};
         const cap = D.capital.filter(c => enPeriodo(c.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
@@ -887,9 +887,19 @@
                 </tbody></table>` : '<div class="vacio">Sin aportes en el período</div>'}</div>
             </div>
             <div class="card">
-                <div class="card-cab"><div><div class="card-tit">Movimientos de cuenta</div><div class="card-sub">Ajustes y transferencias registrados</div></div></div>
-                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${movs.length ? `<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Detalle</th><th class="num">Valor</th></tr></thead><tbody>
-                ${movs.map(m => `<tr><td>${fFecha(m.Fecha)}</td><td>${esc(m.Cuenta || '—')}</td><td>${esc([m.Observaciones, m.NumeroReferencia].filter(Boolean).join(' · ') || '—')}</td><td class="num ${clsU(num(m.Valor))}">${L(num(m.Valor))}</td></tr>`).join('')}
+                <div class="card-cab"><div><div class="card-tit">Movimientos de cuenta</div><div class="card-sub">Ajustes y transferencias registrados</div></div>
+                    <button class="btn prim" onclick="edTrf = {}; pCapital()">+ Transferencia</button></div>
+                ${edTrf ? `<div class="form">
+                    <label>Fecha<input class="inp" type="date" id="t-fecha" value="${hoy()}"></label>
+                    <label>Monto (L)<input class="inp" type="number" min="0" step="0.01" id="t-monto"></label>
+                    <label>Sale de<select class="inp" id="t-de">${opts(D.cuentas, 'IdCuentaBanco', nomCuenta, null, 'Cuenta origen')}</select></label>
+                    <label>Entra a<select class="inp" id="t-a">${opts(D.cuentas, 'IdCuentaBanco', nomCuenta, null, 'Cuenta destino')}</select></label>
+                    <label>Referencia<input class="inp" id="t-ref" maxlength="30" placeholder="N° de comprobante"></label>
+                    <label>Nota<input class="inp" id="t-nota" maxlength="120"></label>
+                    <div class="acciones"><button class="btn ok" onclick="guardarTransferencia()">Guardar</button><button class="btn" onclick="edTrf = null; pCapital()">Cancelar</button></div>
+                </div>` : ''}
+                <div class="tabla-wrap" style="max-height:340px;overflow-y:auto">${movs.length ? `<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Detalle</th><th class="num">Valor</th><th></th></tr></thead><tbody>
+                ${movs.map(m => { const trf = /^TRF-\d{14}$/.test(m.NumeroReferencia || ''); return `<tr><td>${fFecha(m.Fecha)}</td><td>${esc(m.Cuenta || '—')}</td><td>${esc((trf ? m.Observaciones : [m.Observaciones, m.NumeroReferencia].filter(Boolean).join(' · ')) || '—')}</td><td class="num ${clsU(num(m.Valor))}">${L(num(m.Valor))}</td><td>${trf && num(m.Valor) < 0 ? `<button class="lnk" onclick="anularTransferencia('${m.NumeroReferencia}')">Anular</button>` : ''}</td></tr>`; }).join('')}
                 </tbody></table>` : '<div class="vacio">Sin movimientos en el período</div>'}</div>
             </div>
         </div>
@@ -909,6 +919,20 @@
             ${per.data.map(x => { const sal = num((hm.get(x.IdCuentaBanco) || {}).Saldo); return `<tr><td>${esc(x.NombreCuenta || '—')}<div class="meta">${esc([x.Banco, x.NumeroCuenta].filter(Boolean).join(' · '))}</div></td><td class="num pos">${L(num(x.TotalIngresos))}</td><td class="num neg">${L(num(x.TotalEgresos))}</td><td class="num ${clsU(sal)}">${L(sal)}</td></tr>`; }).join('')}
             </tbody><tfoot><tr><td>Total</td><td class="num">${L(t.i)}</td><td class="num">${L(t.e)}</td><td class="num">${L(t.s)}</td></tr></tfoot></table>`;
         } catch (e) { const el = document.getElementById('bancos'); if (el) el.innerHTML = `<div class="vacio">No se pudo cargar: ${esc(e.message)}</div>`; }
+    }
+
+    async function guardarTransferencia() {
+        const v = id => document.getElementById(id).value;
+        const cuerpo = { fecha: v('t-fecha'), monto: v('t-monto'), desde: v('t-de'), hacia: v('t-a'), referencia: v('t-ref'), nota: v('t-nota') };
+        if (!(parseFloat(cuerpo.monto) > 0) || !cuerpo.desde || !cuerpo.hacia) return aviso('Poné el monto y las dos cuentas', true);
+        if (cuerpo.desde === cuerpo.hacia) return aviso('Elegí dos cuentas distintas', true);
+        try { await enviar('/api/finanzas/transferencia', 'POST', cuerpo); aviso('Transferencia registrada'); edTrf = null; await recargar(); }
+        catch (e) { aviso('No se pudo guardar: ' + e.message, true); }
+    }
+    async function anularTransferencia(ref) {
+        if (!confirm('¿Anular esta transferencia? Se borran la salida y la entrada.')) return;
+        try { await enviar('/api/finanzas/transferencia/' + encodeURIComponent(ref), 'DELETE'); aviso('Transferencia anulada'); await recargar(); }
+        catch (e) { aviso('No se pudo anular: ' + e.message, true); }
     }
 
     async function guardarAporte() {
