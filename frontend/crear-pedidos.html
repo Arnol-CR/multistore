@@ -1143,11 +1143,12 @@
                 const d = JSON.parse(crudo.substring(pref.length));
                 tiendaImp = d.tienda || 'SHEIN';
                 if (d.pedido) document.getElementById('pv-nopedido').value = d.pedido;
-                filasPegadas = d.items.map(x => ({ sku:x.sku, talla:x.talla||'', precio:+x.precio||0, cant:+x.cant||1, peso:0, desc:(x.titulo||'').substring(0,200), link:acortarLink(x.link), foto:(x.foto||'').substring(0,500) }));
+                filasPegadas = d.items.map(x => ({ sku:x.sku, talla:x.talla||'', precio:+x.precio||0, cant:+x.cant||1, peso:0, desc:(x.titulo||'').substring(0,200), link:acortarLink(x.link), foto:(x.foto||'').substring(0,500), noPed:(x.pedido && x.pedido !== d.pedido) ? String(x.pedido) : '' }));
                 asignarArticulos();
             } catch(e) { filasPegadas = []; }
             renderPegados();
-            mostrarCargado(`Pedido de ${esc(tiendaImp)} <b>${esc(document.getElementById('pv-nopedido').value)}</b> · ${filasPegadas.length} artículos cargados`);
+            const nPeds = new Set(filasPegadas.map(f => f.noPed).filter(Boolean)).size;
+            mostrarCargado(nPeds ? `${esc(tiendaImp)} · <b>${nPeds} pedidos</b> de la tienda, cada artículo con su número · ${filasPegadas.length} artículos cargados` : `Pedido de ${esc(tiendaImp)} <b>${esc(document.getElementById('pv-nopedido').value)}</b> · ${filasPegadas.length} artículos cargados`);
             return;
         }
         const lineas = document.getElementById('pv-texto').value.split(/\r?\n/).filter(l => l.trim());
@@ -1465,7 +1466,7 @@
             try {
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({ codigoArticulo:f.sku, descripcionArticulo:f.desc, peso:f.peso || pesoDe(f.idArt), fotoUrl:f.foto||null, idArticulo: +f.idArt,
-                        idPedido:+idPed, tallaColor:f.talla, valorCompra:f.precio, cantidadArticulos:f.cant, link:f.link||null, noPedidoAplicacion:noPed }) }).then(r => r.json());
+                        idPedido:+idPed, tallaColor:f.talla, valorCompra:f.precio, cantidadArticulos:f.cant, link:f.link||null, noPedidoAplicacion:f.noPed || noPed }) }).then(r => r.json());
                 if (d.ok && d.idDetallePedido) registrarIngreso(d.idDetallePedido);
                 if (d.ok && f.idCli && d.idDetallePedido) {
                     try {

@@ -5,7 +5,7 @@
  * por eso debe ser autocontenida (no puede usar nada de fuera).
  *
  * Lee:
- *   - Detalle de un PEDIDO (SHEIN / Amazon)  → varios artículos
+ *   - Detalle o lista de PEDIDOS (SHEIN / Amazon / Temu / AliExpress)  → varios artículos
  *   - Página de un PRODUCTO (SHEIN / Amazon / otras con datos estándar) → 1 artículo
  * Copia al portapapeles: MULTISTORE_IMPORT{ tienda, pedido, tipo, items:[...] }
  *   - Página de RASTREO (SHEIN orders/track, Temu bgst_express, Amazon progress-tracker)
@@ -157,6 +157,52 @@ function sheinScraper() {
             items.push({ sku: asin, titulo: tt.replace(/\s+/g, ' '), talla: var_, precio: parseFloat(pr.replace(/,/g, '')) || 0,
                 cant: parseInt(q || '1', 10), foto: imgDe(r).replace(/\._[^./]+_\./, '.'), link: 'https://www.amazon.com/dp/' + asin });
         }
+    }
+
+    /* ───────── PEDIDOS ALIEXPRESS (lista de pedidos o detalle) ───────── */
+    else if (/aliexpress\./i.test(host) && /order/i.test(location.pathname)) {
+        tienda = 'AliExpress';
+        var unicoA = new URLSearchParams(location.search).get('orderId') || '';
+        var reNumA = /(?:referencia|order\s*(?:id|number|no\.?)|id\s+del\s+pedido|n[ºo°.]*\s*(?:de\s+)?pedido)\s*[:：]?\s*(\d{12,})/i;
+        var precioRe = /(?:US\s*)?\$\s*([\d,]+\.\d{2})/;
+        var cantRe = /(?:^|\s)[x×]\s*(\d{1,3})\s*$/im;   // "x2" suelto, no el "60x7" de un título
+        var completaA = function (el) { var t = el.innerText || ''; return precioRe.test(t) && cantRe.test(t) && (el.querySelector('img') || el.querySelector('[style*="background-image"]')); };
+        var fotoA = function (el) {
+            var f = '', im = el.querySelector('img');
+            if (im) f = im.getAttribute('data-src') || im.currentSrc || im.src || '';
+            if (!f) { var bg = el.querySelector('[style*="background-image"]'); if (bg) f = ((bg.getAttribute('style') || '').match(/url\(["']?([^"')]+)/) || [])[1] || ''; }
+            if (f.indexOf('//') === 0) f = 'https:' + f;
+            return /^data:/.test(f) ? '' : f.replace(/(\.(?:jpe?g|png|webp))_.*$/i, '$1');
+        };
+        var linksA = document.querySelectorAll('a[href*="/item/"]'), filasA = [];
+        for (var ia = 0; ia < linksA.length; ia++) {
+            var idA = (linksA[ia].href.match(/\/item\/(\d+)\.html/) || [])[1];
+            if (!idA) continue;
+            var fa = linksA[ia];
+            while (fa.parentElement && fa.parentElement !== document.body && !completaA(fa)) fa = fa.parentElement;
+            if (!completaA(fa) || filasA.indexOf(fa) >= 0) continue;
+            filasA.push(fa);
+            var la = lineasDe(fa), tituloA = '', varA = '';
+            la.forEach(function (l) {
+                if (precioRe.test(l) || /^[x×]\s*\d+$/i.test(l) || /cup[oó]n|devoluci|choice|store|tienda|env[ií]o|entrega|total|valora|confirmar|editar|detalles|pagar|rastrear|seguimiento/i.test(l)) return;
+                if (!tituloA && l.length > 15) tituloA = l;
+                else if (tituloA && !varA && l.length < 80) varA = l;
+            });
+            var pa = (( fa.innerText || '').match(precioRe) || [])[1] || '0';
+            var ca = (((fa.innerText || '').match(cantRe) || [])[1]) || '1';
+            // número de pedido: el contenedor más cercano que lo diga
+            var numA = '', up = fa;
+            while (up && up !== document.body && !numA) { numA = (((up.innerText || '').match(reNumA) || [])[1]) || ''; up = up.parentElement; }
+            if (!numA) numA = unicoA;
+            if (!tituloA) tituloA = (linksA[ia].innerText || '').trim();
+            if (!tituloA) continue;
+            items.push({ sku: idA, titulo: tituloA.replace(/\.{3}$|…$/, '').trim(), talla: varA, precio: parseFloat(pa.replace(/,/g, '')) || 0,
+                cant: parseInt(ca, 10) || 1, foto: fotoA(fa), link: 'https://www.aliexpress.com/item/' + idA + '.html', pedido: numA });
+        }
+        var nums = items.map(function (x) { return x.pedido; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; });
+        pedido = nums.length === 1 ? nums[0] : '';
+        if (nums.length > 1) pedido = '';
+        if (!items.length) { alert('MultiStore: no encontré artículos en esta página de AliExpress. Esperá a que carguen los pedidos (bajá hasta el final si hace falta) y volvé a tocar el marcador.'); return; }
     }
 
     /* ───────── PEDIDO TEMU ───────── */
@@ -441,7 +487,7 @@ function sheinScraper() {
             ? 'MultiStore: ' + items.length + ' productos copiados del carrito de ' + tienda + '.\nVe a MultiStore → Cotización → Pegar'
             : tipo === 'producto'
             ? 'MultiStore: producto copiado (' + tienda + ').\n' + items[0].titulo.substring(0, 80) + (items[0].precio ? '\n$' + items[0].precio : '') + (items[0].pesoLb ? ' · ' + items[0].pesoLb.toFixed(2) + ' lb' : '') + '\nVe a MultiStore → Cotización → Pegar'
-            : 'MultiStore: ' + items.length + ' artículos copiados del pedido ' + tienda + ' ' + pedido + '.\nVe a MultiStore → Pegar varios (o Cotización) → Pegar');
+            : 'MultiStore: ' + items.length + ' artículos copiados ' + (pedido ? 'del pedido ' + tienda + ' ' + pedido : 'de ' + tienda + ' (' + items.map(function (x) { return x.pedido; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).length + ' pedidos, cada artículo con su número)') + '.\nVe a MultiStore → Pegar varios (o Cotización) → Pegar');
     };
     function viejo() { var ta = document.createElement('textarea'); ta.value = data; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(data).then(ok, viejo); else viejo();
