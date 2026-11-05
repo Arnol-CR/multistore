@@ -276,6 +276,7 @@
                 fetch('/api/pedidos/costos').then(r => r.json()).catch(() => ({}))
             ]);
             datos = d.ok ? d.data : [];
+            if (c && c.ok && c.noLlego && c.noLlego.length) { const fuera = new Set(c.noLlego); datos = datos.filter(p => !fuera.has(p.IdDetallePedido)); }
             if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; p.Peso = x.Peso; } }); }
         } catch (e) { datos = []; toast('err', 'No se pudieron cargar los artículos'); }
         opcionesFiltros();

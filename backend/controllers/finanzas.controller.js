@@ -68,7 +68,9 @@ const CONSULTAS = {
     SELECT M.IdMovimientoCuenta, ${F('M.Fecha')} AS Fecha, ISNULL(M.Valor, 0) AS Valor, M.Observaciones, M.NumeroReferencia,
            CB.NombreCuenta AS Cuenta
     FROM A_MoviminentoCuenta M LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = M.IdCuenta`,
-  cobros: `SELECT ${F('FechaMovimiento')} AS Fecha, Monto FROM vw_Pagos`,
+  cobros: `SELECT ${F('FechaMovimiento')} AS Fecha, Monto FROM vw_Pagos WHERE ISNULL(NumeroReferencia, '') NOT LIKE 'NOLLEGO-%'`,
+  perdidos: `SELECT IdDetallePedido, ${F('FechaNoLlego')} AS Fecha, MotivoNoLlego AS Motivo, ISNULL(ReembolsoNoLlego, 0) AS Reembolso,
+             ISNULL(NoLlegoQuitoCobro, 0) AS QuitoCobro FROM C_DetallePedido WHERE NoLlego = 1`,
   puntos: `
     SELECT P.IdPedido, P.IdEmpresa, RTRIM(P.NumeroPedido) AS NumeroPedido, ${F('P.FechaPedido')} AS Fecha, E.NombreEmpresa AS Tienda,
            ISNULL(P.PuntosUtilizados, 0) AS Puntos, ISNULL(P.ValorDolaresPuntos, 0) AS ValorPunto, P.TasaCambio

@@ -315,6 +315,7 @@
         // artículos por tracking
         const porSeg = new Map();
         D.lineas.forEach(l => { if (l.IdSeguimiento) { if (!porSeg.has(l.IdSeguimiento)) porSeg.set(l.IdSeguimiento, []); porSeg.get(l.IdSeguimiento).push(l); } });
+        const PERD = new Map((D.perdidos || []).map(p => [p.IdDetallePedido, p]));
         LIN = D.lineas.map(l => {
             const r = { ...l, Venta: num(l.Venta), CostoCompra: num(l.CostoCompra), PesoTotal: num(l.PesoTotal), EnvioEstimado: num(l.EnvioEstimado), Cant: num(l.Cant) || 1 };
             const e = l.IdSeguimiento ? entSeg.get(l.IdSeguimiento) : null;
@@ -323,7 +324,13 @@
             const parte = pesoSeg ? r.PesoTotal / pesoSeg : 1 / (hermanos.length || 1);
             if (e && e.orden && e.ValorReal > 0) { r.envio = e.ValorReal * parte; r.envioReal = true; r.comb = e.comb * parte; r.orden = e.orden; r.combDe = combRec.get(e.orden.IdCombustible) || null; }
             else { r.envio = r.EnvioEstimado; r.envioReal = false; r.comb = 0; r.orden = null; }
-            r.costo = r.CostoCompra + r.envio + r.comb;
+            const pd = PERD.get(l.IdDetallePedido);
+            if (pd) {   // no llegó: la pérdida cae en la fecha en que se dio por perdido
+                r.perdido = true; r.motivoPerdida = pd.Motivo || 'No llegó'; r.reemb = num(pd.Reembolso); r.FechaPedidoOrig = r.Fecha; r.Fecha = pd.Fecha || r.Fecha;
+                if (num(pd.QuitoCobro)) r.Venta = 0;
+                if (!r.envioReal) r.envio = 0;   // sin orden pagada no hubo envío
+            } else r.reemb = 0;
+            r.costo = r.CostoCompra + r.envio + r.comb - r.reemb;
             r.util = r.Venta - r.costo;
             if (e) e.lineas.push(r);
             r._q = [r.NumeroPedido, r.Seguimiento, r.orden && r.orden.NumeroOrden, r.Vendedor, r.Cliente, r.Tienda, r.NombreArticulo, r.SKU, r.Descripcion, r.TallaColor].filter(Boolean).join(' ').toLowerCase();
@@ -337,6 +344,7 @@
         const a = document.getElementById('desde').value, b = document.getElementById('hasta').value;
         document.getElementById('info-periodo').textContent = a === '2000-01-01' ? 'Todo el historial' : `Del ${fFecha(a)} al ${fFecha(b)} · ventas por fecha del pedido`;
         ({ resumen: pResumen, utilidad: pUtilidad, envios: pEnvios, gastos: pGastos, capital: pCapital, reparto: pReparto })[vista]();
+        if (vista === 'resumen' || vista === 'gastos') pintarPerdidas();
     }
 
     function totales(lins) {
@@ -347,11 +355,32 @@
         return t;
     }
 
+    // ── ARTÍCULOS QUE NO LLEGARON ──
+    function pintarPerdidas() {
+        const lst = LIN.filter(l => l.perdido && enPeriodo(l.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const tot = lst.reduce((a, l) => a - l.util, 0), v = document.getElementById(vista === 'resumen' ? 'v-resumen' : 'v-gastos');
+        if (!v) return;
+        if (vista === 'resumen') {
+            if (lst.length) v.querySelector('.kpis').insertAdjacentHTML('afterend', `<div class="nota"><b>${pl(lst.length, 'artículo no llegó', 'artículos no llegaron')}</b> en el período: pérdida de <b>${L(tot)}</b>, ya restada de la utilidad. Los asumen los socios. El detalle está en Gastos.</div>`);
+            return;
+        }
+        v.insertAdjacentHTML('beforeend', `<div class="card">
+            <div class="card-cab"><div><div class="card-tit">Artículos que no llegaron</div><div class="card-sub">Pérdida = costo + envío pagado + combustible − reembolso de la tienda. Se marcan desde Ver artículo. Cuenta en la fecha en que se dio por perdido.</div></div></div>
+            <div class="tabla-wrap">${lst.length ? `<table><thead><tr><th>Fecha</th><th>Artículo</th><th>Motivo</th><th class="num">Costo</th><th class="num">Envío</th><th class="num">Reembolso</th><th class="num">Venta</th><th class="num">Pérdida</th><th></th></tr></thead><tbody>
+            ${lst.map(l => `<tr><td>${fFecha(l.Fecha)}</td><td>${esc(l.NombreArticulo || '—')}<div class="meta">${esc([l.TallaColor, l.NumeroPedido, l.Tienda, l.Cliente].filter(Boolean).join(' · '))}</div></td><td>${esc(l.motivoPerdida)}</td><td class="num">${L(l.CostoCompra)}</td><td class="num">${L(l.envio + l.comb)}</td><td class="num pos">${l.reemb ? L(l.reemb) : '—'}</td><td class="num">${l.Venta ? L(l.Venta) : '—'}</td><td class="num ${clsU(l.util)}" style="font-weight:700">${L(-l.util)}</td><td><button class="lnk" onclick="deshacerNoLlego(${l.IdDetallePedido})">Deshacer</button></td></tr>`).join('')}
+            </tbody><tfoot><tr><td colspan="7">Total · ${pl(lst.length, 'artículo', 'artículos')}</td><td class="num" style="font-weight:800">${L(tot)}</td><td></td></tr></tfoot></table>` : '<div class="vacio">No hay artículos marcados como no llegó en el período</div>'}</div></div>`);
+    }
+    async function deshacerNoLlego(id) {
+        if (!confirm('¿Deshacer? El artículo vuelve a quedar como pendiente y, si se le quitó el cobro al cliente, se le vuelve a cobrar.')) return;
+        try { await enviar('/api/tracking/no-llego', 'PUT', { id, noLlego: false }); aviso('Listo, ya no cuenta como pérdida'); await recargar(); }
+        catch (e) { aviso('No se pudo: ' + e.message, true); }
+    }
+
     // ── RESUMEN ──
     function pResumen() {
         const per = LIN.filter(l => enPeriodo(l.Fecha));
-        const con = per.filter(l => l.Venta > 0), sin = per.filter(l => !(l.Venta > 0));
-        const t = totales(con);
+        const con = per.filter(l => l.Venta > 0 || l.perdido), sin = per.filter(l => !(l.Venta > 0) && !l.perdido);
+        const t = totales(con), perd = per.filter(l => l.perdido);
         const otros = D.otros.filter(g => enPeriodo(g.Fecha)).reduce((s, g) => s + num(g.Monto), 0);
         const cobrado = D.cobros.filter(c => enPeriodo(c.Fecha)).reduce((s, c) => s + num(c.Monto), 0);
         const neta = t.util - otros;
@@ -447,10 +476,10 @@
             if (sel.dataset.h !== html) { sel.innerHTML = html; sel.dataset.h = html; if (act && !ops.includes(act)) sel.value = ''; } };
         llenar(fv, LIN.map(l => l.Vendedor), 'Todos los vendedores'); llenar(ft, LIN.map(l => l.Tienda), 'Todas las tiendas');
         const palabras = q.split(/\s+/).filter(Boolean);
-        let lins = LIN.filter(l => enPeriodo(l.Fecha) && (!soloCon || l.Venta > 0) && (!fv.value || l.Vendedor === fv.value) && (!ft.value || l.Tienda === ft.value) && palabras.every(p => l._q.includes(p)));
+        let lins = LIN.filter(l => enPeriodo(l.Fecha) && (!soloCon || l.Venta > 0 || l.perdido) && (!fv.value || l.Vendedor === fv.value) && (!ft.value || l.Tienda === ft.value) && palabras.every(p => l._q.includes(p)));
         const clave = { pedido: l => l.NumeroPedido || '—', vendedor: l => l.Vendedor || 'Sin vendedor', cliente: l => l.Cliente || 'Sin cliente', tienda: l => l.Tienda || '—', seguimiento: l => l.Seguimiento || 'Sin tracking', orden: l => (l.orden && l.orden.NumeroOrden) || 'Sin orden de entrega', mes: l => l.Fecha.slice(0, 7) }[g];
         if (g === 'art') {
-            uFilas = lins.map(l => ({ nombre: l.NombreArticulo || '—', sub: [l.TallaColor, l.SKU, l.NumeroPedido, l.Cliente, l.Seguimiento].filter(Boolean).join(' · '), n: l.Cant, venta: l.Venta, compra: l.CostoCompra, envio: l.envio, comb: l.comb, util: l.util, est: !l.envioReal, fecha: l.Fecha }));
+            uFilas = lins.map(l => ({ nombre: l.NombreArticulo || '—', sub: [l.perdido ? 'NO LLEGÓ' + (l.reemb ? ' (reembolso ' + L(l.reemb) + ')' : '') : '', l.TallaColor, l.SKU, l.NumeroPedido, l.Cliente, l.Seguimiento].filter(Boolean).join(' · '), n: l.Cant, venta: l.Venta, compra: l.CostoCompra, envio: l.envio, comb: l.comb, util: l.util, est: !l.envioReal, fecha: l.Fecha }));
         } else {
             const m = new Map();
             lins.forEach(l => { const k = clave(l); if (!m.has(k)) m.set(k, []); m.get(k).push(l); });
@@ -743,13 +772,14 @@
         const calc = filtro => {
         const P = new Map();
         const per = (k, nombre) => { if (!P.has(k)) P.set(k, { k, nombre, com: 0, div: 0, pts: 0, comb: 0, n: 0 }); return P.get(k); };
-        const per1 = LIN.filter(l => filtro(l.Fecha) && l.Venta > 0);
-        const listas = per1.filter(l => l.envioReal), pend = per1.filter(l => !l.envioReal);
+        const per1 = LIN.filter(l => filtro(l.Fecha) && (l.Venta > 0 || l.perdido));
+        const listas = per1.filter(l => l.envioReal || l.perdido), pend = per1.filter(l => !l.envioReal && !l.perdido);
         let ptsNoRep = 0, divSinSocio = 0;
         const filas = listas.map(l => {
             const pts = ptsL.get(l.IdDetallePedido) || 0, gas = GAS.mapa.get(l.IdDetallePedido) || 0;
-            const costo = l.CostoCompra + l.envio + l.comb + pts + gas;
-            const util = l.Venta - costo, m = util / l.Venta, t = tramo(m);
+            const costo = l.CostoCompra + l.envio + l.comb + pts + gas - l.reemb;
+            const util = l.Venta - costo, m = l.Venta ? util / l.Venta : -1;
+            const t = l.perdido && util < 0 ? [0, 0, 0, 1] : tramo(m);   // la pérdida de lo que no llegó la asumen los socios
             const com = util * t[2], div = util * t[3];
             const v = l.IdVendedor ? per(kId(l.IdVendedor), nom(l.IdVendedor)) : per('sinv', 'Sin vendedor asignado');
             v.com += com; v.n++;

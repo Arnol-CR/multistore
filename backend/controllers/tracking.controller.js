@@ -11,7 +11,7 @@ const getArticulosSinSeguimiento = async (req, res) => {
         const result = await pool.request()
             .execute('Sp_DetallePedidoSinSeguimiento');
 
-        res.json({ ok: true, data: result.recordset });
+        res.json({ ok: true, data: result.recordset.filter(x => !x.NoLlego) });   // sin los que no llegaron
     } catch (err) {
         res.status(500).json({ ok: false, error: err.message });
     }
@@ -459,7 +459,71 @@ const editarOrden = async (req, res) => {
     }
 };
 
+/* =========================================================
+   ARTÍCULOS QUE NO LLEGARON (pérdida)
+   ========================================================= */
+// Estado de un artículo
+const getNoLlego = async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const r = await pool.request().input('Id', sql.Int, parseInt(req.params.id)).query(`
+            SELECT IdDetallePedido, ISNULL(NoLlego, 0) AS NoLlego, CONVERT(varchar(10), FechaNoLlego, 23) AS Fecha, MotivoNoLlego AS Motivo,
+                   ISNULL(ReembolsoNoLlego, 0) AS Reembolso, ISNULL(NoLlegoQuitoCobro, 0) AS QuitoCobro, ISNULL(ValorCobroCliente, 0) AS Venta, IdCliente
+            FROM C_DetallePedido WHERE IdDetallePedido = @Id`);
+        res.json({ ok: true, data: r.recordset[0] || null });
+    } catch (err) {
+        const falta = /NoLlego/i.test(err.message);
+        res.status(falta ? 409 : 500).json({ ok: false, falta, error: falta ? 'Falta correr node db/agregar-no-llego.js' : err.message });
+    }
+};
+
+// Marcar o desmarcar "no llegó". Si se quita el cobro al cliente, se registra una devolución
+// (IdMovimiento 5, sin cuenta bancaria) con referencia NOLLEGO-<id>; al deshacer se borra.
+const marcarNoLlego = async (req, res) => {
+    const pool = await poolPromise;
+    const tx = new sql.Transaction(pool);
+    try {
+        const b = req.body || {}, id = parseInt(b.id);
+        if (!id) return res.status(400).json({ ok: false, error: 'Falta el artículo' });
+        const fecha = /^\d{4}-\d{2}-\d{2}$/.test(b.fecha || '') ? b.fecha : null;
+        if (b.noLlego && !fecha) return res.status(400).json({ ok: false, error: 'Poné la fecha' });
+        const ref = 'NOLLEGO-' + id;
+        await tx.begin();
+        const d = (await new sql.Request(tx).input('Id', sql.Int, id).query(`
+            SELECT D.IdCliente, ISNULL(D.ValorCobroCliente, 0) AS Venta, D.IdPedido, A.NombreArticulo
+            FROM C_DetallePedido D LEFT JOIN A_Articulos A ON A.IdArticulo = D.IdArticulo WHERE D.IdDetallePedido = @Id`)).recordset[0];
+        if (!d) throw new Error('No encontré el artículo');
+        // siempre se limpia la devolución anterior (si había) para no duplicar
+        const borr = await new sql.Request(tx).input('Ref', sql.NVarChar(50), ref).query(`DELETE FROM C_MovimientoClientes WHERE NumeroReferencia = @Ref`);
+        let quito = false;
+        if (b.noLlego) {
+            quito = !!b.quitarCobro && d.IdCliente && d.Venta > 0;
+            await new sql.Request(tx).input('Id', sql.Int, id).input('F', sql.Date, fecha)
+                .input('M', sql.NVarChar(100), String(b.motivo || 'No llegó').substring(0, 100))
+                .input('R', sql.Decimal(18, 2), Math.max(0, parseFloat(b.reembolso) || 0)).input('Q', sql.Bit, quito ? 1 : 0)
+                .query(`UPDATE C_DetallePedido SET NoLlego = 1, FechaNoLlego = @F, MotivoNoLlego = @M, ReembolsoNoLlego = @R, NoLlegoQuitoCobro = @Q WHERE IdDetallePedido = @Id`);
+            if (quito) await new sql.Request(tx).input('C', sql.Int, d.IdCliente).input('Mo', sql.Decimal(18, 2), d.Venta).input('F', sql.Date, fecha)
+                .input('O', sql.NVarChar(sql.MAX), `No llegó: ${d.NombreArticulo || 'artículo'} (se quita el cobro)`).input('Ref', sql.NVarChar(50), ref).input('P', sql.Int, d.IdPedido)
+                .query(`INSERT INTO C_MovimientoClientes (IdCliente, IdMovimiento, Monto, FechaMovimiento, Observaciones, NumeroReferencia, IdPedido)
+                        VALUES (@C, 5, @Mo, @F, @O, @Ref, @P)`);
+        } else {
+            await new sql.Request(tx).input('Id', sql.Int, id)
+                .query(`UPDATE C_DetallePedido SET NoLlego = NULL, FechaNoLlego = NULL, MotivoNoLlego = NULL, ReembolsoNoLlego = NULL, NoLlegoQuitoCobro = NULL WHERE IdDetallePedido = @Id`);
+        }
+        await tx.commit();
+        // si se borró una devolución, el saldo del cliente se recalcula (los triggers solo corren al insertar)
+        if (borr.rowsAffected[0] > 0 && !quito) { try { await pool.request().execute('RecalcularSaldoClientes'); } catch (e) {} }
+        res.json({ ok: true, quitoCobro: quito });
+    } catch (err) {
+        try { await tx.rollback(); } catch (_) {}
+        const falta = /NoLlego/i.test(err.message);
+        res.status(500).json({ ok: false, error: falta ? 'Falta correr node db/agregar-no-llego.js' : err.message });
+    }
+};
+
 module.exports = {
+    getNoLlego,
+    marcarNoLlego,
     getTrackingsOrden,
     editarOrden,
     getDetalleArticulo,

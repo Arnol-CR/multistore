@@ -53,7 +53,10 @@ const getCostos = async (req, res) => {
       FROM C_DetallePedido D
       JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
       WHERE ISNULL(D.EstaEntregado, 0) = 0`);
-    res.json({ ok: true, data: result.recordset });
+    // artículos marcados "no llegó" (si la columna todavía no existe, no hay ninguno)
+    let perdidos = [];
+    try { perdidos = (await pool.request().query('SELECT IdDetallePedido FROM C_DetallePedido WHERE NoLlego = 1')).recordset.map(x => x.IdDetallePedido); } catch (e) {}
+    res.json({ ok: true, data: result.recordset, noLlego: perdidos });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 

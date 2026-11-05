@@ -37,6 +37,16 @@
   .va-pie{display:flex;gap:8px;padding:14px 18px;border-top:1px solid #1e2530;flex-shrink:0;flex-wrap:wrap}
   .va-btn{flex:1;min-width:140px;background:#13181f;color:#9ca3af;border:1px solid #1e2530;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;font-weight:600}
   .va-btn:hover{color:#e2e8f0;border-color:#374151}
+  .va-nl{margin:0 18px 12px;border:1px solid #3f1d24;background:#1a1013;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .va-nl[hidden]{display:none}
+  .va-nl-tit{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f87171}
+  .va-nl-fila{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .va-nl label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#9ca3af}
+  .va-nl .va-chk{flex-direction:row;align-items:center;gap:8px;font-size:12.5px;color:#e2e8f0}
+  .va-nl-acc{display:flex;gap:8px;justify-content:flex-end}
+  .va-nl-txt{font-size:13px;color:#e2e8f0;line-height:1.5}
+  .va-btn.rojo{color:#fca5a5;border-color:#3f1d24}
+  @media(max-width:560px){.va-nl-fila{grid-template-columns:1fr}}
   .va-btn.rosa{color:#fff;background:#E8327A;border-color:#E8327A}
   .va-btn.rosa:hover{background:#d12a6d}
   .va-btn.rosa:disabled{opacity:.6;cursor:wait}
@@ -207,6 +217,54 @@
     const [x, y] = await Promise.all([json('/api/catalogo/articulos'), json('/api/catalogo/categorias')]);
     ARTS = x.data || []; CATS = y.data || [];
   }
+  // Marcar "no llegó": el costo pasa a ser pérdida en Finanzas (solo administrador)
+  function engancharNoLlego(a) {
+    const caja = fondo.querySelector('.va-nl'), btn = fondo.querySelector('.va-nl-btn');
+    if (!caja || !btn) return;
+    let est = null;
+    const hoyS = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+    const api = async (metodo, cuerpo) => {
+      const r = await fetch('/api/tracking/no-llego' + (metodo === 'GET' ? '/' + a.IdDetallePedido : ''), metodo === 'GET' ? {} : { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+      const d = await r.json().catch(() => ({})); if (!d.ok) throw new Error(d.error || 'Error ' + r.status); return d;
+    };
+    const marcado = () => {
+      caja.hidden = false; btn.textContent = 'No llegó (marcado)';
+      caja.innerHTML = `<div class="va-nl-tit">Marcado como no llegó</div>
+        <div class="va-nl-txt">${esc(est.Motivo || 'No llegó')} · desde el ${esc(fecha(est.Fecha) || est.Fecha || '')}${num(est.Reembolso) ? ` · reembolso ${fmtL(num(est.Reembolso))}` : ''}${num(est.QuitoCobro) ? ' · se le quitó el cobro al cliente' : ''}. Cuenta como pérdida en Finanzas.</div>
+        <div class="va-nl-acc"><button class="va-fb va-nl-des" type="button">Deshacer</button></div>`;
+      caja.querySelector('.va-nl-des').onclick = async e => {
+        if (!confirm('¿Deshacer? Vuelve a quedar pendiente y, si se le quitó el cobro al cliente, se le vuelve a cobrar.')) return;
+        e.currentTarget.disabled = true;
+        try { await api('PUT', { id: a.IdDetallePedido, noLlego: false }); est.NoLlego = 0; caja.hidden = true; btn.textContent = 'No llegó'; avisoVA('Listo, ya no cuenta como pérdida'); }
+        catch (err) { avisoVA('No se pudo: ' + err.message, true); e.currentTarget.disabled = false; }
+      };
+    };
+    const formulario = () => {
+      const venta = num(est && est.Venta), conCli = est && est.IdCliente && venta > 0;
+      caja.hidden = false;
+      caja.innerHTML = `<div class="va-nl-tit">Marcar como no llegó</div>
+        <div class="va-nl-fila">
+          <label>Fecha<input class="va-in va-nl-f" type="date" value="${hoyS()}"></label>
+          <label>Motivo<select class="va-in va-nl-m"><option>No llegó</option><option>Llegó dañado</option><option>La tienda lo canceló</option><option>Se perdió en el casillero</option><option>Otro</option></select></label>
+          <label>Reembolso de la tienda (L)<input class="va-in va-nl-r" type="number" min="0" step="0.01" placeholder="0.00"></label>
+        </div>
+        ${conCli ? `<label class="va-chk"><input type="checkbox" class="va-nl-q" checked> Quitarle el cobro al cliente (${fmtL(venta)}); lo que ya pagó le queda a favor</label>` : ''}
+        <div class="va-nl-acc"><button class="va-fb va-nl-no" type="button">Cancelar</button><button class="va-fb va-nl-ok" type="button" style="background:#b91c1c;border-color:#b91c1c">Guardar como pérdida</button></div>`;
+      caja.querySelector('.va-nl-no').onclick = () => { caja.hidden = true; };
+      caja.querySelector('.va-nl-ok').onclick = async e => {
+        const q = caja.querySelector('.va-nl-q');
+        const cuerpo = { id: a.IdDetallePedido, noLlego: true, fecha: caja.querySelector('.va-nl-f').value, motivo: caja.querySelector('.va-nl-m').value, reembolso: caja.querySelector('.va-nl-r').value, quitarCobro: q ? q.checked : false };
+        e.currentTarget.disabled = true;
+        try { const d = await api('PUT', cuerpo); est = { ...est, NoLlego: 1, Fecha: cuerpo.fecha, Motivo: cuerpo.motivo, Reembolso: cuerpo.reembolso, QuitoCobro: d.quitoCobro ? 1 : 0 }; marcado(); avisoVA('Marcado como no llegó'); }
+        catch (err) { avisoVA('No se pudo: ' + err.message, true); e.currentTarget.disabled = false; }
+      };
+    };
+    api('GET').then(d => { if (actual !== a) return; est = d.data || {}; if (num(est.NoLlego)) marcado(); }).catch(() => {});
+    btn.onclick = () => { if (!caja.hidden) { caja.hidden = true; return; } est && num(est.NoLlego) ? marcado() : formulario(); };
+  }
+  function num(v) { return Number(v) || 0; }
+  function avisoVA(t, err) { if (typeof window.showToast === 'function') window.showToast(t, err); else if (typeof window.toast === 'function') window.toast(err ? 'err' : 'ok', t); else if (err) alert(t); }
+
   function engancharArticulo(a) {
     const box = fondo.querySelector('.va-cat'), sel = box.querySelector('.va-cat-sel'), q = box.querySelector('.va-cat-q');
     const lista = box.querySelector('.va-cat-lista'), nuevo = box.querySelector('.va-cat-nuevo');
@@ -415,10 +473,12 @@
           </div>
         </div>
       </div>
+      ${esAdminVA() ? `<div class="va-nl" hidden></div>` : ''}
       <div class="va-pie">
         <button class="va-btn rosa va-copiar" title="Copia una tarjeta con la foto y los datos para pegar en WhatsApp">${ico(COPIAR)} Copiar imagen</button>
         <button class="va-btn va-bajar" title="Descargar la tarjeta como PNG">${ico(BAJAR)} Descargar</button>
         ${d.link ? `<a class="va-btn sec" href="${esc(d.link)}" target="_blank" rel="noopener">${ico(EXT)} Abrir en la tienda</a>` : ''}
+        ${esAdminVA() ? `<button class="va-btn rojo va-nl-btn" title="Marcar que este artículo no llegó (se cuenta como pérdida)">No llegó</button>` : ''}
         <button class="va-btn va-cerrar">Cerrar</button>
       </div>
     </div>`;
@@ -428,6 +488,7 @@
     fondo.querySelector('.va-bajar').onclick = e => descargar(e.currentTarget);
     engancharEdicion(a);
     engancharArticulo(a);
+    engancharNoLlego(a);
     const img = fondo.querySelector('.va-foto img');
     if (img) img.onerror = () => { img.remove(); img.parentElement && img.parentElement.classList.add('vacia'); };
     fondo.classList.add('abierto');

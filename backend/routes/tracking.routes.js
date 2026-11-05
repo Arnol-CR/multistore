@@ -4,6 +4,8 @@ const {
     getTrackingsOrden,
     editarOrden,
     getDetalleArticulo,
+    getNoLlego,
+    marcarNoLlego,
     // Pestaña 1
     getArticulosSinSeguimiento,
     crearSeguimiento,
@@ -38,6 +40,8 @@ router.post('/entrada-casillero', registrarEntradaCasillero);
 router.get('/entradas-casillero', getEntradasCasillero);
 router.get('/articulos/:idSeguimiento', getArticulosPorSeguimiento);
 router.get('/detalle-articulo/:id', getDetalleArticulo);
+router.get('/no-llego/:id', getNoLlego);
+router.put('/no-llego', marcarNoLlego);
 router.get('/cuentas', getCuentasBanco);
 router.post('/ordenes-entrega', crearOrdenEntrega);
 router.put('/ordenes-entrega/asignar', asignarOrdenAEntradas);
