@@ -674,6 +674,7 @@
         <div><div class="op-det" id="op-detalle"></div></div>
         </div></div>
         <div class="modal-footer">
+            <button class="btn-ghost" id="op-img" onclick="copiarImagenOrden()" style="margin-right:auto">Copiar imagen</button>
             <button class="btn-ghost" onclick="cerrarModal('modal-orden')">Cancelar</button>
             <button class="btn-primary" id="op-confirmar" onclick="confirmarOrdenPago()">Confirmar orden</button>
         </div>
@@ -1549,6 +1550,81 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         if(cab) cab.innerHTML = `<div>Trackings<b>${act.length}</b></div><div>Artículos<b>${arts}</b></div><div>Peso estimado<b>${peso.toFixed(2)} lb</b></div><div>Pago estimado<b>${est ? fmtL(est) : '—'}</b></div>`;
         const pag = parseFloat(document.getElementById('op-cantidad-pagada').value) || 0, dif = document.getElementById('op-dif');
         if(dif) dif.innerHTML = pag && est ? `Pagado ${fmtL(pag)} · estimado ${fmtL(est)} · <b style="color:${pag - est > 0.5 ? '#f87171' : '#4ade80'}">${pag - est > 0 ? '+' : ''}${fmtL(pag - est).replace('L -', '-L ')}</b> de diferencia` : '';
+    }
+    // Imagen de lo que viene en la orden (para compartir)
+    function imgLocal(src){ return new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
+    async function copiarImagenOrden(){
+        const act = trkModal.filter(t => !quitarDeOrden.has(t.IdSeguimiento));
+        if(!act.length){ showToast('No hay trackings en la orden.', true); return; }
+        const btn = document.getElementById('op-img'); btn.disabled = true; btn.textContent = 'Generando…';
+        try{
+            // asegurar artículos cargados
+            await Promise.all(act.map(async t => { if(!t._arts){ try{ const r = await fetch(`${API}/articulos/${t.IdSeguimiento}`).then(x => x.json()); t._arts = (r.ok && r.data) || []; }catch(e){ t._arts = []; } } }));
+            const F = "'Segoe UI', Arial, sans-serif", ROSA = '#E8327A', NAR = '#EF7A30', TINTA = '#1f2937', GRIS = '#6b7280', LINEA = '#e5e7eb';
+            const W = 1280, M = 48, IN = W - 2 * M, FT = 58, FA = 40, CAB = 150, BLO = 104, THEAD = 40, TOT = 104, PIE = 62;
+            const nArts = act.reduce((a, t) => a + t._arts.length, 0);
+            const H = CAB + BLO + THEAD + act.length * (FT + 8) + nArts * FA + TOT + PIE;
+            const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+            x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.textBaseline = 'top';
+            const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, ROSA); g.addColorStop(1, NAR); x.fillStyle = g; x.fillRect(0, 0, W, 8);
+            const [marca, logo] = await Promise.all([imgLocal('/assets/shopaholic-logo.png'), imgLocal('/assets/Recurso 3.png')]);
+            const v = id => document.getElementById(id).value;
+            const fechaO = v('op-fecha') ? fmtFecha(v('op-fecha')) : '';
+            let y = 32;
+            if(marca){ const lh = 70; x.drawImage(marca, M, y, marca.width * lh / marca.height, lh); }
+            x.textAlign = 'right'; x.fillStyle = ROSA; x.font = `700 26px ${F}`; x.fillText(ordenEditando ? 'ORDEN DE PAGO DE CASILLERO' : 'PAQUETES POR LLEGAR', W - M, y + 2);
+            x.fillStyle = TINTA; x.font = `600 18px ${F}`; x.fillText(v('op-numero-orden').trim() ? 'Orden ' + v('op-numero-orden').trim() : 'Orden de pago de casillero', W - M, y + 38);
+            x.fillStyle = GRIS; x.font = `400 16px ${F}`; x.fillText(fechaO, W - M, y + 64); x.textAlign = 'left';
+            y = CAB - 20; x.fillStyle = ROSA; x.fillRect(M, y, IN, 3); y += 20;
+            // bloque de totales
+            const peso = act.reduce((a, t) => a + Number(t.TotalPesoLibras ?? t.PesoLibras ?? 0), 0), est = act.reduce((a, t) => a + Number(t.TotalPago || 0), 0);
+            const pag = parseFloat(v('op-cantidad-pagada')) || 0, pesoReal = parseFloat(v('op-peso')) || 0;
+            x.fillStyle = '#fdf2f7'; x.beginPath(); x.roundRect ? x.roundRect(M, y, IN, 70, 8) : x.rect(M, y, IN, 70); x.fill(); x.fillStyle = ROSA; x.fillRect(M, y, 5, 70);
+            const celdas = [['TRACKINGS', String(act.length)], ['ARTÍCULOS', String(nArts)], ['PESO', (pesoReal || peso).toFixed(2) + ' lb'], [pag ? 'PAGADO' : 'PAGO ESTIMADO', fmtL(pag || est)]];
+            celdas.forEach((k, i) => { const cx = M + 24 + i * (IN / 4); x.fillStyle = ROSA; x.font = `700 13px ${F}`; x.fillText(k[0], cx, y + 12); x.fillStyle = TINTA; x.font = `700 24px ${F}`; x.fillText(k[1], cx, y + 32); });
+            y = CAB + BLO;
+            const X = { n: M, art: M + 44, cli: M + 640, cant: M + 930, vend: W - M };
+            x.font = `700 13px ${F}`; x.fillStyle = TINTA;
+            x.fillText('#', X.n + 8, y + 12); x.fillText('ARTÍCULO / TALLA', X.art, y + 12); x.fillText('CLIENTE', X.cli, y + 12); x.textAlign = 'center'; x.fillText('CANT.', X.cant, y + 12); x.textAlign = 'right'; x.fillText('VENDEDOR', X.vend, y + 12); x.textAlign = 'left';
+            x.fillStyle = TINTA; x.fillRect(M, y + THEAD - 3, IN, 2); y += THEAD;
+            const corta = (t, w) => { t = String(t || ''); if(x.measureText(t).width <= w) return t; while(t && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; };
+            let n = 0;
+            act.forEach(t => {
+                y += 8; x.fillStyle = '#f8fafc'; x.fillRect(M, y, IN, FT - 6);
+                x.fillStyle = TINTA; x.font = `800 19px ${F}`; x.fillText(t.Seguimiento + (t.CambioSeguimiento ? '  (' + t.CambioSeguimiento + ')' : ''), M + 12, y + 8);
+                x.fillStyle = GRIS; x.font = `400 15px ${F}`; x.fillText(corta([t.Tiendas, t.Pedidos].filter(Boolean).join(' · ') + ' · ' + t._arts.length + ' art.', 700), M + 12, y + 32);
+                x.textAlign = 'right'; x.fillStyle = TINTA; x.font = `700 17px ${F}`; x.fillText(Number(t.TotalPesoLibras ?? t.PesoLibras ?? 0).toFixed(2) + ' lb', W - M - 12, y + 10);
+                if(t.TotalPago != null){ x.fillStyle = GRIS; x.font = `400 14px ${F}`; x.fillText('est. ' + fmtL(t.TotalPago), W - M - 12, y + 32); }
+                x.textAlign = 'left'; y += FT - 6;
+                t._arts.forEach(a => {
+                    n++; const cy = y + 11;
+                    x.fillStyle = GRIS; x.font = `700 15px ${F}`; x.fillText(String(n), X.n + 8, cy);
+                    x.fillStyle = TINTA; x.font = `600 16px ${F}`; const nom = a.NombreArticulo || '-'; x.fillText(corta(nom, 300), X.art, cy);
+                    const w1 = Math.min(300, x.measureText(nom).width); x.fillStyle = GRIS; x.font = `400 15px ${F}`; if(a.TallaColor) x.fillText(corta('· ' + a.TallaColor, X.cli - X.art - w1 - 24), X.art + w1 + 8, cy + 1);
+                    x.fillStyle = TINTA; x.font = `400 15px ${F}`; x.fillText(corta(a.NombreCliente || 'Sin cliente', 260), X.cli, cy + 1);
+                    x.textAlign = 'center'; x.font = `700 15px ${F}`; x.fillText(String(a.CantidadArticulos || 1), X.cant, cy + 1);
+                    x.textAlign = 'right'; x.fillStyle = GRIS; x.font = `600 14px ${F}`; x.fillText(a.CodigoVendedor || '', X.vend, cy + 2); x.textAlign = 'left';
+                    y += FA; x.fillStyle = LINEA; x.fillRect(M, y - 1, IN, 1);
+                });
+            });
+            // total
+            y += 20; const tw = 420, tx = W - M - tw;
+            x.fillStyle = TINTA; x.fillRect(tx, y, tw, 2); x.fillRect(tx, y + 66, tw, 2);
+            x.font = `700 18px ${F}`; x.fillText(pag ? 'TOTAL PAGADO' : 'PAGO ESTIMADO', tx + 6, y + 14);
+            x.font = `400 14px ${F}`; x.fillStyle = GRIS; x.fillText(pag && est ? 'Estimado ' + fmtL(est) : (pesoReal || peso).toFixed(2) + ' lb', tx + 6, y + 40);
+            x.textAlign = 'right'; x.font = `800 30px ${F}`; x.fillStyle = ROSA; x.fillText(fmtL(pag || est), W - M - 6, y + 16); x.textAlign = 'left';
+            // pie: generado por, MultiStore
+            x.fillStyle = '#f1f5f9'; x.fillRect(0, H - PIE, W, PIE); x.fillStyle = LINEA; x.fillRect(0, H - PIE, W, 1);
+            let px = M; if(logo){ const lh = 28, lw = logo.width * lh / logo.height; x.drawImage(logo, M, H - PIE / 2 - lh / 2, lw, lh); px += lw + 10; }
+            let u = {}; try{ u = JSON.parse(localStorage.getItem('ms_usuario') || '{}') || {}; }catch(e){}
+            x.textBaseline = 'middle'; x.font = `400 16px ${F}`; x.fillStyle = GRIS;
+            x.fillText(`Generado por ${(`${u.nombres || ''} ${u.apellidos || ''}`).trim() || 'MultiStore'} en MultiStore`, px, H - PIE / 2);
+            x.textAlign = 'right'; x.fillText(new Date().toLocaleString('es-HN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }), W - M, H - PIE / 2);
+            const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+            try{ await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); showToast('Imagen copiada. Pegala en WhatsApp con Ctrl + V'); }
+            catch(e){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'orden-casillero.png'; a.click(); showToast('El navegador no dejó copiar; se descargó la imagen.'); }
+        }catch(err){ showToast('No se pudo generar la imagen: ' + err.message, true); }
+        finally{ btn.disabled = false; btn.textContent = 'Copiar imagen'; }
     }
     function toggleQuitarOrden(id){ quitarDeOrden.has(id) ? quitarDeOrden.delete(id) : quitarDeOrden.add(id); pintarDetalleOrden(); }
 
