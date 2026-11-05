@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {
+    getTrackingsOrden,
+    editarOrden,
     getDetalleArticulo,
     // Pestaña 1
     getArticulosSinSeguimiento,
@@ -43,6 +45,8 @@ router.put('/ordenes-entrega/asignar', asignarOrdenAEntradas);
 /* PESTAÑA 4 — Consulta de órdenes */
 router.get('/ordenes', getOrdenes);
 router.get('/ordenes/:idOrden/detalle', getDetalleOrden);
+router.get('/ordenes/:idOrden/trackings', getTrackingsOrden);
+router.put('/ordenes-entrega/:idOrden', editarOrden);
 router.put('/entregado', marcarEntregado);
 
 module.exports = router;

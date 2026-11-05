@@ -170,6 +170,23 @@
         .pt-ok { color:#4ade80; font-size:11px; font-weight:700; }
         #pt-cuerpo a { color:#93c5fd; text-decoration:none; } #pt-cuerpo a:hover { text-decoration:underline; }
         .pt-aviso { font-size:12px; color:#fbbf24; margin:6px 0 10px; }
+        .modal.ancho { width:1120px; max-width:96vw; }
+        .op-grid { display:grid; grid-template-columns:minmax(260px,360px) minmax(0,1fr); gap:18px; align-items:start; }
+        .op-grid .form-grid-2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+        .op-grid input, .op-grid select { width:100%; min-width:0; box-sizing:border-box; }
+        .op-det { border:1px solid #1e2530; border-radius:9px; background:#0b0f15; max-height:62vh; overflow-y:auto; }
+        .op-det-cab { position:sticky; top:0; background:#0b0f15; padding:10px 12px; border-bottom:1px solid #1e2530; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; z-index:1; }
+        .op-det-cab div { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#6b7280; font-weight:700; }
+        .op-det-cab b { display:block; font-size:15px; color:#fff; letter-spacing:0; text-transform:none; margin-top:2px; }
+        .op-trk { padding:9px 12px; border-bottom:1px solid #141a22; }
+        .op-trk-h { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; font-size:12.5px; }
+        .op-trk-h b { color:#fff; }
+        .op-trk.quitado { opacity:.4; }
+        .op-arts { width:100%; border-collapse:collapse; margin-top:6px; font-size:11.5px; }
+        .op-arts td { padding:4px 6px; border-top:1px solid #111827; color:#9ca3af; vertical-align:top; }
+        .op-arts td:first-child { color:#4b5563; width:22px; text-align:right; }
+        .op-dif { font-size:12px; margin-top:4px; }
+        @media (max-width:900px) { .op-grid { grid-template-columns:1fr; } }
 </style>
 </head>
 
@@ -614,12 +631,12 @@
 </div>
 
 <div class="modal-overlay" id="modal-orden">
-    <div class="modal">
+    <div class="modal ancho">
         <div class="modal-header">
-            <h3>Crear orden de pago de casillero</h3>
+            <h3 id="op-titulo">Crear orden de pago de casillero</h3>
             <button class="modal-close" onclick="cerrarModal('modal-orden')">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body"><div class="op-grid"><div>
             <div class="field">
                 <label>N° de orden</label>
                 <input type="text" id="op-numero-orden" placeholder="Ej. ORD-2026-0001">
@@ -637,7 +654,7 @@
             <div class="form-grid-2">
                 <div class="field">
                     <label>Cantidad pagada</label>
-                    <input type="text" id="op-cantidad-pagada" placeholder="0.00">
+                    <input type="text" id="op-cantidad-pagada" placeholder="0.00" oninput="pintarTotalesOrden()">
                 </div>
                 <div class="field">
                     <label>Método de pago</label>
@@ -652,10 +669,13 @@
                 <label>Cuenta</label>
                 <select id="op-cuenta"></select>
             </div>
+            <div class="op-dif" id="op-dif"></div>
         </div>
+        <div><div class="op-det" id="op-detalle"></div></div>
+        </div></div>
         <div class="modal-footer">
             <button class="btn-ghost" onclick="cerrarModal('modal-orden')">Cancelar</button>
-            <button class="btn-primary" onclick="confirmarOrdenPago()">Confirmar orden</button>
+            <button class="btn-primary" id="op-confirmar" onclick="confirmarOrdenPago()">Confirmar orden</button>
         </div>
     </div>
 </div>
@@ -1184,8 +1204,8 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             const data = await res.json();
             if(!data.ok) throw new Error(data.error || 'Error al cargar seguimientos');
             listaSeguimientos = data.data || [];
-            document.getElementById('count-seguimientos').textContent = listaSeguimientos.length;
-            renderSeguimientos(listaSeguimientos);
+            document.getElementById('count-seguimientos').textContent = listaSeguimientos.filter(s => s.IdEstado !== 4).length;
+            filtrarSeguimientos();
         }catch(err){
             tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">Error: ${err.message}</td></tr>`;
         }
@@ -1194,7 +1214,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
     function renderSeguimientos(lista){
         const tbody = document.getElementById('tbody-seguimientos');
         if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">No hay seguimientos registrados.</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="7">No hay trackings pendientes de orden de pago.</td></tr>`;
             return;
         }
         tbody.innerHTML = lista.map(s => {
@@ -1209,9 +1229,9 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                     <td><span class="badge ${estado.cls}">${estado.label}</span></td>
                     <td><button class="btn-ghost btn-sm" onclick="toggleArticulosSeguimiento(${s.IdSeguimiento}, this, 'seg')">Ver artículos</button></td>
                     <td>
-                        ${puedeRegistrar
-                            ? `<button class="btn-ghost btn-sm" title="Opcional: al crear la orden de pago se registra sola" onclick="abrirModalEntrada(${s.IdSeguimiento})">Llegó a Miami</button>`
-                            : `<span class="badge b-gray">Ya registrado</span>`}
+                        ${s.IdEstado === 4
+                            ? `<span class="badge b-gray">Con orden</span>`
+                            : `<button class="btn-primary btn-sm" onclick="irAOrden(${s.IdSeguimiento})">Hacer orden</button>`}
                     </td>
                 </tr>
                 <tr class="fila-articulos fila-articulos-seg-${s.IdSeguimiento}" style="display:none;">
@@ -1228,7 +1248,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         const estadoFiltro = document.getElementById('f-estado-seg').value;
         const filtrados = listaSeguimientos.filter(s => {
             const coincideTexto = s.Seguimiento.toLowerCase().includes(q);
-            const coincideEstado = !estadoFiltro || String(s.IdEstado) === estadoFiltro;
+            const coincideEstado = estadoFiltro ? String(s.IdEstado) === estadoFiltro : s.IdEstado !== 4;   // los que ya tienen orden solo con el filtro "Con orden"
             return coincideTexto && coincideEstado;
         });
         renderSeguimientos(filtrados);
@@ -1475,6 +1495,10 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             }
         });
 
+        ordenEditando = null; quitarDeOrden = new Set();
+        document.getElementById('op-titulo').textContent = 'Crear orden de pago de casillero';
+        document.getElementById('op-confirmar').textContent = 'Confirmar orden';
+        trkModal = entradasCasillero.filter(e => seleccionEntradas.has(e.IdSeguimiento));
         document.getElementById('op-numero-orden').value = '';
         document.getElementById('op-fecha').value = new Date().toISOString().substring(0,10);
         document.getElementById('op-peso').value = totalPeso.toFixed(2);
@@ -1487,9 +1511,94 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         ).join('') || '<option value="">No hay cuentas disponibles</option>';
 
         abrirModal('modal-orden');
+        pintarDetalleOrden();
     }
 
+    let ordenEditando = null, quitarDeOrden = new Set(), trkModal = [];
+    const fmtL = v => 'L ' + Number(v || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // Panel derecho: qué se está pagando (trackings y sus artículos)
+    function pintarDetalleOrden(){
+        const box = document.getElementById('op-detalle');
+        box.innerHTML = `<div class="op-det-cab" id="op-det-cab"></div>` + (trkModal.length ? trkModal.map(t => `
+            <div class="op-trk ${quitarDeOrden.has(t.IdSeguimiento) ? 'quitado' : ''}">
+                <div class="op-trk-h"><div><b>${t.Seguimiento}</b>${t.CambioSeguimiento ? ` <span style="color:#6b7280">(${t.CambioSeguimiento})</span>` : ''}
+                    <div class="meta-trk">${[t.Tiendas, t.Pedidos].filter(Boolean).join(' · ')}${t.Articulos != null ? ' · ' + t.Articulos + ' art.' : ''}</div></div>
+                    <div style="text-align:right;white-space:nowrap">${Number(t.TotalPesoLibras ?? t.PesoLibras ?? 0).toFixed(2)} lb${t.TotalPago != null ? `<div class="meta-trk">est. ${fmtL(t.TotalPago)}</div>` : ''}
+                    ${ordenEditando ? `<div><a href="#" style="color:${quitarDeOrden.has(t.IdSeguimiento) ? '#93c5fd' : '#f87171'};font-size:11.5px" onclick="event.preventDefault();toggleQuitarOrden(${t.IdSeguimiento})">${quitarDeOrden.has(t.IdSeguimiento) ? 'Deshacer' : 'Quitar de la orden'}</a></div>` : ''}</div></div>
+                <table class="op-arts" id="op-arts-${t.IdSeguimiento}"><tr><td></td><td>Cargando artículos…</td></tr></table>
+            </div>`).join('') : '<div class="panel-articulos-vacio" style="padding:14px">Sin trackings</div>');
+        pintarTotalesOrden();
+        trkModal.forEach(async t => {
+            try{
+                const r = await fetch(`${API}/articulos/${t.IdSeguimiento}`).then(x => x.json());
+                const arts = (r.ok && r.data) || []; t._arts = arts;
+                const tb = document.getElementById('op-arts-' + t.IdSeguimiento); if(!tb) return;
+                tb.innerHTML = arts.length ? arts.map((a, i) => `<tr><td>${i + 1}</td><td><span style="color:#e2e8f0">${a.NombreArticulo ?? '-'}</span>${a.TallaColor ? ' · ' + a.TallaColor : ''}${(a.CantidadArticulos || 1) > 1 ? ' · ×' + a.CantidadArticulos : ''}
+                    ${a.DescripcionArticulo ? `<div style="color:#4b5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:480px">${a.DescripcionArticulo}</div>` : ''}</td><td style="white-space:nowrap">${a.NombreCliente ?? 'Sin cliente'}</td><td style="white-space:nowrap">${a.CodigoVendedor ?? ''}</td></tr>`).join('')
+                    : '<tr><td></td><td>Sin artículos</td></tr>';
+                pintarTotalesOrden();
+            }catch(e){}
+        });
+    }
+    function pintarTotalesOrden(){
+        const act = trkModal.filter(t => !quitarDeOrden.has(t.IdSeguimiento));
+        const arts = act.reduce((a, t) => a + (t._arts ? t._arts.length : (t.Articulos || 0)), 0);
+        const peso = act.reduce((a, t) => a + Number(t.TotalPesoLibras ?? t.PesoLibras ?? 0), 0);
+        const est = act.reduce((a, t) => a + Number(t.TotalPago || 0), 0);
+        const cab = document.getElementById('op-det-cab');
+        if(cab) cab.innerHTML = `<div>Trackings<b>${act.length}</b></div><div>Artículos<b>${arts}</b></div><div>Peso estimado<b>${peso.toFixed(2)} lb</b></div><div>Pago estimado<b>${est ? fmtL(est) : '—'}</b></div>`;
+        const pag = parseFloat(document.getElementById('op-cantidad-pagada').value) || 0, dif = document.getElementById('op-dif');
+        if(dif) dif.innerHTML = pag && est ? `Pagado ${fmtL(pag)} · estimado ${fmtL(est)} · <b style="color:${pag - est > 0.5 ? '#f87171' : '#4ade80'}">${pag - est > 0 ? '+' : ''}${fmtL(pag - est).replace('L -', '-L ')}</b> de diferencia` : '';
+    }
+    function toggleQuitarOrden(id){ quitarDeOrden.has(id) ? quitarDeOrden.delete(id) : quitarDeOrden.add(id); pintarDetalleOrden(); }
+
+    // Desde la pestaña Trackings: ir a Orden de pago con ese tracking marcado
+    function irAOrden(id){
+        cambiarTab('orden');
+        if(!entradasCasillero.some(e => e.IdSeguimiento === id)){ showToast('Ese tracking no tiene artículos o ya tiene orden.', true); return; }
+        seleccionEntradas.add(id);
+        renderEntradasCasillero(entradasCasillero);
+    }
+
+    // Editar una orden ya creada (Consulta de órdenes)
+    async function abrirEdicionOrden(idOrden){
+        const o = (window._ordenesVistas || []).find(x => x.IdOrden === idOrden); if(!o) return;
+        ordenEditando = o; quitarDeOrden = new Set();
+        document.getElementById('op-titulo').textContent = 'Editar orden de pago ' + (o.NumeroOrden || '');
+        document.getElementById('op-confirmar').textContent = 'Guardar cambios';
+        document.getElementById('op-numero-orden').value = o.NumeroOrden || '';
+        document.getElementById('op-fecha').value = String(o.Fecha || '').substring(0,10);
+        document.getElementById('op-peso').value = Number(o.Peso || 0).toFixed(2);
+        document.getElementById('op-cantidad-pagada').value = Number(o.CantidadPagada || 0).toFixed(2);
+        if(o.IdMetodoPago) document.getElementById('op-metodo-pago').value = String(o.IdMetodoPago);
+        if(!listaCuentas.length) await cargarCuentasBanco();
+        const sel = document.getElementById('op-cuenta');
+        sel.innerHTML = listaCuentas.map(c => `<option value="${c.IdCuentaBanco}">${c.Banco} · ${c.NombreCuenta} · ${c.NumeroCuenta}</option>`).join('');
+        if(o.IdCuenta) sel.value = String(o.IdCuenta);
+        trkModal = [];
+        abrirModal('modal-orden');
+        try{
+            const r = await fetch(`${API}/ordenes/${idOrden}/trackings`).then(x => x.json());
+            trkModal = (r.ok && r.data) || [];
+        }catch(e){ trkModal = []; }
+        pintarDetalleOrden();
+    }
+    async function guardarEdicionOrden(){
+        const v = id => document.getElementById(id).value;
+        const cuerpo = { NumeroOrden: v('op-numero-orden').trim(), Fecha: v('op-fecha'), Peso: parseFloat(v('op-peso')) || 0, CantidadPagada: parseFloat(v('op-cantidad-pagada')) || 0,
+            IdMetodoPago: Number(v('op-metodo-pago')), IdCuenta: Number(v('op-cuenta')), quitar: [...quitarDeOrden] };
+        if(!cuerpo.NumeroOrden || !cuerpo.Fecha || !cuerpo.IdCuenta){ showToast('Completá el número, la fecha y la cuenta.', true); return; }
+        if(quitarDeOrden.size && quitarDeOrden.size === trkModal.length){ showToast('La orden no puede quedar sin trackings.', true); return; }
+        try{
+            const r = await fetch(`${API}/ordenes-entrega/${ordenEditando.IdOrden}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cuerpo) }).then(x => x.json());
+            if(!r.ok) throw new Error(r.error || 'No se pudo guardar');
+            showToast('Orden ' + cuerpo.NumeroOrden + ' actualizada' + (quitarDeOrden.size ? ` · ${quitarDeOrden.size} tracking(s) devueltos a pendientes` : '') + '.');
+            ordenEditando = null; cerrarModal('modal-orden');
+            await buscarOrdenes(); cargarEntradasCasillero(); cargarSeguimientos();
+        }catch(err){ showToast(err.message, true); }
+    }
     async function confirmarOrdenPago(){
+        if(ordenEditando) return guardarEdicionOrden();
         const NumeroOrden = document.getElementById('op-numero-orden').value.trim();
         const Fecha = document.getElementById('op-fecha').value;
         const Peso = parseFloat(document.getElementById('op-peso').value) || 0;
@@ -1577,6 +1686,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
     }
 
     function renderOrdenes(lista){
+        window._ordenesVistas = lista;
         const tbody = document.getElementById('tbody-ordenes');
         document.getElementById('co-resumen-header').textContent = `${lista.length} orden(es) encontrada(s)`;
 
@@ -1592,6 +1702,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                     <button class="btn-primary btn-sm" onclick="verDetalleOrden(${o.IdOrden}, '${(o.NumeroOrden||'').replace(/'/g,"\\'")}')">
                         Ver detalle
                     </button>
+                    <button class="btn-ghost btn-sm" onclick="abrirEdicionOrden(${o.IdOrden})">Editar</button>
                 </td>
                 <td style="font-weight:600;">${o.NumeroOrden ?? '-'}</td>
                 <td>${fmtFecha(o.Fecha)}</td>

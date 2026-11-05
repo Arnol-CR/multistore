@@ -323,7 +323,15 @@ const getOrdenes = async (req, res) => {
         const result = await pool.request()
             .input('FechaInicio', sql.Date, fechaInicio)
             .input('FechaFin', sql.Date, fechaFin)
-            .execute('Se_OrdenesEntrega');
+            .query(`SELECT OE.IdOrden, OE.NumeroOrden, OE.Fecha, OE.CantidadPagada, OE.Peso, OE.IdMetodoPago, OE.IdCuenta,
+                           CB.Banco, CB.NombreCuenta, MP.Metodo, COUNT(EC.IdEntradaCasillero) AS TotalSeguimientos
+                    FROM C_OrdenesEntrega OE
+                    LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = OE.IdCuenta
+                    LEFT JOIN A_MetodosPagos MP ON MP.IdMetodoPago = OE.IdMetodoPago
+                    LEFT JOIN C_EntradasCasillero EC ON EC.IdOrden = OE.IdOrden
+                    WHERE CAST(OE.Fecha AS DATE) BETWEEN @FechaInicio AND @FechaFin
+                    GROUP BY OE.IdOrden, OE.NumeroOrden, OE.Fecha, OE.CantidadPagada, OE.Peso, OE.IdMetodoPago, OE.IdCuenta, CB.Banco, CB.NombreCuenta, MP.Metodo
+                    ORDER BY OE.Fecha DESC, OE.IdOrden DESC`);
 
         res.json({ ok: true, data: result.recordset });
     } catch (err) {
@@ -393,7 +401,54 @@ const getDetalleArticulo = async (req, res) => {
     }
 };
 
+// Trackings de una orden (para editarla)
+const getTrackingsOrden = async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const r = await pool.request().input('O', sql.Int, parseInt(req.params.idOrden)).query(`
+            SELECT S.IdSeguimiento, RTRIM(S.Seguimiento) AS Seguimiento,
+                   (SELECT COUNT(*) FROM C_DetallePedido D WHERE D.IdSeguimiento = S.IdSeguimiento) AS Articulos,
+                   CAST((SELECT ISNULL(SUM(D.PesoTotal), 0) FROM C_DetallePedido D WHERE D.IdSeguimiento = S.IdSeguimiento) / 454.0 AS decimal(10,2)) AS PesoLibras
+            FROM C_EntradasCasillero EC JOIN C_Seguimientos S ON S.IdSeguimiento = EC.IdSeguimiento
+            WHERE EC.IdOrden = @O ORDER BY S.Seguimiento`);
+        res.json({ ok: true, data: r.recordset });
+    } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+// Editar una orden de pago y, si se indica, quitarle trackings. Luego se recalcula el reparto del
+// envío real entre sus trackings y artículos (los triggers corren al tocar las entradas de la orden).
+const editarOrden = async (req, res) => {
+    const id = parseInt(req.params.idOrden);
+    const { NumeroOrden, Fecha, CantidadPagada, IdMetodoPago, Peso, IdCuenta, quitar } = req.body || {};
+    if (!id || !NumeroOrden || !Fecha || CantidadPagada == null || Peso == null || !IdCuenta)
+        return res.status(400).json({ ok: false, error: 'Faltan datos de la orden.' });
+    const pool = await poolPromise;
+    const tx = new sql.Transaction(pool);
+    try {
+        await tx.begin();
+        await new sql.Request(tx).input('Id', sql.Int, id).input('N', sql.NVarChar(50), NumeroOrden).input('F', sql.Date, Fecha)
+            .input('C', sql.Decimal(18, 2), CantidadPagada).input('M', sql.Int, parseInt(IdMetodoPago) || null)
+            .input('P', sql.Decimal(18, 2), Peso).input('Cta', sql.Int, parseInt(IdCuenta))
+            .query(`UPDATE C_OrdenesEntrega SET NumeroOrden = @N, Fecha = @F, CantidadPagada = @C, IdMetodoPago = @M, Peso = @P, IdCuenta = @Cta WHERE IdOrden = @Id`);
+        for (const s of (Array.isArray(quitar) ? quitar : [])) {
+            await new sql.Request(tx).input('Id', sql.Int, id).input('S', sql.Int, parseInt(s)).query(`
+                UPDATE C_EntradasCasillero SET IdOrden = NULL, PesoGramosReal = NULL, ValorPesoReal = NULL WHERE IdOrden = @Id AND IdSeguimiento = @S;
+                UPDATE C_Seguimientos SET IdEstado = 3 WHERE IdSeguimiento = @S;
+                UPDATE C_DetallePedido SET PeroCobradoReal = NULL, ValorCobradoReal = NULL WHERE IdSeguimiento = @S;`);
+        }
+        // tocar las entradas que quedan en la orden para que los triggers recalculen el reparto
+        await new sql.Request(tx).input('Id', sql.Int, id).query('UPDATE C_EntradasCasillero SET IdOrden = IdOrden WHERE IdOrden = @Id');
+        await tx.commit();
+        res.json({ ok: true, mensaje: 'Orden actualizada.' });
+    } catch (err) {
+        try { await tx.rollback(); } catch (_) {}
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 module.exports = {
+    getTrackingsOrden,
+    editarOrden,
     getDetalleArticulo,
     // Pestaña 1
     getArticulosSinSeguimiento,
