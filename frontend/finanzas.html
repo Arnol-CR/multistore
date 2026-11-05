@@ -188,9 +188,12 @@
                     <div class="barra-ctl">
                         <select class="inp" id="u-grupo">
                             <option value="art">Por artículo</option><option value="pedido">Por pedido</option><option value="vendedor">Por vendedor</option>
-                            <option value="cliente">Por cliente</option><option value="tienda">Por tienda</option><option value="mes">Por mes</option>
+                            <option value="cliente">Por cliente</option><option value="tienda">Por tienda</option><option value="seguimiento">Por seguimiento</option>
+                            <option value="orden">Por orden de entrega</option><option value="mes">Por mes</option>
                         </select>
-                        <input class="inp" id="u-buscar" placeholder="Buscar…" style="width:180px">
+                        <select class="inp" id="u-vend"><option value="">Todos los vendedores</option></select>
+                        <select class="inp" id="u-tienda"><option value="">Todas las tiendas</option></select>
+                        <input class="inp" id="u-buscar" placeholder="Pedido, tracking, orden, cliente, SKU, talla…" title="Busca en pedido, seguimiento, orden, vendedor, cliente, tienda, artículo, SKU, descripción y talla. Podés poner varias palabras." style="width:280px">
                         <label class="chk"><input type="checkbox" id="u-conprecio" checked> Solo con precio de venta</label>
                         <button class="btn" onclick="exportarUtilidad()">Exportar CSV</button>
                     </div>
@@ -323,6 +326,7 @@
             r.costo = r.CostoCompra + r.envio + r.comb;
             r.util = r.Venta - r.costo;
             if (e) e.lineas.push(r);
+            r._q = [r.NumeroPedido, r.Seguimiento, r.orden && r.orden.NumeroOrden, r.Vendedor, r.Cliente, r.Tienda, r.NombreArticulo, r.SKU, r.Descripcion, r.TallaColor].filter(Boolean).join(' ').toLowerCase();
             return r;
         });
     }
@@ -437,22 +441,27 @@
     function pUtilidad() {
         const g = document.getElementById('u-grupo').value, q = document.getElementById('u-buscar').value.trim().toLowerCase();
         const soloCon = document.getElementById('u-conprecio').checked;
-        let lins = LIN.filter(l => enPeriodo(l.Fecha) && (!soloCon || l.Venta > 0));
-        const clave = { pedido: l => l.NumeroPedido || '—', vendedor: l => l.Vendedor || 'Sin vendedor', cliente: l => l.Cliente || 'Sin cliente', tienda: l => l.Tienda || '—', mes: l => l.Fecha.slice(0, 7) }[g];
+        const fv = document.getElementById('u-vend'), ft = document.getElementById('u-tienda');
+        const llenar = (sel, vals, todos) => { const act = sel.value, ops = [...new Set(vals.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            const html = `<option value="">${todos}</option>` + ops.map(o => `<option${o === act ? ' selected' : ''}>${esc(o)}</option>`).join('');
+            if (sel.dataset.h !== html) { sel.innerHTML = html; sel.dataset.h = html; if (act && !ops.includes(act)) sel.value = ''; } };
+        llenar(fv, LIN.map(l => l.Vendedor), 'Todos los vendedores'); llenar(ft, LIN.map(l => l.Tienda), 'Todas las tiendas');
+        const palabras = q.split(/\s+/).filter(Boolean);
+        let lins = LIN.filter(l => enPeriodo(l.Fecha) && (!soloCon || l.Venta > 0) && (!fv.value || l.Vendedor === fv.value) && (!ft.value || l.Tienda === ft.value) && palabras.every(p => l._q.includes(p)));
+        const clave = { pedido: l => l.NumeroPedido || '—', vendedor: l => l.Vendedor || 'Sin vendedor', cliente: l => l.Cliente || 'Sin cliente', tienda: l => l.Tienda || '—', seguimiento: l => l.Seguimiento || 'Sin tracking', orden: l => (l.orden && l.orden.NumeroOrden) || 'Sin orden de entrega', mes: l => l.Fecha.slice(0, 7) }[g];
         if (g === 'art') {
-            uFilas = lins.map(l => ({ nombre: l.NombreArticulo || '—', sub: [l.TallaColor, l.NumeroPedido, l.Cliente].filter(Boolean).join(' · '), n: l.Cant, venta: l.Venta, compra: l.CostoCompra, envio: l.envio, comb: l.comb, util: l.util, est: !l.envioReal, fecha: l.Fecha }));
+            uFilas = lins.map(l => ({ nombre: l.NombreArticulo || '—', sub: [l.TallaColor, l.SKU, l.NumeroPedido, l.Cliente, l.Seguimiento].filter(Boolean).join(' · '), n: l.Cant, venta: l.Venta, compra: l.CostoCompra, envio: l.envio, comb: l.comb, util: l.util, est: !l.envioReal, fecha: l.Fecha }));
         } else {
             const m = new Map();
             lins.forEach(l => { const k = clave(l); if (!m.has(k)) m.set(k, []); m.get(k).push(l); });
-            uFilas = [...m.entries()].map(([k, ls]) => { const t = totales(ls); return { nombre: g === 'mes' ? nomMes(k) : k, orden: k, sub: g === 'pedido' ? [ls[0].Tienda, fFecha(ls[0].Fecha)].join(' · ') : '', n: ls.reduce((a, l) => a + l.Cant, 0), venta: t.venta, compra: t.compra, envio: t.envio, comb: t.comb, util: t.util, est: t.nEst > 0, fecha: ls[0].Fecha }; });
+            uFilas = [...m.entries()].map(([k, ls]) => { const t = totales(ls); return { nombre: g === 'mes' ? nomMes(k) : k, orden: k, sub: g === 'pedido' ? [ls[0].Tienda, fFecha(ls[0].Fecha)].join(' · ') : g === 'seguimiento' ? [ls[0].Tienda, ls[0].NumeroPedido].filter(Boolean).join(' · ') : g === 'orden' && ls[0].orden ? fFecha(ls[0].orden.Fecha) : '', n: ls.reduce((a, l) => a + l.Cant, 0), venta: t.venta, compra: t.compra, envio: t.envio, comb: t.comb, util: t.util, est: t.nEst > 0, fecha: ls[0].Fecha }; });
         }
-        if (q) uFilas = uFilas.filter(f => (f.nombre + ' ' + f.sub).toLowerCase().includes(q));
         const k = uOrden.k;
         uFilas.sort((a, b) => { const x = k === 'nombre' ? (g === 'mes' ? a.orden : a.nombre) : a[k], y = k === 'nombre' ? (g === 'mes' ? b.orden : b.nombre) : b[k]; return (typeof x === 'string' ? x.localeCompare(y) : x - y) * uOrden.dir; });
         const t = uFilas.reduce((s, f) => { ['n', 'venta', 'compra', 'envio', 'comb', 'util'].forEach(c => s[c] += f[c]); return s; }, { n: 0, venta: 0, compra: 0, envio: 0, comb: 0, util: 0 });
         const th = (c, txt, cls = 'num') => `<th class="ord ${cls}" onclick="ordenarU('${c}')">${txt}${uOrden.k === c ? (uOrden.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
         const MAX = 500;
-        document.getElementById('u-tabla').innerHTML = uFilas.length ? `<table><thead><tr>${th('nombre', { art: 'Artículo', pedido: 'Pedido', vendedor: 'Vendedor', cliente: 'Cliente', tienda: 'Tienda', mes: 'Mes' }[g], '')}${th('n', 'Unid.')}${th('venta', 'Venta')}${th('compra', 'Costo artículo')}${th('envio', 'Envío')}${th('comb', 'Combustible')}${th('util', 'Utilidad')}<th class="num">Margen</th></tr></thead><tbody>
+        document.getElementById('u-tabla').innerHTML = uFilas.length ? `<table><thead><tr>${th('nombre', { art: 'Artículo', pedido: 'Pedido', vendedor: 'Vendedor', cliente: 'Cliente', tienda: 'Tienda', seguimiento: 'Seguimiento', orden: 'Orden de entrega', mes: 'Mes' }[g], '')}${th('n', 'Unid.')}${th('venta', 'Venta')}${th('compra', 'Costo artículo')}${th('envio', 'Envío')}${th('comb', 'Combustible')}${th('util', 'Utilidad')}<th class="num">Margen</th></tr></thead><tbody>
             ${uFilas.slice(0, MAX).map(f => `<tr><td>${esc(f.nombre)}${f.sub ? `<div class="meta">${esc(f.sub)}</div>` : ''}</td><td class="num">${f.n}</td><td class="num">${L(f.venta)}</td><td class="num">${L(f.compra)}</td><td class="num">${L(f.envio)}${f.est ? '<span class="tag est" title="Envío estimado por peso: todavía no hay orden de entrega">est.</span>' : ''}</td><td class="num">${L(f.comb)}</td><td class="num ${clsU(f.util)}">${L(f.util)}</td><td class="num">${f.venta ? pct(f.util, f.venta) : '—'}</td></tr>`).join('')}
             </tbody><tfoot><tr><td>Total · ${uFilas.length} ${g === 'art' ? 'artículos' : 'grupos'}${uFilas.length > MAX ? ` (se muestran ${MAX})` : ''}</td><td class="num">${t.n}</td><td class="num">${L(t.venta)}</td><td class="num">${L(t.compra)}</td><td class="num">${L(t.envio)}</td><td class="num">${L(t.comb)}</td><td class="num ${clsU(t.util)}">${L(t.util)}</td><td class="num">${pct(t.util, t.venta)}</td></tr></tfoot></table>`
             : '<div class="vacio">No hay datos con estos filtros</div>';
@@ -953,6 +962,7 @@
     });
     document.getElementById('periodo').addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) ponerPeriodo(c.dataset.p); });
     ['desde', 'hasta'].forEach(id => document.getElementById(id).addEventListener('change', () => { document.querySelectorAll('#periodo .chip').forEach(c => c.classList.remove('on')); pintar(); }));
+    ['u-vend', 'u-tienda'].forEach(id => document.getElementById(id).addEventListener('change', pUtilidad));
     ['u-grupo', 'u-conprecio'].forEach(id => document.getElementById(id).addEventListener('change', () => { uOrden = { k: 'util', dir: -1 }; pUtilidad(); }));
     document.getElementById('u-buscar').addEventListener('input', pUtilidad);
     window.addEventListener('resize', () => { if (vista === 'resumen') pintar(); });

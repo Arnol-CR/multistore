@@ -12,6 +12,7 @@ const CONSULTAS = {
   lineas: `
     SELECT D.IdDetallePedido, D.IdPedido, ${F('P.FechaPedido')} AS Fecha, RTRIM(P.NumeroPedido) AS NumeroPedido,
            E.NombreEmpresa AS Tienda, A.NombreArticulo, D.TallaColor, D.CantidadArticulos AS Cant, D.Fotografia,
+           RTRIM(D.CodigoArticulo) AS SKU, LEFT(D.DescripcionArticulo, 250) AS Descripcion,
            D.IdCliente, ${nombre('C.Nombre', 'C.Apellido')} AS Cliente,
            D.IdVendedor, ${nombre('V.Nombres', 'V.Apellidos')} AS Vendedor,
            ISNULL(D.ValorCobroCliente, 0) AS Venta, ISNULL(D.TotalCompraLempiras, 0) AS CostoCompra,

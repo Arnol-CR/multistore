@@ -465,6 +465,8 @@
                                     <th>Talla / Color</th>
                                     <th>Descripción</th>
                                     <th>Cant.</th>
+                                    <th style="text-align:right">Peso (lb)</th>
+                                    <th style="text-align:right">Envío</th>
                                     <th>Vendedor</th>
                                     <th>Seguimiento</th>
                                     <th>Tienda</th>
@@ -472,7 +474,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody-detalle-orden">
-                                <tr class="fila-vacia"><td colspan="11">Cargando artículos...</td></tr>
+                                <tr class="fila-vacia"><td colspan="13">Cargando artículos...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1801,7 +1803,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         document.getElementById('card-detalle-orden').style.display = 'block';
 
         const tbody = document.getElementById('tbody-detalle-orden');
-        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="11">Cargando artículos...</td></tr>`;
+        tbody.innerHTML = `<tr class="fila-vacia"><td colspan="13">Cargando artículos...</td></tr>`;
         document.getElementById('tbody-resumen-vendedor').innerHTML = '';
         document.getElementById('tbody-resumen-seguimiento').innerHTML = '';
 
@@ -1816,7 +1818,7 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
             document.getElementById('filtro-detalle-orden').value = '';
             renderDetalleOrden(detalleOrdenActual);
         }catch(err){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="11">Error: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="13">Error: ${err.message}</td></tr>`;
         }
     }
 
@@ -1846,6 +1848,8 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                     ${a.DescripcionCorta ?? '-'}
                 </td>
                 <td style="text-align:center;">${a.CantidadArticulos ?? 1}</td>
+                <td style="text-align:right;">${(Number(a.PesoEnvioG || 0) / 453.592).toFixed(2)}</td>
+                <td style="text-align:right;font-weight:700;">${Number(a.ValorEnvio || 0) ? fmtL(a.ValorEnvio) : '-'}</td>
                 <td>${a.CodigoVendedor ?? '-'}</td>
                 <td style="font-size:11px;color:var(--color-text-secondary);">${a.Seguimiento ?? '-'}</td>
                 <td>${a.Tienda ?? '-'}</td>
@@ -1863,11 +1867,15 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         const tbody = document.getElementById('tbody-detalle-orden');
 
         if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="11">Esta orden no tiene artículos registrados.</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="13">Esta orden no tiene artículos registrados.</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = lista.map((a, i) => renderFilaDetalle(a, i)).join('');
+        const totEnv = lista.reduce((t, a) => t + Number(a.ValorEnvio || 0), 0), totG = lista.reduce((t, a) => t + Number(a.PesoEnvioG || 0), 0);
+        tbody.innerHTML = lista.map((a, i) => renderFilaDetalle(a, i)).join('') +
+            `<tr style="border-top:1px solid var(--color-border-primary);font-weight:700;"><td colspan="6" style="text-align:right;">Total envío</td>
+                <td style="text-align:center;">${lista.reduce((t, a) => t + (a.CantidadArticulos || 1), 0)}</td>
+                <td style="text-align:right;">${(totG / 453.592).toFixed(2)}</td><td style="text-align:right;color:var(--teal-light);">${fmtL(totEnv)}</td><td colspan="4"></td></tr>`;
 
         if(!actualizarResumenes) return;
 

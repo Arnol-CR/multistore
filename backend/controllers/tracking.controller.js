@@ -347,8 +347,20 @@ const getDetalleOrden = async (req, res) => {
 
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('IdOrden', sql.Int, idOrden)
-            .execute('Se_DetalleOrdenEntrega');
+            .input('IdOrden', sql.Int, parseInt(idOrden))
+            .query(`SELECT DP.IdDetallePedido, CT.NombreCliente, CT.NombreArticulo, DP.CodigoArticulo, CT.TallaColor,
+                           LEFT(CT.DescripcionArticulo, 80) AS DescripcionCorta, CT.CantidadArticulos, V.CodigoVendedor,
+                           S.Seguimiento, E.NombreEmpresa AS Tienda, ISNULL(DP.EstaEntregado, 0) AS EstaEntregado,
+                           ISNULL(DP.PeroCobradoReal, 0) AS PesoEnvioG, ISNULL(DP.ValorCobradoReal, 0) AS ValorEnvio
+                    FROM C_EntradasCasillero EC
+                    INNER JOIN C_Seguimientos S ON S.IdSeguimiento = EC.IdSeguimiento
+                    INNER JOIN C_DetallePedido DP ON DP.IdSeguimiento = EC.IdSeguimiento
+                    INNER JOIN ListadoPedidoCostoTodos CT ON CT.IdDetallePedido = DP.IdDetallePedido
+                    LEFT JOIN A_Vendedores V ON V.IdVendedor = CT.IdVendedor
+                    LEFT JOIN C_Pedidos P ON P.IdPedido = DP.IdPedido
+                    LEFT JOIN A_Empresas E ON E.IdEmpresa = P.IdEmpresa
+                    WHERE EC.IdOrden = @IdOrden
+                    ORDER BY V.CodigoVendedor, CT.NombreCliente`);
 
         res.json({ ok: true, data: result.recordset });
     } catch (err) {
