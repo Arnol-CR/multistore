@@ -325,7 +325,8 @@
         if (!confirm(ids.length === 1 ? '¿Dejar este artículo sin cliente?' : `¿Dejar estos ${ids.length} artículos sin cliente?`)) return;
         try {
             const d = await fetch('/api/clientes/quitar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids, idUsuario: usuario.id }) }).then(r => r.json());
-            if (!d.ok) { toast('err', 'Error: ' + d.error); return; }
+            if (!d.ok) { toast('err', d.error || 'No se pudo quitar'); return; }
+            if (d.sinCambiar) { toast('err', `${d.sinCambiar} ya entregado(s) no se cambiaron`); editGrupo.clear(); ids.forEach(i => editCli.delete(i)); return cargar(); }
             datos.forEach(p => { if (ids.includes(p.IdDetallePedido)) { p.IdCliente = null; p.NombreCliente = null; } });
             ids.forEach(i => editCli.delete(i)); editGrupo.clear();
             render();

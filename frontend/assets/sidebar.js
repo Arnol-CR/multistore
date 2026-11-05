@@ -20,7 +20,7 @@
       label: 'Compras',
       items: [
         { href: '/crear-pedidos.html', texto: 'Nuevo pedido', solo: false, badge: null, svg: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>' },
-        { href: '/pedidos.html', texto: 'Pedidos', solo: false, badge: { id: 'badge-pedidos', cls: '' }, svg: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>' },
+        { href: '/trazabilidad.html', texto: 'Trazabilidad', solo: false, badge: null, svg: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><polyline points="8 11 10 13 14 9"/>' },
         { href: '/listado-pedidos.html', texto: 'Administrar pedidos', solo: true, badge: null, svg: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>' },
         { href: '/tracking.html', texto: 'Envíos y casillero', solo: false, badge: null, svg: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>' }
       ]

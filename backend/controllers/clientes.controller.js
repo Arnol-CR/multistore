@@ -106,13 +106,17 @@ const quitarCliente = async (req, res) => {
     const ids = (Array.isArray(req.body.ids) ? req.body.ids : [req.body.idDetallePedido]).map(x => parseInt(x)).filter(Boolean);
     if (!ids.length) return res.status(400).json({ ok: false, error: 'Faltan artículos' });
     const pool = await poolPromise;
+    // El administrador puede quitar el cliente aunque el artículo ya esté entregado; el vendedor solo de los no entregados
+    const admin = !!(req.usuario && req.usuario.esAdmin);
     const antes = await clientesActuales(pool, ids).catch(() => new Map());
     const r = await pool.request().input('ids', sql.NVarChar, ids.join(','))
       .query(`UPDATE C_DetallePedido SET IdCliente = NULL
               WHERE IdDetallePedido IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@ids, ','))
-                AND ISNULL(EstaEntregado, 0) = 0`);
+                ${admin ? '' : 'AND ISNULL(EstaEntregado, 0) = 0'}`);
     await anotarClientes(pool, parseInt(req.body.idUsuario) || null, antes, null);
-    res.json({ ok: true, cambiados: r.rowsAffected[0] });
+    const n = r.rowsAffected[0];
+    if (!n) return res.status(409).json({ ok: false, error: 'No se quitó: el artículo ya está entregado. Pedile al administrador que lo haga.' });
+    res.json({ ok: true, cambiados: n, sinCambiar: ids.length - n });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 

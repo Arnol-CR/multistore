@@ -413,7 +413,7 @@
             const json = await res.json();
             if (json.ok) {
                 todosPedidos = json.data;
-                document.getElementById('badge-pedidos').textContent = todosPedidos.length;
+                { const bp = document.getElementById('badge-pedidos'); if (bp) bp.textContent = todosPedidos.length; }
                 pedidosFiltrados = todosPedidos;
                 cargarExtras();
                 cargarTiendasDinamicas();
