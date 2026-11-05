@@ -325,13 +325,17 @@ const getOrdenes = async (req, res) => {
             .input('FechaInicio', sql.Date, fechaInicio)
             .input('FechaFin', sql.Date, fechaFin)
             .query(`SELECT OE.IdOrden, OE.NumeroOrden, OE.Fecha, OE.CantidadPagada, OE.Peso, OE.IdMetodoPago, OE.IdCuenta,
-                           CB.Banco, CB.NombreCuenta, MP.Metodo, COUNT(EC.IdEntradaCasillero) AS TotalSeguimientos
+                           CB.Banco, CB.NombreCuenta, MP.Metodo, COUNT(EC.IdEntradaCasillero) AS TotalSeguimientos,
+                           OE.IdCombustible, MAX(CO.CantidadPagar) AS Combustible, MAX(CO.IdVendedor) AS IdVendCombustible,
+                           MAX(CO.Observaciones) AS ObsCombustible, CAST(MAX(CAST(ISNULL(CO.EstaCancelado, 0) AS int)) AS bit) AS CombustiblePagado,
+                           (SELECT COUNT(*) FROM C_OrdenesEntrega O2 WHERE O2.IdCombustible = OE.IdCombustible) AS OrdenesCombustible
                     FROM C_OrdenesEntrega OE
+                    LEFT JOIN C_Combustible CO ON CO.IdCombustible = OE.IdCombustible
                     LEFT JOIN A_CuentaBanco CB ON CB.IdCuentaBanco = OE.IdCuenta
                     LEFT JOIN A_MetodosPagos MP ON MP.IdMetodoPago = OE.IdMetodoPago
                     LEFT JOIN C_EntradasCasillero EC ON EC.IdOrden = OE.IdOrden
                     WHERE CAST(OE.Fecha AS DATE) BETWEEN @FechaInicio AND @FechaFin
-                    GROUP BY OE.IdOrden, OE.NumeroOrden, OE.Fecha, OE.CantidadPagada, OE.Peso, OE.IdMetodoPago, OE.IdCuenta, CB.Banco, CB.NombreCuenta, MP.Metodo
+                    GROUP BY OE.IdOrden, OE.NumeroOrden, OE.Fecha, OE.CantidadPagada, OE.Peso, OE.IdMetodoPago, OE.IdCuenta, CB.Banco, CB.NombreCuenta, MP.Metodo, OE.IdCombustible
                     ORDER BY OE.Fecha DESC, OE.IdOrden DESC`);
 
         res.json({ ok: true, data: result.recordset });
@@ -521,7 +525,42 @@ const marcarNoLlego = async (req, res) => {
     }
 };
 
+// Combustible / transporte de una orden. Es por fecha: lo comparten las órdenes de ese día.
+// El pago (pagado o no, y de qué cuenta) se marca en Finanzas.
+const guardarCombustibleOrden = async (req, res) => {
+    const pool = await poolPromise;
+    const tx = new sql.Transaction(pool);
+    try {
+        const id = parseInt(req.params.idOrden), b = req.body || {}, monto = parseFloat(b.monto);
+        if (!id || !(monto >= 0)) return res.status(400).json({ ok: false, error: 'Monto no válido' });
+        await tx.begin();
+        const o = (await new sql.Request(tx).input('Id', sql.Int, id).query(`SELECT IdCombustible, Fecha FROM C_OrdenesEntrega WHERE IdOrden = @Id`)).recordset[0];
+        if (!o) throw new Error('No encontré la orden');
+        let idc = o.IdCombustible;
+        if (!idc) {   // si la orden no tiene registro, se usa el de su fecha o se crea uno
+            const r = await new sql.Request(tx).input('F', sql.Date, o.Fecha).query(`SELECT TOP 1 IdCombustible FROM C_Combustible WHERE Fecha = @F ORDER BY IdCombustible`);
+            idc = r.recordset[0] && r.recordset[0].IdCombustible;
+            if (!idc) idc = (await new sql.Request(tx).input('F', sql.Date, o.Fecha).query(`
+                IF COLUMNPROPERTY(OBJECT_ID('dbo.C_Combustible'), 'IdCombustible', 'IsIdentity') = 1
+                  BEGIN INSERT INTO C_Combustible (Fecha, EstaCancelado) VALUES (@F, 0); SELECT CAST(SCOPE_IDENTITY() AS int) AS Id; END
+                ELSE
+                  BEGIN DECLARE @N int = (SELECT ISNULL(MAX(IdCombustible), 0) + 1 FROM C_Combustible WITH (UPDLOCK, HOLDLOCK));
+                        INSERT INTO C_Combustible (IdCombustible, Fecha, EstaCancelado) VALUES (@N, @F, 0); SELECT @N AS Id; END`)).recordset[0].Id;
+            await new sql.Request(tx).input('Id', sql.Int, id).input('C', sql.Int, idc).query(`UPDATE C_OrdenesEntrega SET IdCombustible = @C WHERE IdOrden = @Id`);
+        }
+        await new sql.Request(tx).input('C', sql.Int, idc).input('M', sql.Decimal(18, 2), monto)
+            .input('V', sql.Int, parseInt(b.idVendedor) || null).input('O', sql.NVarChar(sql.MAX), (b.observaciones || '').trim() || null)
+            .query(`UPDATE C_Combustible SET CantidadPagar = @M, IdVendedor = @V, Observaciones = @O WHERE IdCombustible = @C`);
+        await tx.commit();
+        res.json({ ok: true, idCombustible: idc });
+    } catch (err) {
+        try { await tx.rollback(); } catch (_) {}
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
 module.exports = {
+    guardarCombustibleOrden,
     getNoLlego,
     marcarNoLlego,
     getTrackingsOrden,

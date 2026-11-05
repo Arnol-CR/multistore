@@ -538,7 +538,7 @@
     // ── GASTOS ──
     let edGasto = null, edComb = null;
     function pGastos() {
-        const comb = D.combustible.filter(c => enPeriodo(c.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
+        const comb = D.combustible.filter(c => enPeriodo(c.Fecha) && (num(c.Monto) > 0 || ORD.some(o => o.IdCombustible === c.IdCombustible))).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const otros = D.otros.filter(g => enPeriodo(g.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const trans = D.transacciones.filter(g => enPeriodo(g.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha));
         const peds = D.puntos.filter(p => enPeriodo(p.Fecha)).sort((a, b) => b.Fecha.localeCompare(a.Fecha) || b.IdPedido - a.IdPedido);

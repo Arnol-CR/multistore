@@ -44,15 +44,14 @@ const getTodosPedidos = async (req, res) => {
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-// Precio de compra (precio de la app) y cantidad de los artículos aún no entregados
+// Precio de compra (precio de la app), cantidad y peso de los artículos (entregados o no)
 const getCostos = async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
       SELECT D.IdDetallePedido, D.ValorCompra, D.CantidadArticulos, D.Link, P.TasaCambio, D.Peso
       FROM C_DetallePedido D
-      JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
-      WHERE ISNULL(D.EstaEntregado, 0) = 0`);
+      JOIN C_Pedidos P ON P.IdPedido = D.IdPedido`);
     // artículos marcados "no llegó" (si la columna todavía no existe, no hay ninguno)
     let perdidos = [];
     try { perdidos = (await pool.request().query('SELECT IdDetallePedido FROM C_DetallePedido WHERE NoLlego = 1')).recordset.map(x => x.IdDetallePedido); } catch (e) {}

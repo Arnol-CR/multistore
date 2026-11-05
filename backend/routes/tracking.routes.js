@@ -5,6 +5,7 @@ const {
     editarOrden,
     getDetalleArticulo,
     getNoLlego,
+    guardarCombustibleOrden,
     marcarNoLlego,
     // Pestaña 1
     getArticulosSinSeguimiento,
@@ -42,6 +43,7 @@ router.get('/articulos/:idSeguimiento', getArticulosPorSeguimiento);
 router.get('/detalle-articulo/:id', getDetalleArticulo);
 router.get('/no-llego/:id', getNoLlego);
 router.put('/no-llego', marcarNoLlego);
+router.put('/ordenes/:idOrden/combustible', guardarCombustibleOrden);
 router.get('/cuentas', getCuentasBanco);
 router.post('/ordenes-entrega', crearOrdenEntrega);
 router.put('/ordenes-entrega/asignar', asignarOrdenAEntradas);

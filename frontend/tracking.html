@@ -428,6 +428,7 @@
                                 <th>Peso (lb)</th>
                                 <th>Pagado</th>
                                 <th>Trackings</th>
+                                <th>Combustible</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-ordenes">
@@ -632,6 +633,26 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="modal-combustible">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Combustible / transporte</h3>
+            <button class="modal-close" onclick="cerrarModal('modal-combustible')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="cb-info" style="font-size:12.5px;color:var(--color-text-secondary);margin-bottom:12px;"></div>
+            <div class="form-grid-2">
+                <div class="field"><label>Monto (L)</label><input type="number" id="cb-monto" min="0" step="0.01" placeholder="0.00"></div>
+                <div class="field"><label>A quién se le paga</label><select id="cb-vend"><option value="">Sin persona</option></select></div>
+            </div>
+            <div class="field"><label>Observaciones</label><input type="text" id="cb-obs" maxlength="200" placeholder="Ej. viaje a la agencia"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="cerrarModal('modal-combustible')">Cancelar</button>
+            <button class="btn-primary" id="cb-ok" onclick="guardarCombustible()">Guardar</button>
+        </div>
+    </div>
+</div>
 <div class="modal-overlay" id="modal-orden">
     <div class="modal ancho">
         <div class="modal-header">
@@ -1768,13 +1789,46 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
         }
     }
 
+    // Combustible / transporte de la orden (se marca como pagado en Finanzas)
+    let cbOrden = null, cbVendedores = null;
+    async function abrirCombustible(idOrden){
+        const o = (window._ordenesVistas || []).find(x => x.IdOrden === idOrden); if(!o) return;
+        cbOrden = o;
+        if(!cbVendedores){ try{ const d = await fetch('/api/vendedores').then(r => r.json()); cbVendedores = (d.ok && d.data) || []; }catch(e){ cbVendedores = []; } }
+        const sel = document.getElementById('cb-vend');
+        sel.innerHTML = '<option value="">Sin persona</option>' + cbVendedores.map(v => `<option value="${v.IdVendedor}">${[v.Nombres, v.Apellidos].filter(Boolean).join(' ') || v.Nombre || v.CodigoVendedor}</option>`).join('');
+        sel.value = o.IdVendCombustible || '';
+        document.getElementById('cb-monto').value = Number(o.Combustible) > 0 ? Number(o.Combustible) : '';
+        document.getElementById('cb-obs').value = o.ObsCombustible || '';
+        const n = Number(o.OrdenesCombustible || 1);
+        document.getElementById('cb-info').innerHTML = `Orden <b>${o.NumeroOrden || o.IdOrden}</b> del ${fmtFecha(o.Fecha)}.` +
+            (n > 1 ? ` Este combustible es del día: lo comparten <b>${n} órdenes</b> y se reparte entre ellas por peso.` : '') +
+            (o.CombustiblePagado ? ' <b>Ya está marcado como pagado</b> en Finanzas.' : ' El pago se marca en Finanzas, en Gastos.');
+        abrirModal('modal-combustible');
+        setTimeout(() => document.getElementById('cb-monto').focus(), 50);
+    }
+    async function guardarCombustible(){
+        const m = parseFloat(document.getElementById('cb-monto').value);
+        if(!(m >= 0)){ showToast('Poné el monto', true); return; }
+        const btn = document.getElementById('cb-ok'); btn.disabled = true;
+        try{
+            const r = await fetch(`${API}/ordenes/${cbOrden.IdOrden}/combustible`, { method:'PUT', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ monto: m, idVendedor: document.getElementById('cb-vend').value, observaciones: document.getElementById('cb-obs').value }) }).then(x => x.json());
+            if(!r.ok) throw new Error(r.error || 'Error');
+            (window._ordenesVistas || []).forEach(x => { if(x.IdCombustible === cbOrden.IdCombustible || x.IdOrden === cbOrden.IdOrden){ x.IdCombustible = r.idCombustible; x.Combustible = m; x.IdVendCombustible = +document.getElementById('cb-vend').value || null; x.ObsCombustible = document.getElementById('cb-obs').value; } });
+            renderOrdenes(window._ordenesVistas);
+            cerrarModal('modal-combustible'); showToast('Combustible guardado');
+        }catch(err){ showToast('No se pudo guardar: ' + err.message, true); }
+        finally{ btn.disabled = false; }
+    }
+
     function renderOrdenes(lista){
         window._ordenesVistas = lista;
         const tbody = document.getElementById('tbody-ordenes');
         document.getElementById('co-resumen-header').textContent = `${lista.length} orden(es) encontrada(s)`;
 
         if(!lista.length){
-            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="9">No hay órdenes en ese rango de fechas.</td></tr>`;
+            tbody.innerHTML = `<tr class="fila-vacia"><td colspan="10">No hay órdenes en ese rango de fechas.</td></tr>`;
             return;
         }
 
@@ -1794,6 +1848,9 @@ document.getElementById('co-fecha-inicio').value = unMesAtras.toISOString().subs
                 <td>${o.Peso ?? '-'}</td>
                 <td style="color:var(--teal-light); font-weight:700;">L ${Number(o.CantidadPagada || 0).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 <td><span class="badge b-blue">${o.TotalSeguimientos ?? 0}</span></td>
+                <td>${Number(o.Combustible) > 0
+                    ? `<button class="btn-ghost btn-sm" onclick="abrirCombustible(${o.IdOrden})" title="${o.CombustiblePagado ? 'Pagado' : 'Pendiente de pago'}">L ${Number(o.Combustible).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2})}${o.CombustiblePagado ? ' · pagado' : ''}</button>`
+                    : `<button class="btn-ghost btn-sm" onclick="abrirCombustible(${o.IdOrden})">+ Agregar</button>`}</td>
             </tr>
         `).join('');
     }
