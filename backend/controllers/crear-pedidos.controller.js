@@ -370,4 +370,36 @@ const cambiarPeso = async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
-module.exports = { cambiarPeso, cambiarArticuloCatalogo, cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };
+// Revisa repetidos antes de guardar:
+//  - el mismo pedido de la tienda (NoPedidoAplicacion) ya registrado en OTRO pedido
+//  - el mismo artículo (SKU + talla) ya guardado en este pedido o en ese pedido de la tienda
+const revisarDuplicados = async (req, res) => {
+  try {
+    const b = req.body || {}, idPedido = parseInt(b.idPedido) || 0, noPed = String(b.noPedido || '').trim();
+    const items = (Array.isArray(b.items) ? b.items : []).slice(0, 300).map((x, i) => ({ i, sku: String(x.sku || '').trim().replace(/\|/g, ''), talla: String(x.talla || '').trim() }));
+    const pool = await poolPromise;
+    let pedidoApp = [];
+    if (noPed) pedidoApp = (await pool.request().input('N', sql.NVarChar, noPed).input('P', sql.Int, idPedido).query(`
+      SELECT P.IdPedido, RTRIM(P.NumeroPedido) AS NumeroPedido, CONVERT(varchar(10), P.FechaPedido, 23) AS Fecha, E.NombreEmpresa AS Tienda, COUNT(*) AS Lineas
+      FROM C_DetallePedido D JOIN C_Pedidos P ON P.IdPedido = D.IdPedido LEFT JOIN A_Empresas E ON E.IdEmpresa = P.IdEmpresa
+      WHERE LTRIM(RTRIM(D.NoPedidoAplicacion)) = @N AND D.IdPedido <> @P
+      GROUP BY P.IdPedido, P.NumeroPedido, P.FechaPedido, E.NombreEmpresa`)).recordset;
+    let repetidos = [];
+    const conSku = items.filter(x => x.sku);
+    if (conSku.length) {
+      const existentes = (await pool.request().input('P', sql.Int, idPedido).input('N', sql.NVarChar, noPed || null)
+        .input('S', sql.NVarChar(sql.MAX), [...new Set(conSku.map(x => x.sku.toLowerCase()))].join('|')).query(`
+        SELECT D.IdDetallePedido, LOWER(LTRIM(RTRIM(D.CodigoArticulo))) AS Sku, LOWER(LTRIM(RTRIM(ISNULL(D.TallaColor, '')))) AS Talla,
+               RTRIM(P.NumeroPedido) AS NumeroPedido, A.NombreArticulo, D.TallaColor,
+               NULLIF(LTRIM(RTRIM(CONCAT(C.Nombre, ' ', C.Apellido))), '') AS Cliente
+        FROM C_DetallePedido D JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
+        LEFT JOIN A_Articulos A ON A.IdArticulo = D.IdArticulo LEFT JOIN C_Clientes C ON C.IdCliente = D.IdCliente
+        WHERE (D.IdPedido = @P OR (@N IS NOT NULL AND LTRIM(RTRIM(D.NoPedidoAplicacion)) = @N))
+          AND LOWER(LTRIM(RTRIM(D.CodigoArticulo))) IN (SELECT value FROM STRING_SPLIT(@S, '|'))`)).recordset;
+      repetidos = conSku.map(x => ({ i: x.i, ya: existentes.filter(e => e.Sku === x.sku.toLowerCase() && e.Talla === x.talla.toLowerCase()) })).filter(x => x.ya.length);
+    }
+    res.json({ ok: true, pedidoApp, repetidos });
+  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+};
+
+module.exports = { revisarDuplicados, cambiarPeso, cambiarArticuloCatalogo, cambiarFoto, getTiendas, getCasilleros, getMonedas, getArticulos, getNumeroPedido, crearPedido, getPedidosAbiertos, getDetallesPedido, agregarArticulo, editarArticulo, actualizarCuentaPedido, eliminarArticulo };

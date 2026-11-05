@@ -22,5 +22,6 @@ router.delete('/articulo',      eliminarArticulo);
 router.put('/peso', require('../controllers/crear-pedidos.controller').cambiarPeso);
 router.put('/articulo-catalogo', require('../controllers/crear-pedidos.controller').cambiarArticuloCatalogo);
 router.put('/foto',            require('../controllers/crear-pedidos.controller').cambiarFoto);
+router.post('/duplicados',     require('../controllers/crear-pedidos.controller').revisarDuplicados);
 
 module.exports = router;

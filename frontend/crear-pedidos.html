@@ -876,6 +876,12 @@
                     body: JSON.stringify({ ...body, idDetallePedido: +detalleId })
                 }).then(r => r.json());
             } else {
+                // Aviso si ya existe el mismo artículo o el mismo pedido de la tienda
+                const rev = await revisarRepetidos(+idPed, body.noPedidoAplicacion, [{ sku: body.codigoArticulo, talla: body.tallaColor }]);
+                const avisos = [];
+                if (rev.pedidoApp.length) avisos.push(textoPedidoApp(body.noPedidoAplicacion, rev.pedidoApp));
+                if (rev.repetidos.length) avisos.push('Este artículo (mismo SKU y talla) ya está guardado:\n' + textoYa(rev.repetidos[0].ya));
+                if (avisos.length && !confirm(avisos.join('\n\n') + '\n\n¿Agregarlo de todas formas?')) { mostrarMsg(msg, 'err', 'No se agregó: ya existía'); return; }
                 // AGREGAR
                 d = await fetch('/api/crear-pedidos/agregar', {
                     method:'POST', headers:{'Content-Type':'application/json'},
@@ -895,6 +901,22 @@
 
     // Alias para compatibilidad
     function agregarArticulo() { guardarArticulo(); }
+
+    // ── Aviso de repetidos (no bloquea: vos decidís) ──
+    async function revisarRepetidos(idPedido, noPedido, items) {
+        try {
+            const d = await fetch('/api/crear-pedidos/duplicados', { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ idPedido, noPedido, items }) }).then(r => r.json());
+            return d.ok ? d : { pedidoApp: [], repetidos: [] };
+        } catch (e) { return { pedidoApp: [], repetidos: [] }; }
+    }
+    const fF = f => f ? String(f).slice(0, 10).split('-').reverse().join('/') : '';
+    function textoPedidoApp(noPedido, lista) {
+        return `El pedido de la tienda ${noPedido} ya está registrado en:\n` + lista.map(p => `  · Pedido ${p.NumeroPedido}${p.Tienda ? ' (' + p.Tienda + ')' : ''} del ${fF(p.Fecha)} con ${p.Lineas} artículo(s)`).join('\n');
+    }
+    function textoYa(ya) {
+        return ya.slice(0, 3).map(e => `  · ${e.NombreArticulo || 'Artículo'}${e.TallaColor ? ' · ' + e.TallaColor : ''} en el pedido ${e.NumeroPedido}${e.Cliente ? ' (cliente ' + e.Cliente + ')' : ''}`).join('\n') + (ya.length > 3 ? `\n  · y ${ya.length - 3} más` : '');
+    }
 
     function editarEnForm(a) {
         window._artEditando = a; // Guardar objeto completo
@@ -1421,9 +1443,24 @@
         const artCat = todosArticulos.find(x => x.IdArticulo == idArt);
         const pesoDef = artCat ? (parseFloat(artCat.PesoArticulo) || 0) : 0;
         let ok = 0, err = 0, primerError = '';
+        // Aviso de repetidos antes de guardar
+        const pend = filasPegadas.map((f, i) => ({ f, i })).filter(x => !x.f.guardado);
+        const rev = await revisarRepetidos(+idPed, noPed, pend.map(x => ({ sku: x.f.sku, talla: x.f.talla })));
+        if (rev.pedidoApp.length && !confirm(textoPedidoApp(noPed, rev.pedidoApp) + '\n\n¿Seguir guardando en este pedido?')) { btn.disabled = false; mostrarMsg(msg, 'err', 'No se guardó nada'); return; }
+        const saltar = new Set();
+        if (rev.repetidos.length) {
+            rev.repetidos.forEach(r => { const st = document.getElementById('pv-st-' + pend[r.i].i); if (st) { st.textContent = 'Repetido'; st.style.color = '#fbbf24'; st.title = textoYa(r.ya); } });
+            const todos = confirm(`${rev.repetidos.length} de ${pend.length} artículos ya están guardados (mismo SKU y talla), marcados como "Repetido":
+
+` +
+                rev.repetidos.slice(0, 4).map(r => textoYa(r.ya.slice(0, 1))).join('\n') + (rev.repetidos.length > 4 ? '\n  · …' : '') +
+                '\n\nAceptar: guardar TODOS (también los repetidos)\nCancelar: guardar solo los nuevos');
+            if (!todos) rev.repetidos.forEach(r => saltar.add(pend[r.i].i));
+        }
         for (let i = 0; i < filasPegadas.length; i++) {
             const f = filasPegadas[i], st = document.getElementById('pv-st-' + i);
             if (f.guardado) continue;
+            if (saltar.has(i)) continue;
             st.innerHTML = '<svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>';
             try {
                 const d = await fetch('/api/crear-pedidos/agregar', { method:'POST', headers:{'Content-Type':'application/json'},
