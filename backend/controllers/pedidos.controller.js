@@ -50,11 +50,14 @@ const getCostos = async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request().query(`
       SELECT D.IdDetallePedido, D.ValorCompra, D.CantidadArticulos, D.Link, P.TasaCambio, D.Peso,
-             CA.PrecioLibra, ISNULL(D.ValorCobradoReal, 0) AS EnvioReal,
+             -- si el casillero no tiene precio por libra, se usa el de otro casillero; si la línea no tiene peso, el del catálogo
+             COALESCE(NULLIF(CA.PrecioLibra, 0), (SELECT TOP 1 PrecioLibra FROM A_Casilleros WHERE PrecioLibra > 0 ORDER BY IdCasillero)) AS PrecioLibra,
+             NULLIF(A.PesoArticulo, 0) AS PesoCatalogo, ISNULL(D.ValorCobradoReal, 0) AS EnvioReal,
              CASE WHEN EXISTS (SELECT 1 FROM C_EntradasCasillero X WHERE X.IdSeguimiento = D.IdSeguimiento AND X.IdOrden IS NOT NULL) THEN 1 ELSE 0 END AS TieneOrden
       FROM C_DetallePedido D
       JOIN C_Pedidos P ON P.IdPedido = D.IdPedido
-      LEFT JOIN A_Casilleros CA ON CA.IdCasillero = P.IdCasillero`);
+      LEFT JOIN A_Casilleros CA ON CA.IdCasillero = P.IdCasillero
+      LEFT JOIN A_Articulos A ON A.IdArticulo = D.IdArticulo`);
     // artículos marcados "no llegó" (si la columna todavía no existe, no hay ninguno)
     let perdidos = [];
     try { perdidos = (await pool.request().query('SELECT IdDetallePedido FROM C_DetallePedido WHERE NoLlego = 1')).recordset.map(x => x.IdDetallePedido); } catch (e) {}

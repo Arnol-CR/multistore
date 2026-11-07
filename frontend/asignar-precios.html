@@ -279,7 +279,7 @@
             ]);
             datos = d.ok ? d.data : [];
             if (c && c.ok && c.noLlego && c.noLlego.length) { const fuera = new Set(c.noLlego); datos = datos.filter(p => !fuera.has(p.IdDetallePedido)); }
-            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.PrecioLibra = x.PrecioLibra; p.EnvioReal = x.EnvioReal; p.TieneOrden = x.TieneOrden; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; p.Peso = x.Peso; } }); }
+            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.PrecioLibra = x.PrecioLibra; p.PesoCatalogo = x.PesoCatalogo; p.EnvioReal = x.EnvioReal; p.TieneOrden = x.TieneOrden; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; p.Peso = x.Peso; } }); }
         } catch (e) { datos = []; toast('err', 'No se pudieron cargar los artículos'); }
         opcionesFiltros();
         const qp = new URLSearchParams(location.search).get('pedido');
@@ -383,14 +383,14 @@
     // Envío: el real si ya tiene orden de pago; si no, estimado = peso total (lb) × precio por libra del casillero
     function envioDe(p) {
         if (num(p.TieneOrden)) return { v: num(p.EnvioReal), real: true };
-        const lb = num(p.Peso) * cantDe(p) / 453.592;
-        return { v: lb * num(p.PrecioLibra), real: false, sinDatos: !num(p.Peso) || !num(p.PrecioLibra) };
+        const g = num(p.Peso) || num(p.PesoCatalogo), lb = g * cantDe(p) / 453.592;
+        return { v: lb * num(p.PrecioLibra), real: false, sinDatos: !g || !num(p.PrecioLibra), delCatalogo: !num(p.Peso) && !!g };
     }
     // Margen de lo que se está escribiendo: (precio − costo − envío) ÷ precio
     function margenHTML(p, v) {
         const venta = parseFloat(v), costo = num(p.ValorCompra) * cantDe(p) * num(p.TasaCambio), e = envioDe(p);
-        const envTxt = e.sinDatos ? 'Envío ?' : `Envío ${Lc(e.v)}${e.real ? '' : ' est.'}`;
-        if (!(venta > 0) || !costo) return envTxt;
+        const envTxt = e.sinDatos ? '<span title="Poné el peso para estimar el envío">Sin peso, sin envío</span>' : (e.delCatalogo ? `<span title="Sin peso en esta línea: se usó el peso del catálogo">Envío ${Lc(e.v)} est.*</span>` : `Envío ${Lc(e.v)}${e.real ? '' : ' est.'}`);
+        if (!(venta > 0)) return envTxt;
         const util = venta - costo - e.v, pct = util / venta * 100;
         const cls = pct < 0 ? 'mal' : pct < 15 ? 'med' : 'ok';
         return `${envTxt} · <b class="${cls}" title="Utilidad ${Lc(util)} (venta − costo ${Lc(costo)} − envío ${Lc(e.v)}${e.real ? ' real' : ' estimado'})">${pct.toFixed(0)}%</b>`;
