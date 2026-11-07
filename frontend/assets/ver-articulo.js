@@ -274,6 +274,12 @@
       const x = r.data, venta = num(x.Venta) || d.venta, costo = num(x.CostoL) || num(d.costoL), real = !!x.IdOrden;
       const envio = real ? num(x.EnvioReal) : num(x.EnvioEstimado), comb = real ? num(x.Combustible) : 0;
       const util = venta - costo - envio - comb, pct = venta ? (util / venta * 100).toFixed(1) + '%' : '';
+      if (!venta) {   // sin precio: lo que va costando con envío
+        caja.hidden = false;
+        caja.innerHTML = `<span>Costo ${fmtL(Math.round(costo))}</span><span>Envío ${fmtL(Math.round(envio))}${real ? '' : ' <i>estimado</i>'}</span>${comb ? `<span>Combustible ${fmtL(Math.round(comb))}</span>` : ''}<span><b>Costo total ${fmtL(Math.round(costo + envio + comb))}</b></span>`
+          + (real ? '' : '<div class="va-util-nota">Envío estimado por peso según el casillero. Cuando tenga orden de pago se usa el real.</div>');
+        return;
+      }
       const gan = fondo.querySelector('.va-gan');
       if (gan) { gan.className = 'va-gan ' + (util >= 0 ? 'va-pos' : 'va-neg'); gan.textContent = (util >= 0 ? '+' : '−') + fmtL(Math.abs(Math.round(util))) + (real ? '' : ' aprox.');
         gan.title = real ? 'Utilidad: venta menos costo, envío real y combustible' : 'Utilidad aproximada con envío estimado por peso'; }
@@ -479,7 +485,7 @@
           <div class="va-precio"><b>Precio de venta</b>
             ${d.venta ? `<span>${fmtL(d.venta)}${d.gan != null ? `<small class="va-gan ${d.gan >= 0 ? 'va-pos' : 'va-neg'}" title="Precio de venta menos lo que costó en la app">${d.gan >= 0 ? '+' : '−'}${fmtL(Math.abs(Math.round(d.gan)))}</small>` : ''}</span>` : '<span class="sin">Sin precio</span>'}
           </div>
-          ${d.venta && esAdminVA() ? '<div class="va-util" hidden></div>' : ''}
+          ${esAdminVA() ? '<div class="va-util" hidden></div>' : ''}
           <div class="va-grid">
             ${dato('Precio app', d.compra != null ? `${d.cant > 1 ? `<small>${d.cant} × </small>` : ''}$${d.compra.toFixed(2)}${d.costoL ? ` <small>≈ ${fmtL(Math.round(d.costoL))}</small>` : ''}` : '—', d.compra != null ? '' : 'va-nada')}
             ${dato('Pedido', d.pedido ? `${esc(d.pedido)} <small>${esc(d.tienda)}</small>` : '—', d.pedido ? '' : 'va-nada')}

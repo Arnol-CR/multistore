@@ -124,6 +124,8 @@
         .peso-in:hover { border-color:#1e2530; }
         .peso-in:focus { border-color:#3b82f6; background:#0d1117; }
         .peso-tot { display:block; font-size:10.5px; color:#6b7280; margin-top:2px; white-space:nowrap; }
+        .mg { display:block; font-size:10.5px; margin-top:3px; text-align:right; white-space:nowrap; color:#6b7280; }
+        .mg b { font-weight:700; } .mg .ok { color:#4ade80; } .mg .med { color:#fbbf24; } .mg .mal { color:#f87171; }
         .antes { display:block; font-size:10px; color:#7c3aed; margin-top:3px; text-align:right; }
         .asig-todos { display:flex; align-items:center; gap:6px; }
         .asig-todos input { width:230px; padding:7px 10px !important; font-size:12px !important; }
@@ -277,7 +279,7 @@
             ]);
             datos = d.ok ? d.data : [];
             if (c && c.ok && c.noLlego && c.noLlego.length) { const fuera = new Set(c.noLlego); datos = datos.filter(p => !fuera.has(p.IdDetallePedido)); }
-            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; p.Peso = x.Peso; } }); }
+            if (c && c.ok) { const m = new Map(c.data.map(x => [x.IdDetallePedido, x])); datos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.ValorCompra = x.ValorCompra; p.PrecioLibra = x.PrecioLibra; p.EnvioReal = x.EnvioReal; p.TieneOrden = x.TieneOrden; p.CantidadArticulos = x.CantidadArticulos; p.Link = x.Link; p.TasaCambio = x.TasaCambio; p.Peso = x.Peso; } }); }
         } catch (e) { datos = []; toast('err', 'No se pudieron cargar los artículos'); }
         opcionesFiltros();
         const qp = new URLSearchParams(location.search).get('pedido');
@@ -378,6 +380,23 @@
     // "Nestor Alexander Hernandez Carranza" → "Nestor Hernandez"
     const nomCorto = n => { const w = String(n || '').trim().split(/\s+/).filter(Boolean); return w.length >= 3 ? w[0] + ' ' + w[2] : w.join(' '); };
 
+    // Envío: el real si ya tiene orden de pago; si no, estimado = peso total (lb) × precio por libra del casillero
+    function envioDe(p) {
+        if (num(p.TieneOrden)) return { v: num(p.EnvioReal), real: true };
+        const lb = num(p.Peso) * cantDe(p) / 453.592;
+        return { v: lb * num(p.PrecioLibra), real: false, sinDatos: !num(p.Peso) || !num(p.PrecioLibra) };
+    }
+    // Margen de lo que se está escribiendo: (precio − costo − envío) ÷ precio
+    function margenHTML(p, v) {
+        const venta = parseFloat(v), costo = num(p.ValorCompra) * cantDe(p) * num(p.TasaCambio), e = envioDe(p);
+        const envTxt = e.sinDatos ? 'Envío ?' : `Envío ${Lc(e.v)}${e.real ? '' : ' est.'}`;
+        if (!(venta > 0) || !costo) return envTxt;
+        const util = venta - costo - e.v, pct = util / venta * 100;
+        const cls = pct < 0 ? 'mal' : pct < 15 ? 'med' : 'ok';
+        return `${envTxt} · <b class="${cls}" title="Utilidad ${Lc(util)} (venta − costo ${Lc(costo)} − envío ${Lc(e.v)}${e.real ? ' real' : ' estimado'})">${pct.toFixed(0)}%</b>`;
+    }
+    function num(v) { return Number(v) || 0; }
+
     function fila(p) {
         const id = p.IdDetallePedido;
         const cant = cantDe(p);
@@ -412,10 +431,10 @@
             <td class="num col-costo">${costo}</td>
             <td class="num col-peso"><input class="peso-in" type="number" min="0" step="1" inputmode="numeric" data-peso="${id}" value="${p.Peso != null ? parseFloat(p.Peso) : ''}" placeholder="—" title="Peso por unidad en gramos. Enter para guardar" onchange="guardarPeso(${id}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"><span style="color:#6b7280;font-size:11px">g</span>${cant > 1 && p.Peso ? `<span class="peso-tot">× ${cant} = ${(parseFloat(p.Peso) * cant).toLocaleString('es-HN')} g</span>` : ''}</td>
             <td class="num">${sug ? `<span class="sug" title="Usar sugerido${cant > 1 ? ' (total de la línea)' : ''}" onclick="ponerSugerido(${id}, ${sug})">L ${sug}</span>${cant > 1 ? `<span class="sub-num">${Lc(sug / cant)} c/u</span>` : ''}` : '<span style="color:#374151">—</span>'}</td>
-            <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>${cant > 1 ? `<span class="cu">${textoCU(p, p.ValorCobroCliente)}</span>` : ''}`
+            <td class="num">${bloqueado(p) ? `<span class="precio-bloq" title="Ya tiene precio. Solo el administrador puede cambiarlo."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>${esc(p.ValorCobroCliente)}</span>${cant > 1 ? `<span class="cu">${textoCU(p, p.ValorCobroCliente)}</span>` : ''}<span class="mg">${margenHTML(p, p.ValorCobroCliente)}</span>`
                 : `<input class="inp precio ${cambiado ? (parseFloat(p.ValorCobroCliente) > 0 ? 'correccion' : 'cambio') : (val ? 'tiene' : '')}" type="number" min="0" step="5" inputmode="decimal"
                    data-id="${id}" value="${val}" placeholder="0" oninput="escribir(${id}, this.value)" onkeydown="teclaPrecio(event, this)" onfocus="this.select()"
-                   title="${parseFloat(p.ValorCobroCliente) > 0 ? 'Precio guardado: L ' + esc(p.ValorCobroCliente) + '. Como administrador podés corregirlo.' : ''}${cant > 1 ? (parseFloat(p.ValorCobroCliente) > 0 ? ' ' : '') + 'Escribí el total de las ' + cant + ' unidades.' : ''}">${cant > 1 ? `<span class="cu" data-cu="${id}">${textoCU(p, val) || 'Total de ' + cant + ' unidades'}</span>` : ''}${cambiado && parseFloat(p.ValorCobroCliente) > 0 ? `<span class="antes">antes L ${esc(p.ValorCobroCliente)}</span>` : ''}`}</td>
+                   title="${parseFloat(p.ValorCobroCliente) > 0 ? 'Precio guardado: L ' + esc(p.ValorCobroCliente) + '. Como administrador podés corregirlo.' : ''}${cant > 1 ? (parseFloat(p.ValorCobroCliente) > 0 ? ' ' : '') + 'Escribí el total de las ' + cant + ' unidades.' : ''}">${cant > 1 ? `<span class="cu" data-cu="${id}">${textoCU(p, val) || 'Total de ' + cant + ' unidades'}</span>` : ''}<span class="mg" data-mg="${id}">${margenHTML(p, val)}</span>${cambiado && parseFloat(p.ValorCobroCliente) > 0 ? `<span class="antes">antes L ${esc(p.ValorCobroCliente)}</span>` : ''}`}</td>
             <td class="estado">${icono}</td>
         </tr>`;
     }
@@ -556,6 +575,7 @@
         const tr = inp.closest('tr');
         tr.classList.toggle('dirty', cambios.has(id));
         const cu = tr.querySelector(`[data-cu="${id}"]`); if (cu) cu.textContent = textoCU(orig, v) || 'Total de ' + cantDe(orig) + ' unidades';
+        const mg = tr.querySelector(`[data-mg="${id}"]`); if (mg) mg.innerHTML = margenHTML(orig, v);
         inp.classList.toggle('cambio', cambios.has(id));
         tr.querySelector('.estado').innerHTML = cambios.has(id) ? '<span style="color:#fbbf24" title="Sin guardar"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></span>' : '';
         actualizarBarra(true);
