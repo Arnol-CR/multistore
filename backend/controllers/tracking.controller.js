@@ -482,7 +482,8 @@ const getNoLlego = async (req, res) => {
 };
 
 // Marcar o desmarcar "no llegó". Si se quita el cobro al cliente, se registra una devolución
-// (IdMovimiento 5, sin cuenta bancaria) con referencia NOLLEGO-<id>; al deshacer se borra.
+// como abono (IdMovimiento 3) SIN cuenta bancaria, con referencia NOLLEGO-<id>: baja el saldo del cliente y no toca bancos.
+// Al deshacer se borra.
 const marcarNoLlego = async (req, res) => {
     const pool = await poolPromise;
     const tx = new sql.Transaction(pool);
@@ -509,7 +510,7 @@ const marcarNoLlego = async (req, res) => {
             if (quito) await new sql.Request(tx).input('C', sql.Int, d.IdCliente).input('Mo', sql.Decimal(18, 2), d.Venta).input('F', sql.Date, fecha)
                 .input('O', sql.NVarChar(sql.MAX), `No llegó: ${d.NombreArticulo || 'artículo'} (se quita el cobro)`).input('Ref', sql.NVarChar(50), ref).input('P', sql.Int, d.IdPedido)
                 .query(`INSERT INTO C_MovimientoClientes (IdCliente, IdMovimiento, Monto, FechaMovimiento, Observaciones, NumeroReferencia, IdPedido)
-                        VALUES (@C, 5, @Mo, @F, @O, @Ref, @P)`);
+                        VALUES (@C, 3, @Mo, @F, @O, @Ref, @P)`);
         } else {
             await new sql.Request(tx).input('Id', sql.Int, id)
                 .query(`UPDATE C_DetallePedido SET NoLlego = NULL, FechaNoLlego = NULL, MotivoNoLlego = NULL, ReembolsoNoLlego = NULL, NoLlegoQuitoCobro = NULL WHERE IdDetallePedido = @Id`);

@@ -350,7 +350,7 @@
     }
 
     // ═════════ SALDOS ═════════
-    let clientes = [], filtroEstado = 'deben', cuentas = [];
+    let clientes = [], filtroEstado = 'saldo', cuentas = [];
     async function cargar() {
         try {
             const d = await fetch('/api/clientes/todos').then(r => r.json());
@@ -396,6 +396,7 @@
         pintarKpis(l);
         l = l.filter(c => {
             const e = estadoDe(c), s = num(c.SaldoCalculado);
+            if (filtroEstado === 'saldo' && !(Math.abs(s) > 0.5)) return false;   // por defecto: los que deben y los que tienen a favor
             if (filtroEstado === 'deben' && !(s > 0.5)) return false;
             if (filtroEstado === 'cobrable' && !(e.cobrable > 0.5)) return false;
             if (filtroEstado === 'camino' && !(s > 0.5 && num(c.MontoPendienteEntrega) > 0.5)) return false;

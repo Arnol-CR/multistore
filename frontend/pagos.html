@@ -154,7 +154,15 @@
             .cli-nums, .totales { grid-template-columns:1fr 1fr 1fr; gap:6px; }
             .cli-nums span, .tot span { font-size:13.5px; }
         }
-    </style>
+            .ed-pago { margin-left:10px; padding:4px 10px; font-size:11.5px; }
+        .ep-fondo { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:300; padding:16px; }
+        .ep-fondo.on { display:flex; }
+        .ep-caja { background:var(--panel); border:1px solid var(--borde); border-radius:12px; width:min(520px,100%); }
+        .ep-cuerpo { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:16px 18px; }
+        .ep-cuerpo label { display:flex; flex-direction:column; gap:5px; font-size:11px; color:var(--tenue); }
+        .ep-pie { display:flex; gap:8px; padding:12px 18px; border-top:1px solid var(--borde); }
+        @media (max-width:520px) { .ep-cuerpo { grid-template-columns:1fr; } }
+</style>
 </head>
 <body>
 
@@ -542,10 +550,41 @@
                 return `<div class="pago" ${c ? `onclick="location.href='/clientes.html?cliente=${c.IdCliente}'"` : ''} title="${c ? 'Ver estado de cuenta' : ''}">
                     <div class="c-av" style="background:${colorDe(p.NombreCliente)}">${esc(iniciales(p.NombreCliente))}</div>
                     <div class="c-txt"><b>${esc(p.NombreCliente || '—')}</b><small>${esc(p.Metodo || '')} · ${esc(p.NombreCuenta || '')}${p.Referencia ? ` · <span class="${dup ? 'ref-dup' : ''}" title="${dup ? 'Referencia usada en varios pagos' : ''}">#${esc(p.Referencia)}</span>` : ''}</small></div>
-                    <div class="pago-m"><b>${L(num(p.Cantidad))}</b></div></div>`;
+                    <div class="pago-m"><b>${L(num(p.Cantidad))}</b>${usuario.esAdmin && p.IdTipoMovimiento === 3 && !/^NOLLEGO-/.test(p.Referencia || '') ? `<button class="btn btn-sm ed-pago" onclick="event.stopPropagation();editarPago(${p.IdPago})">Editar</button>` : ''}</div></div>`;
             }).join('');
         }).join('');
     }
+    // ── Editar pago (administrador) ──
+    let pagoEd = null;
+    function editarPago(id) {
+        const p = pagos.find(x => x.IdPago === id); if (!p) return; pagoEd = p;
+        document.getElementById('ep-cli').textContent = p.NombreCliente || '';
+        document.getElementById('ep-fecha').value = String(p.FechaPago || '').slice(0, 10);
+        document.getElementById('ep-monto').value = num(p.Cantidad).toFixed(2);
+        document.getElementById('ep-met').innerHTML = '<option value="">—</option>' + metodos.map(m => `<option value="${m.IdMetodoPago}">${esc(m.Metodo)}</option>`).join('');
+        document.getElementById('ep-met').value = p.IdMetodoPago || '';
+        document.getElementById('ep-cta').innerHTML = '<option value="">—</option>' + cuentas.map(k => `<option value="${k.IdCuentaBanco}">${esc([k.Banco, k.NombreCuenta].filter(Boolean).join(' · '))}</option>`).join('');
+        document.getElementById('ep-cta').value = p.IdCuentaBanco || '';
+        document.getElementById('ep-ref').value = p.Referencia || '';
+        document.getElementById('ep-obs').value = p.Observaciones || '';
+        document.getElementById('ep-fondo').classList.add('on');
+    }
+    function cerrarEditarPago() { document.getElementById('ep-fondo').classList.remove('on'); pagoEd = null; }
+    async function guardarEdicionPago(eliminar) {
+        if (!pagoEd) return;
+        if (eliminar && !confirm(`¿Eliminar el pago de ${L(num(pagoEd.Cantidad))} de ${pagoEd.NombreCliente}? El saldo del cliente vuelve a subir.`)) return;
+        const v = id => document.getElementById(id).value;
+        const cuerpo = { fechaPago: v('ep-fecha'), cantidad: v('ep-monto'), idMetodoPago: v('ep-met'), idCuenta: v('ep-cta'), referencia: v('ep-ref'), observaciones: v('ep-obs') };
+        if (!eliminar && !(parseFloat(cuerpo.cantidad) > 0)) { toast('err', 'Poné un monto válido'); return; }
+        try {
+            const d = await fetch('/api/pagos/' + pagoEd.IdPago, eliminar ? { method: 'DELETE' } : { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) }).then(r => r.json());
+            if (!d.ok) throw new Error(d.error || 'Error');
+            toast('ok', eliminar ? 'Pago eliminado' : 'Pago actualizado');
+            cerrarEditarPago(); cargarPagos();
+            fetch('/api/clientes/todos').then(r => r.json()).then(x => { if (x.ok) clientes = x.data; });
+        } catch (e) { toast('err', 'No se pudo: ' + e.message); }
+    }
+
     function exportar() {
         const l = pagosFiltrados(); if (!l.length) { toast('err', 'No hay pagos para exportar'); return; }
         let h = '<html><head><meta charset="UTF-8"></head><body><table><tr><th>Fecha</th><th>Cliente</th><th>Monto (L)</th><th>Método</th><th>Cuenta</th><th>Referencia</th></tr>';
@@ -555,6 +594,24 @@
 
     if (usuario) cargar();
 </script>
+<div class="ep-fondo" id="ep-fondo" onclick="if(event.target===this)cerrarEditarPago()">
+    <div class="ep-caja">
+        <div class="card-cab"><div><div class="card-tit">Editar pago</div><div class="card-sub" id="ep-cli"></div></div><button class="btn btn-sm" onclick="cerrarEditarPago()">Cerrar</button></div>
+        <div class="ep-cuerpo">
+            <label class="campo">Fecha<input class="inp" type="date" id="ep-fecha"></label>
+            <label class="campo">Monto (L)<input class="inp" type="number" min="0" step="0.01" id="ep-monto"></label>
+            <label class="campo">Método<select class="inp" id="ep-met"></select></label>
+            <label class="campo">Cuenta<select class="inp" id="ep-cta"></select></label>
+            <label class="campo">Referencia<input class="inp" id="ep-ref"></label>
+            <label class="campo">Observaciones<input class="inp" id="ep-obs"></label>
+        </div>
+        <div class="ep-pie">
+            <button class="btn btn-sm" style="color:#f87171;margin-right:auto" onclick="guardarEdicionPago(true)">Eliminar pago</button>
+            <button class="btn" onclick="cerrarEditarPago()">Cancelar</button>
+            <button class="btn" style="background:#15803d;border-color:#15803d;color:#fff" onclick="guardarEdicionPago(false)">Guardar</button>
+        </div>
+    </div>
+</div>
 <script src="/assets/sidebar.js"></script>
 </body>
 </html>

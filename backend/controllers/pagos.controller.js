@@ -43,18 +43,50 @@ const getPagosRecientes = async (req, res) => {
       .input('Limit', sql.Int, limit)
       .query(`
         SELECT TOP (@Limit)
-          IdMovimientoCliente AS IdPago,
-          CONVERT(varchar(10), FechaMovimiento, 120) AS FechaPago,
-          Monto AS Cantidad,
-          NumeroReferencia AS Referencia,
-          NombreCompleto AS NombreCliente,
-          Metodo,
-          NombreCuenta
-        FROM vw_pagos
-        ORDER BY FechaMovimiento DESC, IdMovimientoCliente DESC
+          V.IdMovimientoCliente AS IdPago,
+          CONVERT(varchar(10), V.FechaMovimiento, 120) AS FechaPago,
+          V.Monto AS Cantidad,
+          V.NumeroReferencia AS Referencia,
+          V.NombreCompleto AS NombreCliente,
+          V.IdCliente, V.Metodo, V.NombreCuenta, V.IdCuentaBanco, V.Observaciones, V.IdTipoMovimiento,
+          MC.IdMetodoPago
+        FROM vw_pagos V
+        JOIN C_MovimientoClientes MC ON MC.IdMovimientoCliente = V.IdMovimientoCliente
+        ORDER BY V.FechaMovimiento DESC, V.IdMovimientoCliente DESC
       `);
     res.json({ ok: true, data: result.recordset });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
 
-module.exports = { getMetodosPagos, getCuentasBanco, registrarPago, getPagosRecientes };
+// Editar un pago de cliente (solo administrador). Después se recalcula el saldo de los clientes.
+const editarPago = async (req, res) => {
+  try {
+    if (!(req.usuario && req.usuario.esAdmin)) return res.status(403).json({ ok: false, error: 'Solo el administrador puede editar pagos' });
+    const id = parseInt(req.params.id), b = req.body || {}, monto = parseFloat(b.cantidad);
+    if (!id || !(monto > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(b.fechaPago || '')) return res.status(400).json({ ok: false, error: 'Fecha y monto son obligatorios' });
+    const pool = await poolPromise;
+    const r = await pool.request().input('Id', sql.Int, id).input('F', sql.Date, b.fechaPago).input('M', sql.Decimal(18, 2), monto)
+      .input('Met', sql.Int, parseInt(b.idMetodoPago) || null).input('Cta', sql.Int, parseInt(b.idCuenta) || null)
+      .input('Ref', sql.NVarChar(sql.MAX), (b.referencia || '').trim()).input('Obs', sql.NVarChar(sql.MAX), (b.observaciones || '').trim())
+      .query(`UPDATE C_MovimientoClientes SET FechaMovimiento = @F, Monto = @M, IdMetodoPago = @Met, IdCuentaBanco = @Cta, NumeroReferencia = @Ref, Observaciones = @Obs
+              WHERE IdMovimientoCliente = @Id AND IdMovimiento = 3 AND ISNULL(NumeroReferencia, '') NOT LIKE 'NOLLEGO-%'`);
+    if (!r.rowsAffected[0]) return res.status(404).json({ ok: false, error: 'Ese pago no se puede editar' });
+    try { await pool.request().execute('RecalcularSaldoClientes'); } catch (e) {}
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+// Eliminar un pago registrado por error (solo administrador)
+const eliminarPago = async (req, res) => {
+  try {
+    if (!(req.usuario && req.usuario.esAdmin)) return res.status(403).json({ ok: false, error: 'Solo el administrador puede eliminar pagos' });
+    const pool = await poolPromise;
+    const r = await pool.request().input('Id', sql.Int, parseInt(req.params.id))
+      .query(`DELETE FROM C_MovimientoClientes WHERE IdMovimientoCliente = @Id AND IdMovimiento = 3 AND ISNULL(NumeroReferencia, '') NOT LIKE 'NOLLEGO-%'`);
+    if (!r.rowsAffected[0]) return res.status(404).json({ ok: false, error: 'Ese pago no se puede eliminar' });
+    try { await pool.request().execute('RecalcularSaldoClientes'); } catch (e) {}
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+};
+
+module.exports = { getMetodosPagos, getCuentasBanco, registrarPago, getPagosRecientes, editarPago, eliminarPago };
