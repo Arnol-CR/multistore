@@ -388,12 +388,13 @@
     }
     // Margen de lo que se está escribiendo: (precio − costo − envío) ÷ precio
     function margenHTML(p, v) {
-        const venta = parseFloat(v), costo = num(p.ValorCompra) * cantDe(p) * num(p.TasaCambio), e = envioDe(p);
+        const tasa = num(p.TasaCambio) || 27;   // si el pedido no tiene tasa de cambio, se usa 27
+        const venta = parseFloat(v), costo = num(p.ValorCompra) * cantDe(p) * tasa, e = envioDe(p);
         const envTxt = e.sinDatos ? '<span title="Poné el peso para estimar el envío">Sin peso, sin envío</span>' : (e.delCatalogo ? `<span title="Sin peso en esta línea: se usó el peso del catálogo">Envío ${Lc(e.v)} est.*</span>` : `Envío ${Lc(e.v)}${e.real ? '' : ' est.'}`);
         if (!(venta > 0)) return envTxt;
         const util = venta - costo - e.v, pct = util / venta * 100;
         const cls = pct < 0 ? 'mal' : pct < 15 ? 'med' : 'ok';
-        return `${envTxt} · <b class="${cls}" title="Utilidad ${Lc(util)} (venta − costo ${Lc(costo)} − envío ${Lc(e.v)}${e.real ? ' real' : ' estimado'})">${pct.toFixed(0)}%</b>`;
+        return `${envTxt} · <b class="${cls}" title="Ganancia ${Lc(util)} = venta ${Lc(venta)} − costo app ${Lc(costo)}${num(p.TasaCambio) ? '' : ' (el pedido no tiene tasa: se usó 27)'} − envío ${Lc(e.v)}${e.real ? ' real' : ' estimado'}. Rentabilidad = ganancia ÷ venta">${pct.toFixed(0)}%</b>`;
     }
     function num(v) { return Number(v) || 0; }
 
