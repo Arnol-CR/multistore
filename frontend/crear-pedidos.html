@@ -688,10 +688,11 @@
     function registrarIngreso(id) {
         try { const m = ingresos(), lim = Date.now() - 86400000; Object.keys(m).forEach(k => { if (m[k] < lim) delete m[k]; }); m[id] = Date.now(); localStorage.setItem('ms_ingresos', JSON.stringify(m)); } catch (e) {}
     }
-    // Editable mientras el pedido esté abierto (esta pestaña solo muestra pedidos abiertos) y el artículo no se haya entregado
+    // El precio de la app se puede corregir siempre que el pedido esté abierto (esta pestaña solo muestra pedidos abiertos),
+    // sin importar cuándo se ingresó ni si ya se entregó
     function editableEnTabla(a) {
         const sel = document.getElementById('a-pedido'), opt = sel && sel.options[sel.selectedIndex];
-        return !!(opt && opt.value) && !a.EstaEntregado;
+        return !!(opt && opt.value);
     }
     async function guardarPrecioRapido(inp) {
         const id = +inp.dataset.id, a = detallesCache.find(x => x.IdDetallePedido === id); if (!a) return;
