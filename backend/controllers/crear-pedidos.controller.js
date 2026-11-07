@@ -234,6 +234,7 @@ const editarArticulo = async (req, res) => {
       .execute('Se_DetallePedido');
     if (antes && antes.EstaEntregado != null) await pool.request().input('Id', sql.Int, parseInt(idDetallePedido)).input('E', sql.Bit, antes.EstaEntregado ? 1 : 0)
       .query('UPDATE C_DetallePedido SET EstaEntregado = @E WHERE IdDetallePedido = @Id');
+    await redistribuirEnvio(pool, parseInt(idDetallePedido));   // por si cambió el peso o la cantidad
 
     // Subir y actualizar foto si viene una nueva
     let urlFoto = null;
@@ -356,6 +357,20 @@ const cambiarArticuloCatalogo = async (req, res) => {
 };
 
 // Cambiar el peso (por unidad, en gramos) de una línea; devuelve el sugerido recalculado
+// Redistribuye el envío real del tracking de ese artículo según los pesos actuales.
+// Tocar la entrada de casillero vuelve a correr el trigger que reparte el envío entre los artículos del tracking.
+async function redistribuirEnvio(pool, idDetalle) {
+  try {
+    const r = await pool.request().input('Id', sql.Int, idDetalle).query(`
+      DECLARE @S int = (SELECT IdSeguimiento FROM C_DetallePedido WHERE IdDetallePedido = @Id);
+      IF @S IS NOT NULL AND EXISTS (SELECT 1 FROM C_EntradasCasillero WHERE IdSeguimiento = @S)
+        UPDATE C_EntradasCasillero SET IdOrden = IdOrden WHERE IdSeguimiento = @S;
+      SELECT D.IdDetallePedido, ISNULL(D.ValorCobradoReal, 0) AS EnvioReal, ISNULL(D.PeroCobradoReal, 0) AS PesoRealG
+      FROM C_DetallePedido D WHERE @S IS NOT NULL AND D.IdSeguimiento = @S;`);
+    return r.recordset;
+  } catch (e) { return []; }
+}
+
 const cambiarPeso = async (req, res) => {
   try {
     const id = parseInt(req.body.idDetallePedido), peso = parseFloat(req.body.peso);
@@ -371,7 +386,8 @@ const cambiarPeso = async (req, res) => {
       WHERE D.IdDetallePedido = @Id;`);
     const x = r.recordset[0];
     if (!x) return res.status(404).json({ ok: false, error: 'No encontré el artículo' });
-    res.json({ ok: true, peso: x.Peso, pesoTotal: x.PesoTotal, precioSugerido: x.PrecioSugerido });
+    const envios = await redistribuirEnvio(pool, id);
+    res.json({ ok: true, peso: x.Peso, pesoTotal: x.PesoTotal, precioSugerido: x.PrecioSugerido, envios });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 };
 
