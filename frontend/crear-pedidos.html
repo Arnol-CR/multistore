@@ -239,7 +239,10 @@
             .btn-menu { display:flex; }
             .panel-2col { grid-template-columns:1fr; }
         }
-    </style>
+            .seg-tasa { display:flex; background:#0f1219; border:1px solid #1f2937; border-radius:8px; padding:3px; gap:3px; }
+        .seg-tasa button { flex:1; background:none; border:none; color:#9ca3af; font:inherit; font-size:13px; font-weight:600; padding:8px; border-radius:6px; cursor:pointer; }
+        .seg-tasa button.on { background:#1e293b; color:#fff; }
+</style>
 </head>
 <body>
 
@@ -622,11 +625,11 @@
                 <td class="r"><div class="pa-total">${sim} ${n2(p.TotalCompra)}</div><div class="pa-sub">${p.TasaCambio ? 'L ' + n2((p.TotalCompra || 0) * p.TasaCambio) : '&nbsp;'}</div></td>
                 <td class="pa-m">${p.TasaCambio
                     ? `<div class="pa-tasa">L ${Number(p.TasaCambio).toFixed(2)}</div><div class="pa-sub">${paEsc(p.Banco || 'Sin cuenta')}${p.NombreCuenta ? ' · ' + paEsc(p.NombreCuenta) : ''}</div>`
-                    : `<button class="pa-falta" onclick="event.stopPropagation();abrirModalTasa(${p.IdPedido},'${num}',0,${p.IdCuenta || 0})">Poner tasa</button>`}</td>
+                    : `<button class="pa-falta" onclick="event.stopPropagation();abrirModalTasa(${p.IdPedido},'${num}',0,${p.IdCuentaBanco || 0},${Number(p.TotalCompra) || 0})">Poner tasa</button>`}</td>
                 <td class="r" onclick="event.stopPropagation()"><div class="pa-acc">
                     <button class="pa-ib azul" onclick="irAgregar(${p.IdPedido})" title="Agregar artículos">${paIco('mas')}</button>
                     <button class="pa-ib" onclick="verFaltantes('${num}')" title="Ver artículos pendientes de este pedido">${paIco('lista')}</button>
-                    <button class="pa-ib morado" onclick="abrirModalTasa(${p.IdPedido},'${num}',${p.TasaCambio || 0},${p.IdCuenta || 0})" title="Tasa de cambio y cuenta">${paIco('tasa')}</button>
+                    <button class="pa-ib morado" onclick="abrirModalTasa(${p.IdPedido},'${num}',${p.TasaCambio || 0},${p.IdCuentaBanco || 0},${Number(p.TotalCompra) || 0})" title="Tasa de cambio y cuenta">${paIco('tasa')}</button>
                     <button class="pa-ib rojo" onclick="confirmarCerrarPedido(${p.IdPedido},'${num}')" title="Cerrar pedido">${paIco('candado')}</button>
                 </div></td>
             </tr>`;
@@ -993,10 +996,15 @@
         }catch(e){ listaCuentasCP = []; }
     }
 
-    async function abrirModalTasa(idPedido, numeroPedido, tasaActual, idCuenta) {
+    let tasaDolares = 0, tasaModo = 'tasa';
+    async function abrirModalTasa(idPedido, numeroPedido, tasaActual, idCuenta, dolares) {
         document.getElementById('cp-tasa-id').value = idPedido;
         document.getElementById('cp-tasa-numero').textContent = numeroPedido;
-        document.getElementById('cp-tasa-valor').value = tasaActual > 0 ? parseFloat(tasaActual).toFixed(2) : '';
+        tasaDolares = Number(dolares) || 0;
+        document.getElementById('cp-tasa-dolares').textContent = '$ ' + tasaDolares.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('cp-tasa-valor').value = tasaActual > 0 ? +parseFloat(tasaActual).toFixed(4) : '';
+        document.getElementById('cp-tasa-lps').value = tasaActual > 0 && tasaDolares ? (tasaActual * tasaDolares).toFixed(2) : '';
+        modoTasa('tasa');
 
         await cargarCuentasCP();
         const sel = document.getElementById('cp-tasa-cuenta');
@@ -1008,10 +1016,34 @@
         document.getElementById('modal-tasa-cp').classList.add('open');
     }
 
+    // Dos formas: poner la tasa, o los lempiras que cobró el banco (tasa = lempiras ÷ dólares)
+    function modoTasa(m) {
+        tasaModo = m;
+        document.querySelectorAll('#cp-tasa-modos button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+        document.getElementById('cp-fila-tasa').style.display = m === 'tasa' ? '' : 'none';
+        document.getElementById('cp-fila-lps').style.display = m === 'lps' ? '' : 'none';
+        calcTasa();
+        setTimeout(() => document.getElementById(m === 'tasa' ? 'cp-tasa-valor' : 'cp-tasa-lps').focus(), 30);
+    }
+    function tasaElegida() {
+        if (tasaModo === 'tasa') return parseFloat(document.getElementById('cp-tasa-valor').value) || 0;
+        const l = parseFloat(document.getElementById('cp-tasa-lps').value) || 0;
+        return tasaDolares > 0 ? l / tasaDolares : 0;
+    }
+    function calcTasa() {
+        const t = tasaElegida(), el = document.getElementById('cp-tasa-calc');
+        const fmt = v => v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (!t) { el.textContent = ''; return; }
+        el.innerHTML = tasaModo === 'tasa'
+            ? (tasaDolares ? `$ ${fmt(tasaDolares)} × ${t} = <b>L ${fmt(t * tasaDolares)}</b>` : '')
+            : (tasaDolares ? `L ${fmt(parseFloat(document.getElementById('cp-tasa-lps').value))} ÷ $ ${fmt(tasaDolares)} = tasa <b>${t.toFixed(4)}</b>` : 'El pedido no tiene artículos con precio: poné la tasa');
+    }
+
     async function guardarTasaPedidoCP() {
         const msg  = document.getElementById('msg-tasa-cp');
-        const tasa = parseFloat(document.getElementById('cp-tasa-valor').value);
-        if (!tasa || tasa < 1) { mostrarMsgCP(msg,'err','Ingresa una tasa válida (ej: 24.90)'); return; }
+        if (tasaModo === 'lps' && !tasaDolares) { mostrarMsgCP(msg,'err','Este pedido no tiene dólares: usá la opción Tasa'); return; }
+        const tasa = +tasaElegida().toFixed(6);
+        if (!tasa || tasa < 1) { mostrarMsgCP(msg,'err', tasaModo === 'tasa' ? 'Ingresa una tasa válida (ej: 24.90)' : 'Ingresa los lempiras cobrados'); return; }
         const idPedido = +document.getElementById('cp-tasa-id').value;
         const idCuenta = document.getElementById('cp-tasa-cuenta').value || null;
         try {
@@ -1508,9 +1540,24 @@
                 <div style="font-family:monospace;color:#60a5fa;font-size:14px;font-weight:700" id="cp-tasa-numero">—</div>
             </div>
             <div class="mfg">
-                <label class="mfl">Tasa (Lempiras por $1)</label>
-                <input class="form-input" id="cp-tasa-valor" type="number" step="0.01" min="1" placeholder="Ej: 24.90" style="font-size:20px;font-family:monospace;color:#4ade80;font-weight:700">
+                <label class="mfl">Total del pedido</label>
+                <div style="font-family:monospace;color:#e2e8f0;font-size:18px;font-weight:700" id="cp-tasa-dolares">$ 0.00</div>
             </div>
+            <div class="mfg">
+                <div id="cp-tasa-modos" class="seg-tasa">
+                    <button type="button" data-m="tasa" onclick="modoTasa('tasa')">Poner la tasa</button>
+                    <button type="button" data-m="lps" onclick="modoTasa('lps')">Lempiras cobrados</button>
+                </div>
+            </div>
+            <div class="mfg" id="cp-fila-tasa">
+                <label class="mfl">Tasa (Lempiras por $1)</label>
+                <input class="form-input" id="cp-tasa-valor" type="number" step="0.01" min="1" placeholder="Ej: 24.90" oninput="calcTasa()" onkeydown="if(event.key==='Enter')guardarTasaPedidoCP()" style="font-size:20px;font-family:monospace;color:#4ade80;font-weight:700">
+            </div>
+            <div class="mfg" id="cp-fila-lps" style="display:none">
+                <label class="mfl">Lempiras que cobró el banco</label>
+                <input class="form-input" id="cp-tasa-lps" type="number" step="0.01" min="0" placeholder="Ej: 2279.11" oninput="calcTasa()" onkeydown="if(event.key==='Enter')guardarTasaPedidoCP()" style="font-size:20px;font-family:monospace;color:#4ade80;font-weight:700">
+            </div>
+            <div id="cp-tasa-calc" style="font-size:12.5px;color:#9ca3af;margin:-4px 0 12px"></div>
             <div class="mfg">
                 <label class="mfl">Cuenta bancaria</label>
                 <select class="form-input" id="cp-tasa-cuenta">
