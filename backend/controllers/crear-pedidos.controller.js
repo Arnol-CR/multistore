@@ -217,6 +217,9 @@ const editarArticulo = async (req, res) => {
       idArtFinal = existing.recordset[0]?.IdArticulo || null;
     }
 
+    // Se_DetallePedido pone EstaEntregado = 0: se guarda el estado para devolverlo igual después
+    const antes = (await pool.request().input('Id', sql.Int, parseInt(idDetallePedido))
+      .query('SELECT EstaEntregado FROM C_DetallePedido WHERE IdDetallePedido = @Id')).recordset[0];
     await pool.request()
       .input('IdDetallePedido',    sql.Int,           parseInt(idDetallePedido))
       .input('CodigoArticulo',     sql.NVarChar,      codigoArticulo || '')
@@ -229,6 +232,8 @@ const editarArticulo = async (req, res) => {
       .input('Link',               sql.NVarChar,      link || null)
       .input('NoPedidoAplicacion', sql.NVarChar,      noPedidoAplicacion || null)
       .execute('Se_DetallePedido');
+    if (antes && antes.EstaEntregado != null) await pool.request().input('Id', sql.Int, parseInt(idDetallePedido)).input('E', sql.Bit, antes.EstaEntregado ? 1 : 0)
+      .query('UPDATE C_DetallePedido SET EstaEntregado = @E WHERE IdDetallePedido = @Id');
 
     // Subir y actualizar foto si viene una nueva
     let urlFoto = null;
