@@ -127,7 +127,7 @@
 
         /* Modal resumen */
         .modal-resumen { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:999; align-items:center; justify-content:center; padding:16px; }
-        .modal-resumen-box { background:#fff; border-radius:12px; width:100%; max-width:620px; max-height:90vh; overflow-y:auto; }
+        .modal-resumen-box { background:#fff; border-radius:12px; width:100%; max-width:780px; max-height:90vh; overflow-y:auto; }
 
         ::-webkit-scrollbar { width:4px; height:4px; }
         ::-webkit-scrollbar-thumb { background:#1e2530; border-radius:2px; }
@@ -179,6 +179,57 @@
         .ed-msg.err { display:block; background:#1f0707; border:1px solid #7f1d1d; color:#fca5a5; }
         .ed-msg.ok { display:block; background:#052e16; border:1px solid #14532d; color:#4ade80; }
             .tbl tr.fila-sel td { background:#13203a !important; }
+        #doc-wrap { position:fixed; left:-10000px; top:0; }
+        #doc { --rosa:#E8327A; --nar:#EF7A30; --tinta:#1f2937; --gris:#6b7280; --linea:#e5e7eb;
+               width:800px; background:#fff; color:var(--tinta); font-family:Arial,'Segoe UI',Helvetica,sans-serif; padding:40px 48px 30px; font-size:12px; line-height:1.45;
+               -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        #doc * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        #doc td, #doc th, #doc div, #doc span, #doc li { color:inherit; }
+        #doc .h { display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:3px solid var(--rosa); }
+        #doc .h img { height:74px; display:block; }
+        #doc .tit { text-align:right; }
+        #doc .tit .k { font-size:26px; font-weight:700; letter-spacing:3px; color:var(--rosa); line-height:1; }
+        #doc .tit .num { font-size:13px; font-weight:700; margin-top:8px; color:var(--tinta); }
+        #doc .tit .f { font-size:12px; color:var(--gris); margin-top:2px; }
+        #doc .datos { display:grid; grid-template-columns:1.25fr 1fr; gap:18px; margin:20px 0 6px; }
+        #doc .cli { background:#fdf2f7; border-left:4px solid var(--rosa); border-radius:0 8px 8px 0; padding:12px 16px; }
+        #doc .k2 { font-size:9.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--rosa); margin-bottom:4px; }
+        #doc .cli .nom { font-size:16px; font-weight:700; color:var(--tinta); }
+        #doc .cli .sub { font-size:12px; color:var(--gris); margin-top:3px; }
+        #doc .cli .sub b { color:var(--tinta); font-weight:600; }
+        #doc .ent { border:1px solid var(--linea); border-radius:8px; padding:12px 16px; }
+        #doc .ent .k2 { color:var(--nar); }
+        #doc .ent .rango { font-size:14px; font-weight:700; color:var(--tinta); }
+        #doc .ent .sub { font-size:11.5px; color:var(--gris); margin-top:3px; }
+        #doc .items { width:100%; border-collapse:collapse; margin-top:18px; }
+        #doc .items thead { display:table-header-group; }
+        #doc .items th { text-align:left; font-size:9.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--tinta); padding:8px 6px; border-bottom:2px solid var(--tinta); background:#fff; }
+        #doc .items tr { page-break-inside:avoid; break-inside:avoid; }
+        #doc .items td { padding:8px 6px; border-bottom:1px solid var(--linea); vertical-align:middle; color:var(--tinta); background:#fff; }
+        #doc .items td.n { color:var(--gris); width:24px; text-align:center; font-weight:700; }
+        #doc .items td img { width:42px; height:42px; object-fit:cover; border-radius:6px; border:1px solid var(--linea); display:block; }
+        #doc .p-nom { font-weight:600; color:var(--tinta); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        #doc .p-var { font-size:11px; color:var(--gris); margin-top:2px; }
+        #doc .r { text-align:right; white-space:nowrap; }
+        #doc .c { text-align:center; }
+        #doc .pie { display:grid; grid-template-columns:1fr 280px; gap:28px; margin-top:16px; align-items:start; page-break-inside:avoid; break-inside:avoid; }
+        #doc .cond { font-size:10.5px; color:var(--gris); }
+        #doc .cond .k2 { color:var(--tinta); }
+        #doc .cond ol { margin:0; padding-left:16px; }
+        #doc .cond li { margin-bottom:2px; }
+        #doc .total { border-top:2px solid var(--tinta); border-bottom:2px solid var(--tinta); padding:10px 4px; display:flex; justify-content:space-between; align-items:baseline; }
+        #doc .total .k { font-size:13px; font-weight:700; letter-spacing:1px; color:var(--tinta); }
+        #doc .total .k small { display:block; font-size:10.5px; font-weight:400; letter-spacing:0; color:var(--gris); }
+        #doc .total .v { font-size:22px; font-weight:800; color:var(--rosa); }
+        #doc .notas { margin-top:14px; font-size:11px; color:var(--tinta); background:#fff7ed; border-left:3px solid var(--nar); padding:6px 10px; white-space:pre-wrap; }
+        #doc .firma { display:flex; justify-content:space-between; align-items:flex-end; margin-top:32px; font-size:11px; color:var(--gris); }
+        #doc .firma b { color:var(--tinta); }
+        #doc .gracias { text-align:center; margin-top:20px; padding-top:10px; border-top:1px solid var(--linea); font-size:11px; color:var(--rosa); font-weight:600; letter-spacing:.3px; }
+        #doc .grupo td { background:#fdf2f7; border-bottom:1px solid #f5c2d8; padding:7px 8px; }
+        #doc .grupo .gn { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--rosa); }
+        #doc .grupo .gs { text-align:right; font-weight:700; color:var(--tinta); }
+        #doc .p-desc { font-size:10.5px; color:#9ca3af; margin-top:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+        #doc .sin { color:#d97706; font-weight:700; }
 </style>
 </head>
 <body>
@@ -711,10 +762,10 @@
 <div class="modal-resumen" id="modal-resumen">
     <div class="modal-resumen-box">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f9fafb;border-radius:12px 12px 0 0;">
-            <span style="font-size:13px;font-weight:600;color:#374151;">📋 Resumen de pedidos</span>
+            <span style="font-size:13px;font-weight:600;color:#374151;">Vista previa de la imagen</span>
             <button onclick="cerrarResumen()" style="background:none;border:none;font-size:20px;color:#9ca3af;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
         </div>
-        <div id="resumen-contenido" style="padding:24px;font-family:'Segoe UI',Arial,sans-serif;">
+        <div id="resumen-contenido" style="padding:16px;font-family:'Segoe UI',Arial,sans-serif;overflow-y:auto;">
             <!-- generado dinámicamente -->
         </div>
         <div style="padding:16px 24px;border-top:1px solid #e5e7eb;display:flex;gap:10px;justify-content:flex-end;background:#f9fafb;border-radius:0 0 12px 12px;">
@@ -742,132 +793,99 @@
     document.getElementById('filtros-body').style.maxHeight = '2000px';
     document.getElementById('filtros-body').style.opacity   = '1';
 
-    function abrirResumen() {
-        const fmtL = v => 'L\u00a0' + parseFloat(v||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    // ===== IMAGEN con el mismo diseño de la Cotización =====
+    let resCanvas = null;
+    const imgDoc = src => !src ? '' : (/^data:/.test(src) || src.startsWith('/')) ? src : '/api/cotizaciones/img?url=' + encodeURIComponent(src);
+    async function abrirResumen() {
         const F = fuente();
-        if (F.length === 0) { alert('No hay datos para generar resumen'); return; }
-
-        // Agrupar por cliente
-        const clientes = {};
-        F.forEach(p => {
-            const key = p.NombreCliente || 'Sin cliente';
-            if (!clientes[key]) clientes[key] = [];
-            clientes[key].push(p);
-        });
-
-        const fecha = new Date().toLocaleDateString('es-HN');
-        const totalArticulos = F.length;
-        const totalPrecio = F.reduce((acc,p) => acc + (parseFloat(p.ValorCobroCliente)||0), 0);
-
-        // Vendedores únicos
-        const vendedores = [...new Set(F.map(p => p.NombreVendedor ? p.NombreVendedor.replace(/\s+/g,' ').trim() : '').filter(Boolean))].join(', ');
-        // Tiendas únicas
-        const tiendas = [...new Set(F.map(p => p.NombreEmpresa).filter(Boolean))].join(', ');
-        // Pedidos únicos
-        const pedidos = [...new Set(F.map(p => p.NumeroPedido).filter(Boolean))].join(', ');
-
-        let html = `
-        <div style="max-width:580px;margin:0 auto;">
-            <!-- Header -->
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:2px solid #e5e7eb;margin-bottom:16px;">
-                <img src="${LOGO_B64}" style="height:64px;object-fit:contain;" onerror="this.style.display='none'">
-                <div style="text-align:right;">
-                    <div style="font-size:20px;font-weight:800;color:#1f2937;">ShopAholic</div>
-                    <div style="font-size:11px;color:#6b7280;">Resumen de pedidos</div>
-                    <div style="font-size:11px;color:#6b7280;">Fecha: ${fecha}</div>
-                </div>
-            </div>
-
-            <!-- Info general -->
-            <div style="background:#f3f4f6;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#374151;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                <div><strong>Vendedor(es):</strong> ${vendedores || '—'}</div>
-                <div><strong>Tienda(s):</strong> ${tiendas || '—'}</div>
-                <div><strong>N° Pedido(s):</strong> ${pedidos || '—'}</div>
-                <div><strong>Total artículos:</strong> ${totalArticulos}</div>
-            </div>`;
-
-        // Por cada cliente
-        Object.entries(clientes).forEach(([nombreCliente, articulos]) => {
-            const subtotal = articulos.reduce((acc,p) => acc + (parseFloat(p.ValorCobroCliente)||0), 0);
-            html += `
-            <div style="margin-bottom:20px;">
-                <div style="background:#1d4ed8;color:#fff;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:13px;">
-                    👤 ${nombreCliente}
-                </div>
-                <table style="width:100%;border-collapse:collapse;font-size:11px;">
-                    <thead>
-                        <tr style="background:#f9fafb;">
-                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280;">#</th>
-                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280;">Artículo</th>
-                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280;">Talla</th>
-                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280;">Descripción</th>
-                            <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #e5e7eb;color:#6b7280;">Precio</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${articulos.map((p,i) => `
-                        <tr style="border-bottom:1px solid #f3f4f6;">
-                            <td style="padding:6px 8px;color:#9ca3af;">${i+1}</td>
-                            <td style="padding:6px 8px;font-weight:600;color:#1f2937;">${p.NombreArticulo||'—'}</td>
-                            <td style="padding:6px 8px;color:#6b7280;">${p.TallaColor||'—'}</td>
-                            <td style="padding:6px 8px;color:#6b7280;max-width:160px;">${p.DescripcionArticulo ? p.DescripcionArticulo.trim().substring(0,50)+(p.DescripcionArticulo.length>50?'...':'') : '—'}</td>
-                            <td style="padding:6px 8px;text-align:right;font-weight:600;color:#059669;">${p.ValorCobroCliente ? fmtL(p.ValorCobroCliente) : 'Sin precio'}</td>
-                        </tr>`).join('')}
-                        <tr style="background:#f0fdf4;">
-                            <td colspan="4" style="padding:8px;text-align:right;font-weight:700;color:#374151;">Subtotal ${nombreCliente}:</td>
-                            <td style="padding:8px;text-align:right;font-weight:700;color:#059669;">${fmtL(subtotal)}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>`;
-        });
-
-        // Total general
-        html += `
-            <div style="background:#1f2937;color:#fff;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-                <div style="font-size:13px;">
-                    <strong>Total artículos:</strong> ${totalArticulos}
-                </div>
-                <div style="font-size:18px;font-weight:800;">
-                    Total: ${fmtL(totalPrecio)}
-                </div>
-            </div>
-            <div style="text-align:center;margin-top:12px;font-size:10px;color:#9ca3af;">
-                Generado por MultiStore · ShopAholic · ${fecha}
-            </div>
-        </div>`;
-
-        document.getElementById('resumen-contenido').innerHTML = html;
+        if (F.length === 0) { alert('No hay datos para generar la imagen'); return; }
+        const caja = document.getElementById('resumen-contenido');
+        caja.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7280;font-size:13px">Generando imagen…</div>';
         document.getElementById('modal-resumen').style.display = 'flex';
+        const e = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const L = v => 'L ' + (Number(v) || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const grupos = new Map(); F.forEach(p => { const k = p.NombreCliente || 'Sin cliente'; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(p); });
+        const peds = [...new Set(F.map(p => p.NumeroPedido).filter(Boolean))], tiendas = [...new Set(F.map(p => p.NombreEmpresa).filter(Boolean))];
+        const vends = [...new Set(F.map(p => (p.NombreVendedor || '').replace(/\s+/g, ' ').trim()).filter(Boolean))];
+        const total = F.reduce((a, p) => a + (Number(p.ValorCobroCliente) || 0), 0), unid = F.reduce((a, p) => a + (Number(p.CantidadArticulos) || 1), 0);
+        const entregados = F.filter(p => p.EstaEntregado).length;
+        const hoy = new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
+        const varios = grupos.size > 1;
+        let n = 0;
+        const filas = [...grupos.entries()].map(([cli, l]) => {
+            const sub = l.reduce((a, p) => a + (Number(p.ValorCobroCliente) || 0), 0);
+            return (varios ? `<tr class="grupo"><td colspan="4" class="gn">${e(cli)} · ${l.length} artículo${l.length === 1 ? '' : 's'}</td><td colspan="2" class="gs">${L(sub)}</td></tr>` : '') + l.map(p => {
+                const c = Number(p.CantidadArticulos) || 1, v = Number(p.ValorCobroCliente) || 0; n++;
+                return `<tr><td class="n">${n}</td>
+                    <td>${p.Fotografia ? `<img src="${e(imgDoc(p.Fotografia))}" crossorigin="anonymous" onerror="this.style.visibility='hidden'">` : ''}</td>
+                    <td><div class="p-nom">${e(p.NombreArticulo || 'Artículo')}</div>${p.TallaColor ? `<div class="p-var">${e(p.TallaColor)}</div>` : ''}${p.DescripcionArticulo ? `<div class="p-desc">${e(p.DescripcionArticulo.trim())}</div>` : ''}</td>
+                    <td class="c">${c}</td>
+                    <td class="r">${v ? L(v / c) : '—'}</td>
+                    <td class="r">${v ? `<b>${L(v)}</b>` : '<span class="sin">Sin precio</span>'}</td></tr>`;
+            }).join('');
+        }).join('');
+        let wrap = document.getElementById('doc-wrap');
+        if (!wrap) { wrap = document.createElement('div'); wrap.id = 'doc-wrap'; wrap.innerHTML = '<div id="doc"></div>'; document.body.appendChild(wrap); }
+        const doc = document.getElementById('doc');
+        doc.innerHTML = `
+            <div class="h">
+                <img src="/assets/shopaholic-logo.png" alt="ShopAholic">
+                <div class="tit">
+                    <div class="k">DETALLE DE PEDIDO</div>
+                    <div class="num">${peds.length === 1 ? 'N° ' + e(peds[0]) : peds.length + ' pedidos'}</div>
+                    <div class="f">${hoy}</div>
+                </div>
+            </div>
+            <div class="datos">
+                <div class="cli">
+                    <div class="k2">${varios ? 'Clientes' : 'Cliente'}</div>
+                    <div class="nom">${varios ? grupos.size + ' clientes' : e([...grupos.keys()][0])}</div>
+                    <div class="sub">${varios ? e([...grupos.keys()].join(', ')) : `${F.length} artículo${F.length === 1 ? '' : 's'}${entregados ? ` &nbsp;·&nbsp; <b>${entregados}</b> entregado${entregados === 1 ? '' : 's'}` : ''}`}</div>
+                </div>
+                <div class="ent">
+                    <div class="k2">Pedido</div>
+                    <div class="rango">${e(tiendas.join(', ') || '—')}</div>
+                    <div class="sub">${peds.length > 1 ? e(peds.join(', ')) + '<br>' : ''}${vends.length ? 'Vendedor: ' + e(vends.join(', ')) : ''}</div>
+                </div>
+            </div>
+            <table class="items">
+                <thead><tr><th class="c">#</th><th style="width:48px"></th><th>Descripción</th><th class="c">Cant.</th><th class="r">Precio unit.</th><th class="r">Importe</th></tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+            <div class="pie">
+                <div class="cond">
+                    <div class="k2">Resumen</div>
+                    <ol style="list-style:none;padding-left:0">
+                        <li>${F.length} artículo${F.length === 1 ? '' : 's'} en ${peds.length} pedido${peds.length === 1 ? '' : 's'} de ${e(tiendas.join(', ') || 'la tienda')}.</li>
+                        <li>${entregados} entregado${entregados === 1 ? '' : 's'} · ${F.length - entregados} por entregar.</li>
+                        ${F.some(p => !Number(p.ValorCobroCliente)) ? `<li>${F.filter(p => !Number(p.ValorCobroCliente)).length} artículo(s) todavía sin precio.</li>` : ''}
+                    </ol>
+                </div>
+                <div class="total"><div class="k">TOTAL<small>${unid} unidad${unid === 1 ? '' : 'es'}</small></div><div class="v">${L(total)}</div></div>
+            </div>
+            <div class="firma"><div>Generado por: <b>${e((`${usuario.nombres || ''} ${usuario.apellidos || ''}`).trim() || 'ShopAholic')}</b></div></div>
+            <div class="gracias">¡Gracias por comprar con nosotros!</div>`;
+        await Promise.all([...doc.querySelectorAll('img')].map(i => i.complete ? null : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 6000); })));
+        try {
+            resCanvas = await html2canvas(doc, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            caja.innerHTML = `<img src="${resCanvas.toDataURL('image/png')}" alt="Vista previa" style="display:block;width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px">`;
+        } catch (err) { caja.innerHTML = `<div style="padding:30px;color:#b91c1c">No se pudo generar la imagen: ${e(err.message)}</div>`; }
     }
 
     function cerrarResumen() {
         document.getElementById('modal-resumen').style.display = 'none';
     }
 
-    async function descargarResumen() {
-        try {
-            const canvas = await html2canvas(document.getElementById('resumen-contenido'), { scale:2, backgroundColor:'#ffffff', useCORS:true });
-            const a = document.createElement('a'); a.href = canvas.toDataURL(); a.download = `detalle_pedido_${new Date().toISOString().substring(0,10)}.png`; a.click();
-        } catch(e) { alert('Error al generar imagen: ' + e.message); }
+    function descargarResumen() {
+        if (!resCanvas) return;
+        const a = document.createElement('a'); a.href = resCanvas.toDataURL('image/png'); a.download = `detalle_pedido_${new Date().toISOString().substring(0,10)}.png`; a.click();
     }
-    async function copiarResumen() {
-        const el = document.getElementById('resumen-contenido');
-        try {
-            const canvas = await html2canvas(el, { scale:2, backgroundColor:'#ffffff', useCORS:true });
-            canvas.toBlob(async blob => {
-                try {
-                    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-                    alert('Imagen copiada. Pegala en WhatsApp con Ctrl+V');
-                } catch(e) {
-                    // Fallback: descargar
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL();
-                    a.download = `resumen_${new Date().toISOString().substring(0,10)}.png`;
-                    a.click();
-                }
-            });
-        } catch(e) { alert('Error al generar imagen: ' + e.message); }
+    function copiarResumen() {
+        if (!resCanvas) return;
+        resCanvas.toBlob(async blob => {
+            try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); alert('Imagen copiada. Pegala en WhatsApp con Ctrl+V'); }
+            catch (e) { descargarResumen(); }
+        }, 'image/png');
     }
 </script>
 <div class="ed-fondo" id="ed-fondo" onclick="if(event.target===this)cerrarEdicion()">
