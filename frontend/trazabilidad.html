@@ -390,6 +390,7 @@
             </div>
             <div class="tz-acc">
                 <button class="btn prim" onclick="verArt(${a.IdDetallePedido})">Ver artículo</button>
+                ${e !== 'perdido' ? `<button class="btn" id="btn-ent" onclick="marcarEntrega(${a.IdDetallePedido}, ${num(a.Entregado) ? 0 : 1})">${num(a.Entregado) ? 'Marcar no entregado' : 'Marcar entregado'}</button>` : ''}
                 ${a.Link ? `<a class="btn" href="${esc(a.Link)}" target="_blank" rel="noopener">Abrir en la tienda</a>` : ''}
                 <button class="btn" onclick="copiarEnlace(${a.IdDetallePedido})">Copiar enlace</button>
             </div>`;
@@ -401,6 +402,18 @@
             document.getElementById('hist').innerHTML = h.ok && h.cambios.length ? h.cambios.map(c => `<div class="cambio"><b>${esc(NOMC[c.Campo] || c.Campo)}</b>: ${esc(c.ValorAnterior ?? '—')} → ${esc(c.ValorNuevo ?? '—')}<div class="meta">${esc([c.Fecha && c.Fecha.replace('T', ' '), c.Usuario].filter(Boolean).join(' · '))}</div></div>`).join('')
                 : '<div class="meta">Sin cambios registrados</div>';
         } catch (_) { const el = document.getElementById('hist'); if (el) el.innerHTML = '<div class="meta">No se pudo cargar</div>'; }
+    }
+    async function marcarEntrega(id, valor) {
+        const a = A.find(x => x.IdDetallePedido === id); if (!a) return;
+        if (!valor && !confirm('¿Marcar este artículo como NO entregado?')) return;
+        const b = document.getElementById('btn-ent'); if (b) b.disabled = true;
+        try {
+            const r = await fetch('/api/tracking/entregado', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ IdDetallePedido: id, EstaEntregado: valor }) }).then(x => x.json());
+            if (!r.ok) throw new Error(r.error || 'Error');
+            a.Entregado = valor; a.est = estadoDe(a);
+            aviso(valor ? 'Marcado como entregado' : 'Marcado como no entregado');
+            filtrar(); abrir(id);
+        } catch (err) { alert('No se pudo: ' + err.message); if (b) b.disabled = false; }
     }
     function cerrar() { selId = null; document.getElementById('panel').classList.remove('abierto'); document.querySelectorAll('.tz-tabla tr.sel').forEach(r => r.classList.remove('sel')); }
     function verArt(id) {
