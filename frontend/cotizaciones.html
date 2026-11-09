@@ -350,7 +350,7 @@
                                 <input class="inp" id="c-mar" type="number" step="0.5" min="0" value="18" style="width:80px;flex-shrink:0" oninput="calcular()">
                             </div>
                         </div>
-                        <label class="chk" style="margin-bottom:6px"><input type="checkbox" id="c-redlb" checked onchange="calcular()"> Redondear libras hacia arriba</label>
+                        <label class="chk" style="margin-bottom:6px"><input type="checkbox" id="c-redlb" onchange="calcular()"> Redondear libras hacia arriba</label>
                         <label class="chk"><input type="checkbox" id="c-red5" checked onchange="calcular()"> Redondear precios a L 5</label>
                     </div>
 
@@ -363,6 +363,7 @@
                             <button class="btn btn-ghost" onclick="nueva()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Nueva</button>
                             <button class="btn btn-ghost" onclick="exportar('pdf')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg> PDF</button>
                             <button class="btn btn-ghost" onclick="exportar('img')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg> Imagen</button>
+                            <button class="btn btn-ghost" style="grid-column:1/-1" onclick="exportar('copiar')"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg> Copiar imagen</button>
                             <button class="btn btn-purple" style="grid-column:1/-1" onclick="abrirConvertir()"><svg class="ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.14em;flex-shrink:0"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg> Convertir en pedido</button>
                         </div>
                     </div>
@@ -528,7 +529,7 @@
         if ($('c-tienda').value) cambioTienda(true);
         if (cfg.mar) $('c-mar').value = cfg.mar;
         $('c-tasa').value = cfg.tasa || defaults.tasaCambio || '';
-        if (cfg.redlb === false) $('c-redlb').checked = false;
+        $('c-redlb').checked = false;   // la cotización usa el peso real; se puede marcar a mano si se quiere redondear
         if (cfg.red5 === false) $('c-red5').checked = false;
         const abrirId = new URLSearchParams(location.search).get('id');
         if (abrirId) abrir(+abrirId); else render();
@@ -1059,6 +1060,11 @@
         try {
             await cargarH2C();
             const cv = await html2canvas($('doc'), { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            if (tipo === 'copiar') {
+                const blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
+                try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); toast('ok', 'Imagen copiada. Pegala en WhatsApp con Ctrl+V'); return; }
+                catch (e) { toast('err', 'El navegador no dejó copiar; se descarga la imagen'); }
+            }
             const a = document.createElement('a');
             a.download = 'ShopAholic-' + (actual ? actual.numero : 'cotizacion') + '.png';
             a.href = cv.toDataURL('image/png'); a.click();
