@@ -230,6 +230,14 @@
         #doc .grupo .gs { text-align:right; font-weight:700; color:var(--tinta); }
         #doc .p-desc { font-size:10.5px; color:#9ca3af; margin-top:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
         #doc .sin { color:#d97706; font-weight:700; }
+        .filtro-input.combo::-webkit-calendar-picker-indicator { opacity:.6; filter:invert(.7); cursor:pointer; }
+        .filtro-input { transition:border-color .15s; }
+        .chk-wrap { border:1px solid #1e2530; border-radius:20px; padding:5px 12px 5px 8px; transition:.15s; }
+        .chk-wrap:hover { border-color:#2a3342; }
+        .chk-wrap:has(input:checked) { background:#0f1d3a; border-color:#1d4ed8; }
+        .chk-wrap:has(input:checked) span { color:#bfdbfe; }
+        .btn-filtrar, .btn-limpiar { display:inline-flex; align-items:center; gap:6px; }
+        .entregado-badge { display:inline-flex; align-items:center; gap:4px; }
 </style>
 </head>
 <body>
@@ -280,30 +288,34 @@
         <!-- Filtros -->
         <div class="filtros-wrap">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <span style="font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;font-weight:600;">🔽 Filtros</span>
+                <span style="font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;font-weight:600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtros <span id="n-filtros" style="display:none;margin-left:6px;background:#1d4ed8;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;letter-spacing:0"></span></span>
                 <button onclick="toggleFiltros()" id="btn-toggle-filtros" style="background:none;border:1px solid #1e2530;border-radius:6px;padding:4px 12px;font-size:11px;color:#6b7280;cursor:pointer;">Ocultar</button>
             </div>
             <div id="filtros-body" class="filtros-body">
             <div class="filtros-grid">
                 <div class="filtro-group">
                     <label>SKU / Código</label>
-                    <input class="filtro-input" id="f-sku" type="text" placeholder="Contiene...">
+                    <input class="filtro-input combo" id="f-sku" type="search" list="dl-sku" autocomplete="off" placeholder="Todos"><datalist id="dl-sku"></datalist>
                 </div>
                 <div class="filtro-group">
                     <label>Descripción artículo</label>
-                    <input class="filtro-input" id="f-desc" type="text" placeholder="Contiene...">
+                    <input class="filtro-input combo" id="f-desc" type="search" list="dl-desc" autocomplete="off" placeholder="Todos"><datalist id="dl-desc"></datalist>
                 </div>
                 <div class="filtro-group">
                     <label>Cliente</label>
-                    <input class="filtro-input" id="f-cliente" type="text" placeholder="Contiene...">
+                    <input class="filtro-input combo" id="f-cliente" type="search" list="dl-cliente" autocomplete="off" placeholder="Todos"><datalist id="dl-cliente"></datalist>
                 </div>
                 <div class="filtro-group">
                     <label>Artículo</label>
-                    <input class="filtro-input" id="f-articulo" type="text" placeholder="Contiene...">
+                    <input class="filtro-input combo" id="f-articulo" type="search" list="dl-articulo" autocomplete="off" placeholder="Todos"><datalist id="dl-articulo"></datalist>
                 </div>
                 <div class="filtro-group">
                     <label>Seguimiento / Tracking</label>
-                    <input class="filtro-input" id="f-tracking" type="text" placeholder="Contiene...">
+                    <input class="filtro-input combo" id="f-tracking" type="search" list="dl-tracking" autocomplete="off" placeholder="Todos"><datalist id="dl-tracking"></datalist>
+                </div>
+                <div class="filtro-group">
+                    <label>N° Pedido</label>
+                    <select class="filtro-input" id="f-pedido"><option value="">Todos</option></select>
                 </div>
                 <div class="filtro-group">
                     <label>Fecha desde</label>
@@ -327,8 +339,8 @@
                     </select>
                 </div>
                 <div class="filtros-btns">
-                    <button class="btn-filtrar" onclick="aplicarFiltros()">🔍 Filtrar</button>
-                    <button class="btn-limpiar" onclick="limpiarFiltros()">✕ Limpiar</button>
+                    <button class="btn-filtrar" onclick="aplicarFiltros()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Filtrar</button>
+                    <button class="btn-limpiar" onclick="limpiarFiltros()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpiar</button>
                 </div>
             </div>
             <div class="chk-fila">
@@ -371,6 +383,7 @@
                     <button onclick="abrirResumen()" style="background:#1f1025;color:#c084fc;border:1px solid #3b1f5e;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg> <span id="lbl-resumen">Imagen</span>
                     </button>
+                    <button onclick="copiarDirecto(this)" style="background:#1d4ed8;color:#fff;border:1px solid #1d4ed8;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span id="lbl-copiar">Copiar imagen</span></button>
                     <span class="result-count" id="result-count">Cargando...</span>
                 </div>
             </div>
@@ -476,7 +489,21 @@
         } catch(e) { console.error(e); }
     }
 
+    // Listas para los combos: valores reales de los artículos cargados
+    function cargarListasFiltros() {
+        const uniq = f => [...new Set(todosPedidos.map(f).map(v => String(v || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        const llenar = (id, vals) => { document.getElementById(id).innerHTML = vals.slice(0, 1500).map(v => `<option value="${v.replace(/"/g, '&quot;')}"></option>`).join(''); };
+        llenar('dl-cliente', uniq(p => p.NombreCliente));
+        llenar('dl-articulo', uniq(p => p.NombreArticulo));
+        llenar('dl-sku', uniq(p => p.CodigoArticulo));
+        llenar('dl-tracking', uniq(p => p.Seguimiento));
+        llenar('dl-desc', uniq(p => (p.DescripcionArticulo || '').slice(0, 80)));
+        const peds = [...new Map(todosPedidos.filter(p => p.NumeroPedido).map(p => [p.NumeroPedido, p])).values()]
+            .sort((a, b) => String(b.FechaPedido || '').localeCompare(String(a.FechaPedido || '')));
+        document.getElementById('f-pedido').innerHTML = '<option value="">Todos</option>' + peds.map(p => `<option value="${p.NumeroPedido}">${p.NumeroPedido} · ${p.NombreEmpresa || ''}</option>`).join('');
+    }
     function cargarTiendasDinamicas() {
+        cargarListasFiltros();
         const sel = document.getElementById('f-tienda');
         const tiendas = [...new Set(todosPedidos.map(p => p.NombreEmpresa).filter(Boolean))].sort();
         sel.innerHTML = '<option value="">Todas</option>' + tiendas.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -502,7 +529,12 @@
         document.getElementById('stat-pendientes').textContent = pendientes;
     }
 
-    // ===== FILTROS =====
+    // ===== FILTROS (se aplican solos al escribir o elegir) =====
+    document.addEventListener('DOMContentLoaded', () => {
+        let t; const ya = () => { clearTimeout(t); t = setTimeout(aplicarFiltros, 250); };
+        ['f-sku','f-desc','f-cliente','f-articulo','f-tracking'].forEach(id => document.getElementById(id).addEventListener('input', ya));
+        ['f-tienda','f-vendedor','f-pedido','f-fecha-desde','f-fecha-hasta'].forEach(id => document.getElementById(id).addEventListener('change', aplicarFiltros));
+    });
     function aplicarFiltros() {
         const sku         = document.getElementById('f-sku').value.trim().toLowerCase();
         const desc        = document.getElementById('f-desc').value.trim().toLowerCase();
@@ -510,6 +542,7 @@
         const articulo    = document.getElementById('f-articulo').value.trim().toLowerCase();
         const tracking    = document.getElementById('f-tracking').value.trim().toLowerCase();
         const tienda      = document.getElementById('f-tienda').value;
+        const pedidoNum   = document.getElementById('f-pedido').value;
         const fechaDesde  = document.getElementById('f-fecha-desde').value;
         const fechaHasta  = document.getElementById('f-fecha-hasta').value;
         const vendedorId  = document.getElementById('f-vendedor')?.value || '';
@@ -527,6 +560,7 @@
             if (articulo    && !(p.NombreArticulo      || '').toLowerCase().includes(articulo))return false;
             if (tracking    && !(p.Seguimiento         || '').toLowerCase().includes(tracking))return false;
             if (tienda      && p.NombreEmpresa !== tienda)                                     return false;
+            if (pedidoNum   && p.NumeroPedido !== pedidoNum)                                   return false;
             if (fechaDesde  && p.FechaPedido && p.FechaPedido.substring(0,10) < fechaDesde) return false;
             if (fechaHasta  && p.FechaPedido && p.FechaPedido.substring(0,10) > fechaHasta) return false;
             if (vendedorId  && String(p.IdVendedor) !== vendedorId)                            return false;
@@ -540,6 +574,8 @@
         });
         paginaActual = 1;
         renderizarPagina();
+        const n = [sku, desc, cliente, articulo, tracking, tienda, pedidoNum, fechaDesde, fechaHasta, vendedorId].filter(Boolean).length + [sinCliente, sinPrecio, sinTracking, soloEntreg, noEntreg, sinVendedor].filter(Boolean).length;
+        const b = document.getElementById('n-filtros'); b.textContent = n; b.style.display = n ? '' : 'none';
     }
 
     function filtrarLocal(texto) {
@@ -561,7 +597,7 @@
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        ['f-tienda','f-vendedor'].forEach(id => {
+        ['f-tienda','f-vendedor','f-pedido'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -570,6 +606,7 @@
             if (el) el.checked = false;
         });
         document.getElementById('search-global').value = '';
+        document.getElementById('n-filtros').style.display = 'none';
         pedidosFiltrados = todosPedidos;
         paginaActual = 1;
         renderizarPagina();
@@ -603,8 +640,8 @@
             const tracking    = p.Seguimiento ? p.Seguimiento.substring(0,14) + '...' : '<span style="color:#4b5563">Sin tracking</span>';
             const estado      = getEstadoBadge(p.IdSeguimiento, p.IdEstado);
             const entregado   = p.EstaEntregado
-                ? '<span class="entregado-badge entregado-si">✓ Sí</span>'
-                : '<span class="entregado-badge entregado-no">✗ No</span>';
+                ? '<span class="entregado-badge entregado-si"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> Sí</span>'
+                : '<span class="entregado-badge entregado-no">No</span>';
             const vendedorTxt = p.CodigoVendedor
                 ? `<span style="color:#c084fc;font-weight:600;">${p.CodigoVendedor}</span><br><span style="font-size:10px;color:#6b7280;">${(p.NombreVendedor||'').trim()}</span>`
                 : '<span style="color:#ef4444;font-size:10px;">Sin vendedor</span>';
@@ -868,6 +905,7 @@
         await Promise.all([...doc.querySelectorAll('img')].map(i => i.complete ? null : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 6000); })));
         try {
             resCanvas = await html2canvas(doc, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            if (window._soloLienzo) return;
             caja.innerHTML = `<img src="${resCanvas.toDataURL('image/png')}" alt="Vista previa" style="display:block;width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px">`;
         } catch (err) { caja.innerHTML = `<div style="padding:30px;color:#b91c1c">No se pudo generar la imagen: ${e(err.message)}</div>`; }
     }
@@ -876,6 +914,23 @@
         document.getElementById('modal-resumen').style.display = 'none';
     }
 
+    // Copia la imagen directo (sin abrir la vista previa)
+    async function copiarDirecto(btn) {
+        if (!fuente().length) { alert('No hay datos para generar la imagen'); return; }
+        const lbl = document.getElementById('lbl-copiar'), txt = lbl.textContent; btn.disabled = true; lbl.textContent = 'Generando…';
+        const hacer = (async () => {
+            window._soloLienzo = true;
+            try { await abrirResumen(); } finally { window._soloLienzo = false; cerrarResumen(); }
+            return await new Promise(ok => resCanvas.toBlob(ok, 'image/png'));
+        })();
+        try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': hacer })]);
+            lbl.textContent = 'Copiada'; setTimeout(() => lbl.textContent = txt, 1800);
+        } catch (e) {
+            try { await hacer; descargarResumen(); } catch (_) {}
+            alert('El navegador no dejó copiar; se descargó la imagen.'); lbl.textContent = txt;
+        } finally { btn.disabled = false; }
+    }
     function descargarResumen() {
         if (!resCanvas) return;
         const a = document.createElement('a'); a.href = resCanvas.toDataURL('image/png'); a.download = `detalle_pedido_${new Date().toISOString().substring(0,10)}.png`; a.click();
