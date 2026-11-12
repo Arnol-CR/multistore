@@ -314,6 +314,10 @@
                     <input class="filtro-input combo" id="f-tracking" type="search" list="dl-tracking" autocomplete="off" placeholder="Todos"><datalist id="dl-tracking"></datalist>
                 </div>
                 <div class="filtro-group">
+                    <label>Orden de pago</label>
+                    <select class="filtro-input" id="f-orden"><option value="">Todas</option><option value="__sin">Sin orden de pago</option></select>
+                </div>
+                <div class="filtro-group">
                     <label>N° Pedido</label>
                     <select class="filtro-input" id="f-pedido"><option value="">Todos</option></select>
                 </div>
@@ -502,6 +506,15 @@
             .sort((a, b) => String(b.FechaPedido || '').localeCompare(String(a.FechaPedido || '')));
         document.getElementById('f-pedido').innerHTML = '<option value="">Todos</option>' + peds.map(p => `<option value="${p.NumeroPedido}">${p.NumeroPedido} · ${p.NombreEmpresa || ''}</option>`).join('');
     }
+    // Lista de órdenes de pago de casillero (más recientes primero) con cuántos artículos trae cada una
+    function cargarOrdenesFiltro() {
+        const sel = document.getElementById('f-orden'), act = sel.value, m = new Map();
+        todosPedidos.forEach(p => { if (!p.NumeroOrden) return; const o = m.get(p.NumeroOrden) || { n: 0, f: p.FechaOrden || '' }; o.n++; m.set(p.NumeroOrden, o); });
+        const fF = f => f ? f.split('-').reverse().join('/') : '';
+        sel.innerHTML = '<option value="">Todas</option><option value="__sin">Sin orden de pago</option>' +
+            [...m.entries()].sort((a, b) => b[1].f.localeCompare(a[1].f)).map(([k, o]) => `<option value="${k}">${k} · ${fF(o.f)} · ${o.n} art.</option>`).join('');
+        sel.value = act;
+    }
     function cargarTiendasDinamicas() {
         cargarListasFiltros();
         const sel = document.getElementById('f-tienda');
@@ -533,7 +546,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         let t; const ya = () => { clearTimeout(t); t = setTimeout(aplicarFiltros, 250); };
         ['f-sku','f-desc','f-cliente','f-articulo','f-tracking'].forEach(id => document.getElementById(id).addEventListener('input', ya));
-        ['f-tienda','f-vendedor','f-pedido','f-fecha-desde','f-fecha-hasta'].forEach(id => document.getElementById(id).addEventListener('change', aplicarFiltros));
+        ['f-tienda','f-vendedor','f-pedido','f-orden','f-fecha-desde','f-fecha-hasta'].forEach(id => document.getElementById(id).addEventListener('change', aplicarFiltros));
     });
     function aplicarFiltros() {
         const sku         = document.getElementById('f-sku').value.trim().toLowerCase();
@@ -543,6 +556,7 @@
         const tracking    = document.getElementById('f-tracking').value.trim().toLowerCase();
         const tienda      = document.getElementById('f-tienda').value;
         const pedidoNum   = document.getElementById('f-pedido').value;
+        const orden       = document.getElementById('f-orden').value;
         const fechaDesde  = document.getElementById('f-fecha-desde').value;
         const fechaHasta  = document.getElementById('f-fecha-hasta').value;
         const vendedorId  = document.getElementById('f-vendedor')?.value || '';
@@ -561,6 +575,7 @@
             if (tracking    && !(p.Seguimiento         || '').toLowerCase().includes(tracking))return false;
             if (tienda      && p.NombreEmpresa !== tienda)                                     return false;
             if (pedidoNum   && p.NumeroPedido !== pedidoNum)                                   return false;
+            if (orden === '__sin' ? !!p.NumeroOrden : (orden && p.NumeroOrden !== orden))       return false;
             if (fechaDesde  && p.FechaPedido && p.FechaPedido.substring(0,10) < fechaDesde) return false;
             if (fechaHasta  && p.FechaPedido && p.FechaPedido.substring(0,10) > fechaHasta) return false;
             if (vendedorId  && String(p.IdVendedor) !== vendedorId)                            return false;
@@ -574,7 +589,7 @@
         });
         paginaActual = 1;
         renderizarPagina();
-        const n = [sku, desc, cliente, articulo, tracking, tienda, pedidoNum, fechaDesde, fechaHasta, vendedorId].filter(Boolean).length + [sinCliente, sinPrecio, sinTracking, soloEntreg, noEntreg, sinVendedor].filter(Boolean).length;
+        const n = [sku, desc, cliente, articulo, tracking, tienda, pedidoNum, orden, fechaDesde, fechaHasta, vendedorId].filter(Boolean).length + [sinCliente, sinPrecio, sinTracking, soloEntreg, noEntreg, sinVendedor].filter(Boolean).length;
         const b = document.getElementById('n-filtros'); b.textContent = n; b.style.display = n ? '' : 'none';
     }
 
@@ -597,7 +612,7 @@
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        ['f-tienda','f-vendedor','f-pedido'].forEach(id => {
+        ['f-tienda','f-vendedor','f-pedido','f-orden'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -984,7 +999,8 @@
             const d = await fetch('/api/pedidos/extras').then(r => r.json());
             if (!d.ok) return;
             const m = new Map(d.data.map(x => [x.IdDetallePedido, x]));
-            todosPedidos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.Fotografia = x.Fotografia; p.Link = x.Link; } });
+            todosPedidos.forEach(p => { const x = m.get(p.IdDetallePedido); if (x) { p.Fotografia = x.Fotografia; p.Link = x.Link; p.NumeroOrden = x.NumeroOrden; p.FechaOrden = x.FechaOrden; } });
+            cargarOrdenesFiltro();
             renderizarPagina();
         } catch (e) {}
     }

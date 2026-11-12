@@ -69,7 +69,12 @@ const getCostos = async (req, res) => {
 const getExtras = async (req, res) => {
   try {
     const pool = await poolPromise;
-    const r = await pool.request().query('SELECT IdDetallePedido, Fotografia, Link FROM C_DetallePedido');
+    // también la orden de pago de casillero de cada artículo (para filtrar por orden)
+    const r = await pool.request().query(`
+      SELECT D.IdDetallePedido, D.Fotografia, D.Link, RTRIM(OE.NumeroOrden) AS NumeroOrden, CONVERT(varchar(10), OE.Fecha, 23) AS FechaOrden
+      FROM C_DetallePedido D
+      OUTER APPLY (SELECT TOP 1 X.IdOrden FROM C_EntradasCasillero X WHERE X.IdSeguimiento = D.IdSeguimiento AND X.IdOrden IS NOT NULL ORDER BY X.IdEntradaCasillero DESC) EC
+      LEFT JOIN C_OrdenesEntrega OE ON OE.IdOrden = EC.IdOrden`);
     res.json({ ok: true, data: r.recordset });
   } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 };
